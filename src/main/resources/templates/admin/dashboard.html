@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        layout:decorate="~{layout/admin_layout}"
+>
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        
+        <!-- 생명윤리법 Q&A -->
+        <div class="table_desc">
+            <h3 class="stit">생명윤리법 Q&A</h3>
+            <a th:href="@{/admin/board(menuCd='BOARD' + ${qnaBbsOid},bbsOid=${qnaBbsOid})}" class="add_bt">더보기</a>
+        </div>
+        <div class="table_layout02 list_type">
+            <table>
+                <caption>Q&A 테이블</caption>
+                <colgroup>
+                    <col style="width: 90px">
+                    <col style="width: auto">
+                    <col style="width: 111px;">
+                    <col style="width: 124px;">
+                    <col style="width: 90px">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th scope="col">번호</th>
+                        <th scope="col">제목</th>
+                        <th scope="col">답변여부</th>
+                        <th scope="col">등록일</th>
+                        <th scope="col">조회수</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(qnaList)}">
+                        <td colspan="5" class="no_data">데이터가 없습니다.</td>
+                    </tr>
+                    <tr th:each="item, stat : ${qnaList}">
+                        <td th:classappend="${item.upendFixYn == 'Y'} ? 'notice' : ''"
+                            th:text="${item.upendFixYn == 'Y'} ? 'notice' : ${stat.count}">
+                        </td>
+                        <td class="tal">
+                            <a th:href="@{/admin/board/post(menuCd='BOARD' + ${item.bbsOid},bbsOid=${item.bbsOid}, bbsPstOid=${item.bbsPstOid})}" class="a_link">
+                                <i th:if="${item.prvtPstYn == 'Y'}" class="px_lock">비밀글</i>
+                                <span th:text="${item.bbsPstTtl}"></span>
+                            </a>
+                        </td>
+                        <td th:text="${item.answerYn == 'Y' ? '완료' : '미완료'}">미완료</td>
+                        <td th:text="${item.regDt != null ? #temporals.format(item.regDt, 'yyyy-MM-dd') : '-'}"></td>
+                        <td th:text="${item.inqCnt}">10</td>
+                    </tr>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        
+        <!-- 정책원 앨범 -->
+        <div class="table_desc">
+            <h3 class="stit">정책원 앨범</h3>
+            <a th:href="@{/admin/board(menuCd='BOARD' + ${galleryBbsOid},bbsOid=${galleryBbsOid})}" class="add_bt">더보기</a>
+        </div>
+        <div class="gallery_list_wrap mb30">
+            <div class="thumbnail_wrap gallery">
+                <p th:if="${#lists.isEmpty(galleryList)}" class="no_data" style="text-align: center; padding: 40px;">등록된 앨범이 없습니다.</p>
+                
+                <!-- 개별 섬네일 -->
+                <a th:each="item : ${galleryList}" 
+                   class="thumbnail_inner" 
+                   th:href="@{/admin/board/post(menuCd='BOARD' + ${item.bbsOid},bbsOid=${item.bbsOid}, bbsPstOid=${item.bbsPstOid})}">
+                    <p class="thumbnail_img">
+                        <img th:if="${item.thmbPath != null}"
+                             th:src="${item.thmbPath} ? (${basicFilePath} + ${item.thmbPath}) : @{/admin/images/Thumbnail_img.png}"
+                             th:onerror="|this.onerror=null; this.src='@{/admin/images/Thumbnail_img.png}';|"
+                             th:alt="${item.bbsPstTtl} + ' 섬네일 이미지'">
+                        <img th:if="${item.thmbPath == null}"
+                             th:src="@{/admin/images/Thumbnail_img.png}"
+                             th:alt="${item.bbsPstTtl} + ' 섬네일 이미지'">
+                    </p>
+                    <p class="thumbnail_text">
+                        <span th:text="${item.bbsPstTtl}"></span>
+                    </p>
+                    <p class="etc_text">
+                        <span th:text="${item.regDt != null ? #temporals.format(item.regDt, 'yyyy-MM-dd') : '-'}"></span>
+                        <em class="ml5"><b>조회수</b> <span th:text="${item.inqCnt}">0</span></em>
+                    </p>
+                </a>
+                <!-- /개별 섬네일 -->
+            </div>
+        </div>
+        
+        <!-- 국내언론동향 -->
+        <div class="table_desc">
+            <h3 class="stit">국내언론동향</h3>
+            <a th:href="@{/admin/board(menuCd='BOARD' + ${domesticMediaBbsOid},bbsOid=${domesticMediaBbsOid})}" class="add_bt">더보기</a>
+        </div>
+        <div class="news_list_wrap mb30">
+            <ul>
+                <li th:if="${#lists.isEmpty(domesticNewsList)}" class="no_data" style="text-align: center; padding: 40px;">
+                    등록된 뉴스가 없습니다.
+                </li>
+                <li th:each="item : ${domesticNewsList}">
+                    <a th:href="@{/admin/board/post(menuCd='BOARD' + ${item.bbsOid},bbsOid=${item.bbsOid}, bbsPstOid=${item.bbsPstOid})}">
+                        <!--<span th:text="${item.category != null ? '[' + item.category + ']' : ''}"></span>-->
+                        <strong th:text="${item.bbsPstTtl}"></strong>
+                        <p th:text="${item.bbsPstCnTxt != null ? (item.bbsPstCnTxt.length() > 100 ? item.bbsPstCnTxt.substring(0, 100) + '...' : item.bbsPstCnTxt) : ''}"></p>
+                        <div class="desc_wrap">
+                            <em th:text="${item.regDt != null ? #temporals.format(item.regDt, 'yyyy.MM.dd') : '-'}"></em>
+                            <em>조회수: <em th:text="${item.inqCnt}">0</em></em>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- 해외언론동향 -->
+        <div class="table_desc">
+            <h3 class="stit">해외언론동향</h3>
+            <a th:href="@{/admin/board(menuCd='BOARD' + ${foreignMediaBbsOid},bbsOid=${foreignMediaBbsOid})}" class="add_bt">더보기</a>
+        </div>
+        <div class="news_list_wrap">
+            <ul>
+                <li th:if="${#lists.isEmpty(foreignNewsList)}" class="no_data" style="text-align: center; padding: 40px;">
+                    등록된 뉴스가 없습니다.
+                </li>
+                <li th:each="item : ${foreignNewsList}">
+                    <a th:href="@{/admin/board/post(menuCd='BOARD' + ${item.bbsOid},bbsOid=${item.bbsOid},bbsPstOid=${item.bbsPstOid})}">
+                        <!--<span th:text="${item.category != null ? '[' + item.category + ']' : ''}">[보도자료]</span>-->
+                        <strong th:text="${item.bbsPstTtl}"></strong>
+                        <p th:text="${item.bbsPstCnTxt != null ? (item.bbsPstCnTxt.length() > 100 ? item.bbsPstCnTxt.substring(0, 100) + '...' : item.bbsPstCnTxt) : ''}"></p>
+                        <div class="desc_wrap">
+                            <em th:text="${item.regDt != null ? #temporals.format(item.regDt, 'yyyy.MM.dd') : '-'}"></em>
+                            <em>조회수: <em th:text="${item.inqCnt}">0</em></em>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+    </div>
+</div>
+</body>
+</html>

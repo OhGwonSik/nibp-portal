@@ -1,0 +1,1663 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.common.board.mapper.BoardMapper">
+
+    <!-- 동적 게시판 게시판 설정 정보 조회 -->
+    <select id="selectBoard" resultType="egovframework.common.board.dto.BoardDTO">
+        SELECT
+            bbs_oid,
+            bbs_se_cd,
+            use_yn,
+            bbs_nm,
+            upend_fix_yn,
+            prvt_yn,
+            mbr_wrt_yn,
+            prev_next_expsr_yn,
+            cmnt_psblty_yn,
+            ctgry_yn,
+            list_cn_expsr_yn,
+            ctgry_list,
+            file_uld_cnt,
+            file_uld_size,
+            pst_oid_expsr_yn,
+            wrtr_expsr_yn,
+            wrt_dt_expsr_yn,
+            ddln_dt_expsr_yn,
+            atch_file_en_yn,
+            prgrs_stts_expsr_yn,
+            inq_cnt_expsr_yn,
+            srch_use_yn,
+            page_cnt,
+            paging_cnt,
+            img_wdth_cnt,
+            img_vrtc_cnt,
+            bbs_expln,
+            bbs_sub_se_cd,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        FROM
+            ${schema}.bbs
+        WHERE
+            bbs_oid = #{bbsOid}
+    </select>
+
+    <!-- 동적 게시판 subBoardType으로 게시판 설정 정보 조회 -->
+    <select id="selectBoardBySubBoardType" resultType="egovframework.common.board.dto.BoardDTO">
+        select
+            tm.bbs_oid,
+            tm.menu_cd,
+            tb.ctgry_list,
+            tb.bbs_se_cd
+        from ${schema}.bbs tb
+        left join ${schema}.menu tm
+          on tb.bbs_oid = tm.bbs_oid
+        where tm.menu_auth_lv = #{menuAuthLv}
+          and tb.bbs_sub_se_cd = #{bbsSubSeCd}
+    </select>
+
+    <!-- 동적 게시판 게시글 목록 resultMap -->
+    <resultMap id="boardPostResultMap" type="egovframework.common.board.dto.BoardPostDTO">
+        <id property="bbsPstOid" column="bbs_pst_oid"/>
+        <result property="bbsOid" column="bbs_oid"/>
+        <result property="userOid" column="user_oid"/>
+        <result property="wrtrNm" column="wrtr_nm"/>
+        <result property="wrtrPswd" column="wrtr_pswd"/>
+        <result property="bbsPstTtl" column="bbs_pst_ttl"/>
+        <result property="bbsPstCn" column="bbs_pst_cn"/>
+        <result property="bbsPstCnTxt" column="bbs_pst_cn_txt"/>
+        <result property="ctgry" column="ctgry"/>
+        <result property="ntcYn" column="ntc_yn"/>
+        <result property="prvtPstYn" column="prvt_pst_yn"/>
+        <result property="upendFixYn" column="upend_fix_yn"/>
+        <result property="bgngDt" column="bgng_dt"/>
+        <result property="endDt" column="end_dt"/>
+        <result property="inqCnt" column="inq_cnt"/>
+        <result property="likeCnt" column="like_cnt"/>
+        <result property="cmntCnt" column="cmnt_cnt"/>
+        <result property="atchCnt" column="atch_cnt"/>
+        <result property="stts" column="stts"/>
+        <result property="ddlnDt" column="ddln_dt"/>
+        <result property="upBbsPstOid" column="up_bbs_pst_oid"/>
+        <result property="replyLv" column="reply_lv"/>
+        <result property="replySeq" column="reply_seq"/>
+        <result property="openYn" column="open_yn"/>
+        <result property="rcrtType" column="rcrt_type"/>
+        <result property="delYn" column="del_yn"/>
+        <result property="delDt" column="del_dt"/>
+        <result property="regId" column="reg_id"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnId" column="mdfcn_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        <result property="fileCnt" column="file_cnt"/>
+        <result property="statusNm" column="status_nm"/>
+        <result property="upendFixYn" column="upend_fix_yn"/>
+        <result property="bgngDt" column="bgng_dt"/>
+        <result property="endDt" column="end_dt"/>
+        <result property="thmbPath" column="thumbnail_path"/>
+        <!-- 첨부파일 -->
+        <collection property="attachments" ofType="egovframework.common.file.domain.FileDTO"
+                    javaType="java.util.ArrayList" select="selectFileByBbsPstOid" column="bbs_pst_oid"/>
+    </resultMap>
+
+    <!-- 대시보드 전용 경량 resultMap (첨부파일 N+1 제거) -->
+    <resultMap id="boardPostDashboardResultMap" type="egovframework.common.board.dto.BoardPostDTO">
+        <id property="bbsPstOid" column="bbs_pst_oid"/>
+        <result property="bbsOid" column="bbs_oid"/>
+        <result property="userOid" column="user_oid"/>
+        <result property="wrtrNm" column="wrtr_nm"/>
+        <result property="bbsPstTtl" column="bbs_pst_ttl"/>
+        <result property="bbsPstCnTxt" column="bbs_pst_cn_txt"/>
+        <result property="ctgry" column="ctgry"/>
+        <result property="ntcYn" column="ntc_yn"/>
+        <result property="prvtPstYn" column="prvt_pst_yn"/>
+        <result property="upendFixYn" column="upend_fix_yn"/>
+        <result property="bgngDt" column="bgng_dt"/>
+        <result property="endDt" column="end_dt"/>
+        <result property="inqCnt" column="inq_cnt"/>
+        <result property="likeCnt" column="like_cnt"/>
+        <result property="cmntCnt" column="cmnt_cnt"/>
+        <result property="atchCnt" column="atch_cnt"/>
+        <result property="stts" column="stts"/>
+        <result property="ddlnDt" column="ddln_dt"/>
+        <result property="openYn" column="open_yn"/>
+        <result property="delYn" column="del_yn"/>
+        <result property="regId" column="reg_id"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnId" column="mdfcn_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        <result property="statusNm" column="status_nm"/>
+        <result property="thmbPath" column="thumbnail_path"/>
+        <result property="answerYn" column="ans_yn"/>
+    </resultMap>
+
+    <!-- 동적 게시판 게시글의 파일 조회 -->
+    <select id="selectFileByBbsPstOid" resultType="egovframework.common.file.domain.FileDTO">
+        SELECT
+            file_oid,
+            tbl_nm,
+            tbl_oid,
+            orgnl_file_nm,
+            strg_file_nm,
+            strg_file_path,
+            strg_file_cpct,
+            file_type_nm,
+            file_type,
+            thmb_yn,
+            atch_file_seq,
+            use_yn,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        FROM ${schema}.file
+        WHERE tbl_oid = #{bbsPstOid}
+          AND tbl_nm = 'bbs_pst'
+          AND use_yn = 'Y'
+          AND file_type = 'ATTACHMENT'
+        ORDER BY atch_file_seq ASC
+    </select>
+
+    <!-- 동적 게시판 게시글 목록 조회 -->
+    <select id="selectBoardPostList" resultMap="boardPostResultMap">
+        SELECT
+            tbp.bbs_pst_oid,
+            tbp.bbs_oid,
+            tbp.user_oid,
+            tbp.wrtr_nm,
+            tbp.wrtr_pswd,
+            tbp.bbs_pst_ttl,
+            tbp.bbs_pst_cn,
+            tbp.bbs_pst_cn_txt,
+            tbp.ctgry,
+            tbp.ntc_yn,
+            tbp.prvt_pst_yn,
+            tbp.inq_cnt,
+            tbp.like_cnt,
+            tbp.cmnt_cnt,
+            tbp.atch_cnt,
+            IF(CURDATE() >= tbp.bgng_dt AND (tbp.end_dt IS NULL OR tbp.end_dt >= CURDATE()), 'Y', 'N') AS upend_fix_yn,
+            tbp.bgng_dt,
+            tbp.end_dt,
+            tbp.stts,
+            tbp.ddln_dt,
+            tbp.up_bbs_pst_oid,
+            tbp.reply_lv,
+            tbp.reply_seq,
+            tbp.open_yn,
+            tbp.rcrt_type,
+            tbp.del_yn,
+            tbp.del_dt,
+            tbp.reg_id,
+            tbp.reg_dt,
+            tbp.mdfcn_id,
+            tbp.mdfcn_dt,
+            CASE
+                WHEN tbp.ddln_dt IS NOT NULL AND DATE(tbp.ddln_dt) <![CDATA[ < ]]> DATE(NOW()) THEN '마감'
+                WHEN DATE(tbp.reg_dt) <![CDATA[ > ]]> DATE(NOW()) THEN '예정'
+                WHEN tbp.ddln_dt IS NULL THEN ''
+                ELSE '진행중'
+            END AS stts_nm
+        FROM ${schema}.bbs_pst tbp
+        <where>
+            <choose>
+                <when test='isAdmin == "Y"'>
+                    <if test="delYn != null and delYn != ''">
+                        AND tbp.del_yn = #{delYn}
+                    </if>
+                </when>
+                
+                <otherwise>
+                    AND tbp.del_yn = 'N'
+                </otherwise>
+            </choose>
+			<choose>
+                <when test='isAdmin == "Y"'>
+                    <if test="openYn != null and openYn != ''">
+                        AND tbp.open_yn = #{openYn}
+                    </if>
+                </when>
+                <when test="isPermanentDisplayBoard == 'Y'.toString()">
+                    AND tbp.open_yn = 'Y'
+					AND (
+					        tbp.bgng_dt IS NULL
+					        OR tbp.bgng_dt <![CDATA[ <= ]]> CURDATE()
+					    )
+                </when>
+                <otherwise>
+                    AND tbp.open_yn = 'Y'
+					AND (
+					        tbp.bgng_dt IS NULL 
+					        OR tbp.bgng_dt <![CDATA[ <= ]]> CURDATE()
+					    )
+					    
+					    AND (
+					        tbp.end_dt IS NULL 
+					        OR tbp.end_dt <![CDATA[ >= ]]> CURDATE()
+					    )
+                </otherwise>
+            </choose>
+			<if test="regStartDt != null and regStartDt != ''">
+                AND tbp.reg_dt <![CDATA[ >= ]]> #{regStartDt}
+            </if>
+            <if test="regEndDt != null and regEndDt != ''">
+                AND tbp.reg_dt <![CDATA[ < ]]> DATE_ADD(#{regEndDt}, INTERVAL 1 DAY)
+            </if>            
+            <if test='bbsOid != null and bbsOid != 0'>
+                AND tbp.bbs_oid = #{bbsOid}
+            </if>
+            <if test="ctgry != null and ctgry != ''">
+                AND tbp.ctgry = #{ctgry}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND
+                <choose>
+                    <when test="searchType == 'title'">
+                        MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+                    </when>
+                    <when test="searchType == 'content'">
+                        MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE)
+                    </when>
+                    <when test="searchType == 'all'">
+                        (MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+                        OR MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE))
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY
+            IF(CURDATE() >= tbp.bgng_dt AND (tbp.end_dt IS NULL OR tbp.end_dt >= CURDATE()), 'Y', 'N') DESC, tbp.bbs_pst_oid DESC
+    </select>
+
+    <!-- 대시보드 전용: 일반 게시글 목록 (뉴스 등) - N+1 없음, bbs_pst_cn 제외 -->
+    <select id="selectDashboardPostList" resultMap="boardPostDashboardResultMap">
+        SELECT
+            tbp.bbs_pst_oid,
+            tbp.bbs_oid,
+            tbp.user_oid,
+            tbp.wrtr_nm,
+            tbp.bbs_pst_ttl,
+            tbp.bbs_pst_cn_txt,
+            tbp.ctgry,
+            tbp.ntc_yn,
+            tbp.prvt_pst_yn,
+            tbp.inq_cnt,
+            tbp.like_cnt,
+            tbp.cmnt_cnt,
+            tbp.atch_cnt,
+            IF(CURDATE() >= tbp.bgng_dt AND (tbp.end_dt IS NULL OR tbp.end_dt >= CURDATE()), 'Y', 'N') AS upend_fix_yn,
+            tbp.bgng_dt,
+            tbp.end_dt,
+            tbp.stts,
+            tbp.ddln_dt,
+            tbp.open_yn,
+            tbp.del_yn,
+            tbp.reg_id,
+            tbp.reg_dt,
+            tbp.mdfcn_id,
+            tbp.mdfcn_dt,
+            CASE
+                WHEN tbp.ddln_dt IS NOT NULL AND DATE(tbp.ddln_dt) <![CDATA[ < ]]> DATE(NOW()) THEN '마감'
+                WHEN DATE(tbp.reg_dt) <![CDATA[ > ]]> DATE(NOW()) THEN '예정'
+                WHEN tbp.ddln_dt IS NULL THEN ''
+                ELSE '진행중'
+            END AS stts_nm
+        FROM ${schema}.bbs_pst tbp
+        WHERE tbp.del_yn = 'N'
+          AND tbp.open_yn = 'Y'
+          AND tbp.bbs_oid = #{bbsOid}
+          <if test="ctgry != null and ctgry != ''">
+              AND tbp.ctgry = #{ctgry}
+          </if>
+        ORDER BY
+            IF(CURDATE() >= tbp.bgng_dt AND (tbp.end_dt IS NULL OR tbp.end_dt >= CURDATE()), 'Y', 'N') DESC, tbp.bbs_pst_oid DESC
+    </select>
+
+    <!-- 메인 페이지 전용: 첫 번째 게시글 첨부파일 일괄 조회 (N+1 방지) -->
+    <select id="selectFirstPostAttachmentsByBbsPstOids" resultType="egovframework.common.file.domain.FileDTO">
+        SELECT
+            tf.file_oid,
+            tf.tbl_nm,
+            tf.tbl_oid,
+            tf.orgnl_file_nm,
+            tf.strg_file_nm,
+            tf.strg_file_path,
+            tf.strg_file_cpct,
+            tf.file_type_nm,
+            tf.file_type,
+            tf.thmb_yn,
+            tf.atch_file_seq,
+            tf.use_yn,
+            tf.reg_id,
+            tf.reg_dt,
+            tf.mdfcn_id,
+            tf.mdfcn_dt
+        FROM ${schema}.file tf
+        WHERE tf.tbl_oid IN
+            <foreach collection="bbsPstOids" item="bbsPstOid" open="(" separator="," close=")">
+                #{bbsPstOid}
+            </foreach>
+          AND tf.tbl_nm = 'bbs_pst'
+          AND tf.use_yn = 'Y'
+          AND tf.file_type = 'ATTACHMENT'
+        ORDER BY tf.tbl_oid, tf.atch_file_seq ASC
+    </select>
+
+    <!-- 동적 게시판 게시글 목록 resultMap - faq, qna -->
+    <resultMap id="boardPostWithAnswerResultMap" type="egovframework.common.board.dto.BoardPostDTO">
+        <id property="bbsPstOid" column="bbs_pst_oid"/>
+        <result property="bbsOid" column="bbs_oid"/>
+        <result property="userOid" column="user_oid"/>
+        <result property="wrtrNm" column="wrtr_nm"/>
+        <result property="wrtrPswd" column="wrtr_pswd"/>
+        <result property="bbsPstTtl" column="bbs_pst_ttl"/>
+        <result property="bbsPstCn" column="bbs_pst_cn"/>
+        <result property="bbsPstCnTxt" column="bbs_pst_cn_txt"/>
+        <result property="ctgry" column="ctgry"/>
+        <result property="ntcYn" column="ntc_yn"/>
+        <result property="prvtPstYn" column="prvt_pst_yn"/>
+        <result property="upendFixYn" column="upend_fix_yn"/>
+        <result property="bgngDt" column="bgng_dt"/>
+        <result property="endDt" column="end_dt"/>
+        <result property="inqCnt" column="inq_cnt"/>
+        <result property="likeCnt" column="like_cnt"/>
+        <result property="cmntCnt" column="cmnt_cnt"/>
+        <result property="atchCnt" column="atch_cnt"/>
+        <result property="qnaStatus" column="qna_status"/>
+        <result property="stts" column="stts"/>
+        <result property="ddlnDt" column="ddln_dt"/>
+        <result property="upBbsPstOid" column="up_bbs_pst_oid"/>
+        <result property="replyLv" column="reply_lv"/>
+        <result property="replySeq" column="reply_seq"/>
+        <result property="delYn" column="del_yn"/>
+        <result property="delDt" column="del_dt"/>
+        <result property="regId" column="reg_id"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnId" column="mdfcn_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        <result property="fileCnt" column="file_cnt"/>
+        <result property="statusNm" column="status_nm"/>
+        <result property="answerYn" column="ans_yn"/>
+
+        <!-- 답변 정보 (association) -->
+        <association property="answers" javaType="egovframework.common.board.dto.BoardPostDTO">
+            <id property="bbsPstOid" column="answer_post_no"/>
+            <result property="bbsOid" column="answer_board_no"/>
+            <result property="userOid" column="answer_user_no"/>
+            <result property="wrtrNm" column="answer_writer_nm"/>
+            <result property="bbsPstTtl" column="answer_post_title"/>
+            <result property="bbsPstCn" column="answer_post_content"/>
+            <result property="inqCnt" column="answer_view_cnt"/>
+            <result property="upBbsPstOid" column="answer_parent_post_no"/>
+            <result property="answerStatus" column="answer_status"/>
+            <result property="regId" column="answer_reg_user_id"/>
+            <result property="regDt" column="answer_reg_dt"/>
+            <result property="mdfcnId" column="answer_upd_user_id"/>
+            <result property="mdfcnDt" column="answer_upd_dt"/>
+
+            <!-- 답변 첨부파일 컬렉션 -->
+            <collection property="attachments" ofType="egovframework.common.board.dto.BoardAttachDTO">
+                <id property="attachNo" column="answer_attach_no"/>
+                <result property="bbsPstOid" column="answer_attach_post_no"/>
+                <result property="strgFileNm" column="answer_file_name"/>
+                <result property="orgnlFileNm" column="answer_origin_file_name"/>
+                <result property="strgFilePath" column="answer_file_path"/>
+                <result property="strgFileCpct" column="answer_file_size"/>
+                <result property="fileTypeNm" column="answer_file_ext"/>
+                <result property="thmbPath" column="answer_thumbnail_path"/>
+                <result property="thmbYn" column="answer_thumbnail_yn"/>
+                <result property="imageWidth" column="answer_image_width"/>
+                <result property="imageHeight" column="answer_image_height"/>
+                <result property="dwnldCnt" column="answer_download_cnt"/>
+                <result property="atchFileSeq" column="answer_attach_order"/>
+                <result property="useYn" column="answer_use_yn"/>
+                <result property="regId" column="answer_attach_reg_user_id"/>
+                <result property="regDt" column="answer_attach_reg_dt"/>
+            </collection>
+        </association>
+
+        <!-- 질문 첨부파일 컬렉션 -->
+        <collection property="attachments" ofType="egovframework.common.board.dto.BoardAttachDTO">
+            <id property="attachNo" column="attach_no"/>
+            <result property="bbsPstOid" column="attach_post_no"/>
+            <result property="strgFileNm" column="strg_file_nm"/>
+            <result property="orgnlFileNm" column="orgnl_file_nm"/>
+            <result property="strgFilePath" column="strg_file_path"/>
+            <result property="strgFileCpct" column="strg_file_cpct"/>
+            <result property="fileTypeNm" column="file_type_nm"/>
+            <result property="thmbPath" column="thumbnail_path"/>
+            <result property="thmbYn" column="thmb_yn"/>
+            <result property="imageWidth" column="image_width"/>
+            <result property="imageHeight" column="image_height"/>
+            <result property="dwnldCnt" column="dwnld_cnt"/>
+            <result property="atchFileSeq" column="atch_file_seq"/>
+            <result property="useYn" column="use_yn"/>
+            <result property="regId" column="attach_reg_user_id"/>
+            <result property="regDt" column="attach_reg_dt"/>
+        </collection>
+    </resultMap>
+
+    <!-- 동적 게시판 게시글 목록 조회 - faq, qna -->
+    <select id="selectBoardPostListTypeB" resultMap="boardPostWithAnswerResultMap">
+        SELECT
+        tbp.bbs_pst_oid,
+        tbp.bbs_oid,
+        tbp.user_oid,
+        tbp.wrtr_nm,
+        tbp.wrtr_pswd,
+        tbp.bbs_pst_ttl,
+        tbp.bbs_pst_cn,
+        tbp.bbs_pst_cn_txt,
+        tbp.ctgry,
+        tbp.ntc_yn,
+        tbp.prvt_pst_yn,
+        tbp.inq_cnt,
+        tbp.like_cnt,
+        tbp.cmnt_cnt,
+        tbp.atch_cnt,
+        tbp.stts,
+        tc.cd_nm AS qna_status,
+        tbp.ddln_dt,
+        tbp.up_bbs_pst_oid,
+        tbp.reply_lv,
+        tbp.reply_seq,
+        tbp.del_yn,
+        tbp.del_dt,
+        tbp.reg_id,
+        tbp.reg_dt,
+        tbp.mdfcn_id,
+        tbp.mdfcn_dt,
+        CASE
+        WHEN tbp.ddln_dt IS NOT NULL AND DATE(tbp.ddln_dt) <![CDATA[ < ]]> DATE(NOW()) THEN '마감'
+        WHEN DATE(tbp.reg_dt) <![CDATA[ > ]]> DATE(NOW()) THEN '예정'
+        WHEN tbp.ddln_dt IS NULL THEN '-'
+        ELSE '진행중'
+        END AS stts_nm,
+        <!-- 답변 정보 -->
+        ans_cn.bbs_pst_oid AS ansCn_post_no,
+        ans_cn.bbs_oid AS ansCn_board_no,
+        ans_cn.user_oid AS ansCn_user_no,
+        ans_cn.wrtr_nm AS ansCn_writer_nm,
+        ans_cn.bbs_pst_ttl AS ansCn_post_title,
+        ans_cn.bbs_pst_cn AS ansCn_post_content,
+        ans_cn.inq_cnt AS ansCn_view_cnt,
+        ans_cn.up_bbs_pst_oid AS ansCn_parent_post_no,
+        tc1.cd_nm AS ansCn_status,
+        ans_cn.reg_id AS ansCn_reg_user_id,
+        ans_cn.reg_dt AS ansCn_reg_dt,
+        ans_cn.mdfcn_id AS ansCn_upd_user_id,
+        ans_cn.mdfcn_dt AS ansCn_upd_dt,
+        IF(ans_cn.bbs_pst_oid IS NOT NULL, 'Y', 'N') AS ansCn_yn
+        FROM ${schema}.bbs_pst tbp
+        LEFT JOIN ${schema}.bbs_pst ans_cn ON
+        ans_cn.up_bbs_pst_oid = tbp.bbs_pst_oid
+        AND ans_cn.del_yn = 'N'
+        INNER JOIN ${schema}.grp_cd tgc ON
+        	tgc.grp_cd = 'QNA_STAT_TYPE'
+        	AND tgc.use_yn = 'Y'
+        INNER JOIN ${schema}.cd tc ON
+        	tc.grp_cd_oid = tgc.grp_cd_oid
+        	AND tc.cd_val = tbp.stts
+        	AND tc.use_yn = 'Y'
+        LEFT JOIN ${schema}.cd tc1 ON
+        	tc1.grp_cd_oid = tgc.grp_cd_oid
+        	AND tc1.cd_val = ans_cn.stts
+        	AND tc1.use_yn = 'Y'        	
+        <where>
+            tbp.open_yn = 'Y'
+            AND tbp.up_bbs_pst_oid IS NULL
+            <choose>
+                <when test='isAdmin == "Y"'>
+                    <if test="delYn != null and delYn != ''">
+                        AND tbp.del_yn = #{delYn}
+                    </if>
+                </when>
+                
+                <otherwise>
+                    AND tbp.del_yn = 'N'
+                </otherwise>
+            </choose>
+			<choose>
+                <when test='isAdmin == "Y"'>
+                    <if test="prvtPstYn != null and prvtPstYn != ''">
+                        AND tbp.prvt_pst_yn = #{prvtPstYn}
+                    </if>
+                    </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+			<if test="regStartDt != null and regStartDt != ''">
+                AND tbp.reg_dt <![CDATA[ >= ]]> #{regStartDt}
+            </if>
+            <if test="regEndDt != null and regEndDt != ''">
+                AND tbp.reg_dt <![CDATA[ < ]]> DATE_ADD(#{regEndDt}, INTERVAL 1 DAY)
+            </if>
+            <if test='bbsOid != null and bbsOid != 0'>
+                AND tbp.bbs_oid = #{bbsOid}
+            </if>
+            <if test="ctgry != null and ctgry != ''">
+                AND tbp.ctgry = #{ctgry}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                <choose>
+                    <when test="searchType == 'title'">
+                        MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+                    </when>
+                    <when test="searchType == 'content'">
+                        MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE)
+                    </when>
+                    <when test="searchType == 'all'">
+                        MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+                        OR MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE)
+                    </when>
+                </choose>
+                )
+            </if>
+        </where>
+        GROUP BY
+        tbp.bbs_pst_oid
+        ORDER BY
+        tbp.reg_dt DESC, tbp.bbs_pst_oid DESC
+    </select>
+
+    <select id="selectBoardPostListTypeImage" resultMap="boardPostResultMap">
+        SELECT
+            tbp.bbs_pst_oid,
+            tbp.bbs_oid,
+            tbp.user_oid,
+            tbp.wrtr_nm,
+            tbp.wrtr_pswd,
+            tbp.bbs_pst_ttl,
+            tbp.bbs_pst_cn,
+            tbp.bbs_pst_cn_txt,
+            tbp.ctgry,
+            tbp.ntc_yn,
+            tbp.prvt_pst_yn,
+            tbp.inq_cnt,
+            tbp.like_cnt,
+            tbp.cmnt_cnt,
+            tbp.atch_cnt,
+            IF(CURDATE() >= tbp.bgng_dt AND (tbp.end_dt IS NULL OR tbp.end_dt >= CURDATE()), 'Y', 'N') AS upend_fix_yn,
+            tbp.bgng_dt,
+            tbp.end_dt,
+            tbp.stts,
+            tbp.ddln_dt,
+            tbp.up_bbs_pst_oid,
+            tbp.reply_lv,
+            tbp.reply_seq,
+            tbp.open_yn,
+            tbp.rcrt_type,
+            tbp.del_yn,
+            tbp.del_dt,
+            tbp.reg_id,
+            tbp.reg_dt,
+            tbp.mdfcn_id,
+            tbp.mdfcn_dt,
+
+            /* 상태값 로직 */
+            CASE
+                WHEN tbp.ddln_dt IS NOT NULL AND DATE(tbp.ddln_dt) <![CDATA[ < ]]> DATE(NOW()) THEN '마감'
+                WHEN DATE(tbp.reg_dt) <![CDATA[ > ]]> DATE(NOW()) THEN '예정'
+                WHEN tbp.ddln_dt IS NULL THEN '-'
+                ELSE '진행중'
+            END AS stts_nm,
+
+            /* 썸네일 경로 */
+            (SELECT CONCAT(tf.strg_file_path, '/', tf.strg_file_nm)
+             FROM ${schema}.file tf
+             WHERE tf.tbl_nm = 'bbs_pst'
+               AND tf.tbl_oid = tbp.bbs_pst_oid
+               AND tf.use_yn = 'Y'
+               AND tf.thmb_yn = 'Y'
+             ORDER BY tf.file_oid
+             LIMIT 1) AS thumbnail_path,
+
+            /* 파일 개수 카운트 */
+            (SELECT COUNT(*)
+             FROM ${schema}.file tf
+             WHERE tf.tbl_nm = 'bbs_pst'
+               AND tf.tbl_oid = tbp.bbs_pst_oid
+               AND tf.use_yn = 'Y'
+               AND tf.thmb_yn = 'N') AS file_cnt
+
+        FROM ${schema}.bbs_pst tbp
+        <where>
+            <choose>
+                <when test='isAdmin == "Y"'>
+                    <if test="delYn != null and delYn != ''">
+                        AND tbp.del_yn = #{delYn}
+                    </if>
+                    <if test="openYn != null and openYn != ''">
+                        AND tbp.open_yn = #{openYn}
+                    </if>
+                </when>
+                <otherwise>
+                    AND TRIM(tbp.del_yn) = 'N'
+                    AND TRIM(tbp.open_yn) = 'Y'
+                </otherwise>
+            </choose>
+			<if test="regStartDt != null and regStartDt != ''">
+                AND tbp.reg_dt <![CDATA[ >= ]]> #{regStartDt}
+            </if>
+            <if test="regEndDt != null and regEndDt != ''">
+                AND tbp.reg_dt <![CDATA[ < ]]> DATE_ADD(#{regEndDt}, INTERVAL 1 DAY)
+            </if>
+            <if test='bbsOid != null and bbsOid != 0'>
+                AND tbp.bbs_oid = #{bbsOid}
+            </if>
+            <if test="ctgry != null and ctgry != ''">
+                AND tbp.ctgry = #{ctgry}
+            </if>
+            <if test='bbsPstOid != null and bbsPstOid != 0'>
+            	AND tbp.bbs_pst_oid = #{bbsPstOid}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND
+                <choose>
+                    <when test="searchType == 'title'">
+                        MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+                    </when>
+                    <when test="searchType == 'content'">
+                        MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE)
+                    </when>
+                    <when test="searchType == 'all'">
+                        (MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+                        OR MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE))
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY
+            IF(CURDATE() >= tbp.bgng_dt AND (tbp.end_dt IS NULL OR tbp.end_dt >= CURDATE()), 'Y', 'N') DESC, tbp.bbs_pst_oid DESC
+    </select>
+
+    <!-- 대시보드 전용: 갤러리 게시글 목록 - N+1 없음, 썸네일 서브쿼리 유지 -->
+    <select id="selectDashboardPostListTypeImage" resultMap="boardPostDashboardResultMap">
+        SELECT
+            tbp.bbs_pst_oid,
+            tbp.bbs_oid,
+            tbp.user_oid,
+            tbp.wrtr_nm,
+            tbp.bbs_pst_ttl,
+            tbp.bbs_pst_cn_txt,
+            tbp.ctgry,
+            tbp.ntc_yn,
+            tbp.prvt_pst_yn,
+            tbp.inq_cnt,
+            tbp.like_cnt,
+            tbp.cmnt_cnt,
+            tbp.atch_cnt,
+            IF(CURDATE() >= tbp.bgng_dt AND (tbp.end_dt IS NULL OR tbp.end_dt >= CURDATE()), 'Y', 'N') AS upend_fix_yn,
+            tbp.bgng_dt,
+            tbp.end_dt,
+            tbp.stts,
+            tbp.ddln_dt,
+            tbp.open_yn,
+            tbp.del_yn,
+            tbp.reg_id,
+            tbp.reg_dt,
+            tbp.mdfcn_id,
+            tbp.mdfcn_dt,
+            CASE
+                WHEN tbp.ddln_dt IS NOT NULL AND DATE(tbp.ddln_dt) <![CDATA[ < ]]> DATE(NOW()) THEN '마감'
+                WHEN DATE(tbp.reg_dt) <![CDATA[ > ]]> DATE(NOW()) THEN '예정'
+                WHEN tbp.ddln_dt IS NULL THEN '-'
+                ELSE '진행중'
+            END AS stts_nm,
+            (SELECT CONCAT(tf.strg_file_path, '/', tf.strg_file_nm)
+            FROM ${schema}.file tf
+            WHERE tf.tbl_nm = 'bbs_pst'
+            AND tf.tbl_oid = tbp.bbs_pst_oid
+            AND tf.use_yn = 'Y'
+            AND tf.thmb_yn = 'Y'
+            LIMIT 1) AS thumbnail_path
+        FROM ${schema}.bbs_pst tbp
+        WHERE tbp.del_yn = 'N'
+          AND tbp.open_yn = 'Y'
+          AND tbp.bbs_oid = #{bbsOid}
+        ORDER BY
+            IF(CURDATE() >= tbp.bgng_dt AND (tbp.end_dt IS NULL OR tbp.end_dt >= CURDATE()), 'Y', 'N') DESC, tbp.bbs_pst_oid DESC
+    </select>
+
+    <select id="selectBoardPostTypeImage" resultMap="boardPostResultMap">
+        SELECT
+            tbp.bbs_pst_oid,
+            tbp.bbs_oid,
+            tbp.user_oid,
+            tbp.wrtr_nm,
+            tbp.wrtr_pswd,
+            tbp.bbs_pst_ttl,
+            tbp.bbs_pst_cn,
+            tbp.bbs_pst_cn_txt,
+            tbp.ctgry,
+            tbp.ntc_yn,
+            tbp.prvt_pst_yn,
+            tbp.inq_cnt,
+            tbp.like_cnt,
+            tbp.cmnt_cnt,
+            tbp.atch_cnt,
+            tbp.upend_fix_yn,
+            tbp.bgng_dt,
+            tbp.end_dt,
+            tbp.stts,
+            tbp.ddln_dt,
+            tbp.up_bbs_pst_oid,
+            tbp.reply_lv,
+            tbp.reply_seq,
+            tbp.open_yn,
+            tbp.rcrt_type,
+            tbp.del_yn,
+            tbp.del_dt,
+            tbp.reg_id,
+            tbp.reg_dt,
+            tbp.mdfcn_id,
+            tbp.mdfcn_dt,
+
+            /* 상태값 로직 */
+            CASE
+                WHEN tbp.ddln_dt IS NOT NULL AND DATE(tbp.ddln_dt) <![CDATA[ < ]]> DATE(NOW()) THEN '마감'
+                WHEN DATE(tbp.reg_dt) <![CDATA[ > ]]> DATE(NOW()) THEN '예정'
+                WHEN tbp.ddln_dt IS NULL THEN '-'
+                ELSE '진행중'
+            END AS stts_nm,
+
+            /* 썸네일 경로 */
+            (SELECT CONCAT(tf.strg_file_path, '/', tf.strg_file_nm)
+             FROM ${schema}.file tf
+             WHERE tf.tbl_nm = 'bbs_pst'
+               AND tf.tbl_oid = tbp.bbs_pst_oid
+               AND tf.use_yn = 'Y'
+               AND tf.thmb_yn = 'Y'
+             ORDER BY tf.file_oid
+             LIMIT 1) AS thumbnail_path,
+
+            /* 파일 개수 카운트 */
+            (SELECT COUNT(*)
+             FROM ${schema}.file tf
+             WHERE tf.tbl_nm = 'bbs_pst'
+               AND tf.tbl_oid = tbp.bbs_pst_oid
+               AND tf.use_yn = 'Y'
+               AND tf.thmb_yn = 'N') AS file_cnt
+
+        FROM ${schema}.bbs_pst tbp
+        <where>
+            tbp.bbs_pst_oid = #{bbsPstOid}
+            <choose>
+                <when test='isAdmin == "Y"'>
+                    <if test="openYn != null and openYn != ''">
+                        AND tbp.open_yn = #{openYn}
+                    </if>
+                </when>
+                <otherwise>
+                    AND tbp.open_yn = 'Y'
+                </otherwise>
+            </choose>
+            <choose>
+                <when test='isAdmin == "Y"'>
+                    <if test="delYn != null and delYn != ''">
+                        AND tbp.del_yn = #{delYn}
+                    </if>
+                </when>
+
+                <otherwise>
+                    AND tbp.del_yn = 'N'
+                </otherwise>
+            </choose>
+            <if test='bbsOid != null and bbsOid != 0'>
+                AND tbp.bbs_oid = #{bbsOid}
+            </if>
+            <if test="ctgry != null and ctgry != ''">
+                AND tbp.ctgry = #{ctgry}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND
+                <choose>
+                    <when test="searchType == 'title'">
+                        MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+                    </when>
+                    <when test="searchType == 'content'">
+                        MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE)
+                    </when>
+                    <when test="searchType == 'all'">
+                        (MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+                        OR MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE))
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY
+            IF(CURDATE() >= tbp.bgng_dt AND (tbp.end_dt IS NULL OR tbp.end_dt >= CURDATE()), 'Y', 'N') DESC, tbp.bbs_pst_oid DESC
+    </select>
+
+    <!-- 동적 게시판 게시글 단건 상세 resultMap (첨부파일 포함) -->
+    <resultMap id="boardPostResultMapWithFiles" type="egovframework.common.board.dto.BoardPostDTO">
+        <id property="bbsPstOid" column="bbs_pst_oid"/>
+        <result property="bbsOid" column="bbs_oid"/>
+        <result property="userOid" column="user_oid"/>
+        <result property="wrtrNm" column="wrtr_nm"/>
+        <result property="wrtrPswd" column="wrtr_pswd"/>
+        <result property="bbsPstTtl" column="bbs_pst_ttl"/>
+        <result property="bbsPstCn" column="bbs_pst_cn"/>
+        <result property="bbsPstCnTxt" column="bbs_pst_cn_txt"/>
+        <result property="ctgry" column="ctgry"/>
+        <result property="ntcYn" column="ntc_yn"/>
+        <result property="prvtPstYn" column="prvt_pst_yn"/>
+        <result property="upendFixYn" column="upend_fix_yn"/>
+        <result property="bgngDt" column="bgng_dt"/>
+        <result property="endDt" column="end_dt"/>
+        <result property="inqCnt" column="inq_cnt"/>
+        <result property="likeCnt" column="like_cnt"/>
+        <result property="cmntCnt" column="cmnt_cnt"/>
+        <result property="atchCnt" column="atch_cnt"/>
+        <result property="stts" column="stts"/>
+        <result property="ddlnDt" column="ddln_dt"/>
+        <result property="upBbsPstOid" column="up_bbs_pst_oid"/>
+        <result property="replyLv" column="reply_lv"/>
+        <result property="replySeq" column="reply_seq"/>
+        <result property="openYn" column="open_yn"/>
+        <result property="rcrtType" column="rcrt_type"/>
+        <result property="delYn" column="del_yn"/>
+        <result property="delDt" column="del_dt"/>
+        <result property="regId" column="reg_id"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnId" column="mdfcn_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        <result property="fileCnt" column="file_cnt"/>
+        <result property="statusNm" column="status_nm"/>
+        <result property="answerYn" column="ans_yn"/>
+        <result property="kwrd" column="kwrd"/>
+
+        <!-- 첨부파일 컬렉션 -->
+        <collection property="attachments" ofType="egovframework.common.board.dto.BoardAttachDTO">
+            <id property="attachNo" column="attach_no"/>
+            <result property="bbsPstOid" column="attach_post_no"/>
+            <result property="strgFileNm" column="strg_file_nm"/>
+            <result property="orgnlFileNm" column="orgnl_file_nm"/>
+            <result property="strgFilePath" column="strg_file_path"/>
+            <result property="strgFileCpct" column="strg_file_cpct"/>
+            <result property="fileTypeNm" column="file_type_nm"/>
+            <result property="thmbPath" column="thumbnail_path"/>
+            <result property="thmbYn" column="thmb_yn"/>
+            <result property="imageWidth" column="image_width"/>
+            <result property="imageHeight" column="image_height"/>
+            <result property="dwnldCnt" column="dwnld_cnt"/>
+            <result property="atchFileSeq" column="atch_file_seq"/>
+            <result property="useYn" column="use_yn"/>
+            <result property="regId" column="attach_reg_user_id"/>
+            <result property="regDt" column="attach_reg_dt"/>
+        </collection>
+    </resultMap>
+
+    <!-- 동적 게시판 게시글 단건 상세 조회 (첨부파일 포함) -->
+    <select id="selectBoardPostDetail" resultMap="boardPostResultMapWithFiles">
+        SELECT
+        tbp.bbs_pst_oid,
+        tbp.bbs_oid,
+        tbp.user_oid,
+        tbp.wrtr_nm,
+        tbp.wrtr_pswd,
+        tbp.bbs_pst_ttl,
+        tbp.bbs_pst_cn,
+        tbp.bbs_pst_cn_txt,
+        tbp.ans_cn,
+        tbp.ctgry,
+        tbp.ntc_yn,
+        tbp.prvt_pst_yn,
+        tbp.inq_cnt,
+        tbp.like_cnt,
+        tbp.upend_fix_yn,
+        tbp.bgng_dt,
+        tbp.end_dt,
+        tbp.cmnt_cnt,
+        tbp.atch_cnt,
+        tbp.stts,
+        tbp.ddln_dt,
+        tbp.up_bbs_pst_oid,
+        tbp.reply_lv,
+        tbp.reply_seq,
+        tbp.open_yn,
+        tbp.rcrt_type,
+        tbp.del_yn,
+        tbp.del_dt,
+        tbp.reg_id,
+        tbp.reg_dt,
+        tbp.mdfcn_id,
+        tbp.mdfcn_dt,
+        tbp.kwrd
+        FROM ${schema}.bbs_pst tbp
+        <where>
+            <choose>
+                <when test='isAdmin == "Y"'>
+                    <if test="delYn != null and delYn != ''">
+                        AND tbp.del_yn = #{delYn}
+                    </if>
+                </when>
+                
+                <otherwise>
+                    AND tbp.del_yn = 'N'
+                </otherwise>
+            </choose>
+            <if test='bbsOid != null and bbsOid != 0'>
+                AND tbp.bbs_oid = #{bbsOid}
+            </if>
+            <if test='bbsPstOid != null and bbsPstOid != 0'>
+                AND tbp.bbs_pst_oid = #{bbsPstOid}
+            </if>
+        </where>
+        ORDER BY
+        tbp.bbs_pst_oid DESC
+    </select>
+
+    <!-- 동적 게시판 게시글 단건 상세 조회 (답변 포함 - FAQ, QnA용) -->
+    <select id="selectBoardPostDetailWithAnswer" resultMap="boardPostWithAnswerResultMap">
+        SELECT
+        -- 질문(원글) 정보
+        q.bbs_pst_oid,
+        q.bbs_oid,
+        q.user_oid,
+        q.wrtr_nm,
+        q.wrtr_pswd,
+        q.bbs_pst_ttl,
+        q.bbs_pst_cn,
+        q.bbs_pst_cn_txt,
+        q.ctgry,
+        q.ntc_yn,
+        q.prvt_pst_yn,
+        q.upend_fix_yn,
+        q.bgng_dt,
+        q.end_dt,
+        q.inq_cnt,
+        q.like_cnt,
+        q.cmnt_cnt,
+        q.atch_cnt,
+        q.stts,
+        q.ddln_dt,
+        q.up_bbs_pst_oid,
+        q.reply_lv,
+        q.reply_seq,
+        q.del_yn,
+        q.del_dt,
+        q.reg_id,
+        q.reg_dt,
+        q.mdfcn_id,
+        q.mdfcn_dt,
+
+        -- 답변 정보
+        a.bbs_pst_oid AS answer_post_no,
+        a.bbs_oid AS answer_board_no,
+        a.user_oid AS answer_user_no,
+        a.wrtr_nm AS answer_writer_nm,
+        a.bbs_pst_ttl AS answer_post_title,
+        a.bbs_pst_cn AS answer_post_content,
+        a.inq_cnt AS answer_view_cnt,
+        a.up_bbs_pst_oid AS answer_parent_post_no,
+        a.reg_id AS answer_reg_user_id,
+        a.reg_dt AS answer_reg_dt,
+        a.mdfcn_id AS answer_upd_user_id,
+        a.mdfcn_dt AS answer_upd_dt,
+        IF(a.bbs_pst_oid IS NOT NULL, 'Y', 'N') AS answer_yn,
+        
+		-- 답변 첨부파일
+        af.file_oid          AS answer_attach_no,
+        af.tbl_oid         AS answer_attach_post_no,
+        af.strg_file_nm        AS answer_file_name,
+        af.orgnl_file_nm AS answer_origin_file_name,
+        af.strg_file_path        AS answer_file_path,
+        af.strg_file_cpct        AS answer_file_size,
+        af.file_type_nm         AS answer_file_ext,
+        af.strg_sml_file_path  AS answer_thumbnail_path,
+        af.thmb_yn     AS answer_thumbnail_yn,
+        0                   AS answer_image_width,
+        0                   AS answer_image_height,
+        af.dwnld_cnt     AS answer_download_cnt,
+        af.atch_file_seq     AS answer_attach_order,
+        af.use_yn           AS answer_use_yn,
+        af.reg_id      AS answer_attach_reg_user_id,
+        af.reg_dt           AS answer_attach_reg_dt
+        FROM
+        ${schema}.bbs_pst q
+        LEFT JOIN ${schema}.bbs_pst a
+        ON a.up_bbs_pst_oid = q.bbs_pst_oid
+        AND a.del_yn = 'N'
+		LEFT JOIN ${schema}.file af
+            ON a.bbs_pst_oid = af.tbl_oid
+            AND af.tbl_nm = 'bbs_pst'
+            AND af.file_type = 'ATTACHMENT'
+            AND af.use_yn = 'Y'        
+        <where>
+            q.up_bbs_pst_oid IS NULL
+			<choose>
+                <when test='isAdmin == "Y"'>
+                    <if test="delYn != null and delYn != ''">
+                        AND q.del_yn = #{delYn}
+                    </if>
+                </when>
+                
+                <otherwise>
+                    AND q.del_yn = 'N'
+                </otherwise>
+            </choose>
+            <if test='bbsOid != null and bbsOid != 0'>
+                AND q.bbs_oid = #{bbsOid}
+            </if>
+            <if test='bbsPstOid != null and bbsPstOid != 0'>
+                AND q.bbs_pst_oid = #{bbsPstOid}
+            </if>
+        </where>
+        ORDER BY
+        q.bbs_pst_oid DESC,
+        a.bbs_pst_oid ASC
+    </select>
+
+    <!-- 동적 게시판 게시글 단건 상세 조회 (ID로) -->
+    <select id="selectBoardPostById" resultType="egovframework.common.board.dto.BoardPostDTO">
+        SELECT
+            bbs_pst_oid,
+            bbs_oid,
+            user_oid,
+            wrtr_nm,
+            wrtr_pswd,
+            bbs_pst_ttl,
+            bbs_pst_cn,
+            bbs_pst_cn_txt,
+            ctgry,
+            ntc_yn,
+            prvt_pst_yn,
+            inq_cnt,
+            like_cnt,
+            cmnt_cnt,
+            atch_cnt,
+            bgng_dt,
+            end_dt,
+            stts,
+            ddln_dt,
+            up_bbs_pst_oid,
+            reply_lv,
+            reply_seq,
+            open_yn,
+            rcrt_type,
+            del_yn,
+            del_dt,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        FROM
+            ${schema}.bbs_pst
+        WHERE
+            bbs_pst_oid = #{bbsPstOid}
+            AND del_yn = 'N'
+    </select>
+    
+    <!-- 동적 게시판 게시글 단건 상세 조회 (ID로) -->
+    <select id="checkBoardPostPassword" resultType="egovframework.common.board.dto.BoardPostDTO">
+        SELECT
+            bbs_pst_oid,
+            bbs_oid,
+            user_oid,
+            wrtr_nm,
+            wrtr_pswd,
+            bbs_pst_ttl,
+            bbs_pst_cn,
+            bbs_pst_cn_txt,
+            ctgry,
+            ntc_yn,
+            prvt_pst_yn,
+            inq_cnt,
+            like_cnt,
+            cmnt_cnt,
+            atch_cnt,
+            bgng_dt,
+            end_dt,
+            stts,
+            ddln_dt,
+            up_bbs_pst_oid,
+            reply_lv,
+            reply_seq,
+            open_yn,
+            rcrt_type,
+            del_yn,
+            del_dt,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        FROM
+            ${schema}.bbs_pst
+        WHERE
+            bbs_pst_oid = #{bbsPstOid}
+            AND wrtr_pswd = ${schema}.fn_encrypt_sha1(#{wrtrPswd})
+            AND del_yn = 'N'
+    </select>    
+
+    <!-- 동적 게시판 다음 게시글 조회 -->
+    <select id="selectNextBoardPost" resultType="egovframework.common.board.dto.BoardPostDTO">
+        SELECT
+            bbs_pst_oid,
+            bbs_pst_ttl
+        FROM ${schema}.bbs_pst
+        WHERE del_yn = 'N'
+          AND NOW() >= reg_dt
+          AND bbs_pst_oid &gt; #{bbsPstOid}
+          AND bbs_oid = #{bbsOid}
+          AND open_yn = 'Y'
+          AND (
+          	bgng_dt IS NULL
+          	OR bgng_dt <![CDATA[ <= ]]> CURDATE()
+          )
+        <if test="isPermanentDisplayBoard != 'Y'.toString()">
+		  AND (
+		  	end_dt IS NULL
+		  	OR end_dt <![CDATA[ >= ]]> CURDATE()
+		  )
+        </if>
+        ORDER BY bbs_pst_oid ASC
+        LIMIT 1
+    </select>
+
+    <!-- 동적 게시판 이전 게시글 조회 -->
+    <select id="selectPrevBoardPost" resultType="egovframework.common.board.dto.BoardPostDTO">
+        SELECT
+            bbs_pst_oid,
+            bbs_pst_ttl
+        FROM ${schema}.bbs_pst
+        WHERE del_yn = 'N'
+          AND NOW() >= reg_dt
+          AND bbs_pst_oid &lt; #{bbsPstOid}
+          AND bbs_oid = #{bbsOid}
+          AND open_yn = 'Y'
+          AND (
+          	bgng_dt IS NULL
+          	OR bgng_dt <![CDATA[ <= ]]> CURDATE()
+          )
+        <if test="isPermanentDisplayBoard != 'Y'.toString()">
+		  AND (
+		  	end_dt IS NULL
+		  	OR end_dt <![CDATA[ >= ]]> CURDATE()
+		  )
+        </if>
+        ORDER BY bbs_pst_oid DESC
+        LIMIT 1
+    </select>
+
+    <!-- 동적 게시판 게시글 저장 -->
+    <insert id="insertBoardPost" parameterType="egovframework.common.board.dto.BoardPostInsertDTO" useGeneratedKeys="true" keyProperty="bbsPstOid">
+        INSERT INTO ${schema}.bbs_pst (
+            bbs_oid,
+            user_oid,
+            wrtr_nm,
+            wrtr_pswd,
+            bbs_pst_ttl,
+            bbs_pst_cn,
+            bbs_pst_cn_txt,
+            ctgry,
+            prvt_pst_yn,
+        <if test="bgngDt != null">
+            bgng_dt,
+        </if>
+        <if test="endDt != null">
+            end_dt,
+        </if>
+            ntc_yn,
+            upend_fix_yn,
+            stts,
+            inq_cnt,
+            up_bbs_pst_oid,
+        <if test="openYn != null and openYn != ''">
+            open_yn,
+        </if>
+        <if test="rcrtType != null and rcrtType != ''">
+            rcrt_type,
+        </if>
+        <if test='kwrd != null and kwrd != ""'>
+        	kwrd,
+        </if>
+            del_yn,
+            reg_id,
+            reg_dt
+        )
+        VALUES (
+           #{bbsOid},
+           #{userOid},
+           #{wrtrNm},
+           ${schema}.fn_encrypt_sha1(#{wrtrPswd}),
+           #{bbsPstTtl},
+           #{bbsPstCn},
+           #{bbsPstCnTxt},
+           #{ctgry},
+           #{prvtPstYn},
+        <if test="bgngDt != null">
+            #{bgngDt},
+        </if>
+        <if test="endDt != null">
+            #{endDt},
+        </if>
+           COALESCE(#{ntcYn}, 'N'),
+           COALESCE(#{upendFixYn}, 'N'),
+           #{stts},
+           COALESCE(#{inqCnt}, 0),
+           #{upBbsPstOid},
+        <if test="openYn != null and openYn != ''">
+            #{openYn},
+        </if>
+        <if test="rcrtType != null and rcrtType != ''">
+            #{rcrtType},
+        </if>
+        <if test='kwrd != null and kwrd != ""'>
+        	#{kwrd},
+        </if>
+           COALESCE(#{delYn}, 'N'),
+           COALESCE(#{regId}, 'portal'),
+           NOW()
+       )
+    </insert>
+    
+	<!-- 동적 Q&A 비밀글 여부 확인 -->
+	<select id="selectBoardPostParentSecretYn" parameterType="egovframework.common.board.dto.BoardPostInsertDTO" resultType="egovframework.common.board.dto.BoardPostDTO">
+		SELECT
+			tb.bbs_se_cd, tb.bbs_sub_se_cd, tbp.prvt_pst_yn
+		FROM
+			${schema}.bbs_pst tbp
+		INNER JOIN ${schema}.bbs tb ON
+			tb.bbs_oid = tbp.bbs_oid
+			AND tb.use_yn = 'Y'
+		WHERE
+			tbp.bbs_pst_oid = #{bbsPstOid}
+	</select>
+	
+	<!-- 동적 Q&A 만족도평가 insert : 디폴트 미응답 -->
+	<insert id="insertBoardPostQnaSatisfaction" parameterType="egovframework.common.board.dto.BoardPostInsertDTO">
+		INSERT INTO ${schema}.qna_dgstfn_evl (
+			  tbl_nm
+			, tbl_oid
+			, stts
+			, reg_id
+			, reg_dt
+		) VALUES (
+			  #{tblNm}
+			, #{tblOid}
+			, 'PENDING'
+			, #{regId}
+			, NOW()
+		)
+	</insert>	    
+    
+    <!-- 동적 게시판 게시글 수정 -->
+    <update id="updateBoardPost" parameterType="egovframework.common.board.dto.BoardPostInsertDTO">
+    	UPDATE ${schema}.bbs_pst
+    		SET bbs_oid = #{bbsOid},
+				user_oid = #{userOid},
+				<if test='wrtrPswd != null and wrtrPswd != ""'>
+					wrtr_pswd = ${schema}.fn_encrypt_sha1(#{wrtrPswd}),
+				</if>
+				bbs_pst_ttl = #{bbsPstTtl},
+				bbs_pst_cn = #{bbsPstCn},
+                bbs_pst_cn_txt = #{bbsPstCnTxt},
+				ctgry = #{ctgry},
+				prvt_pst_yn = #{prvtPstYn},
+				ntc_yn = #{ntcYn},
+				<if test='upendFixYn != null and upendFixYn !=""'>
+					upend_fix_yn = #{upendFixYn},
+				</if>
+                <if test="bgngDt != null">
+                    bgng_dt = #{bgngDt},
+                </if>
+                <if test="endDt != null">
+                    end_dt = #{endDt},
+                </if>
+				    stts = #{stts},
+                <if test="openYn != null and openYn != ''">
+                    open_yn = #{openYn},
+                </if>
+                <if test="rcrtType != null and rcrtType != ''">
+                    rcrt_type = #{rcrtType},
+                </if>
+		        <if test='kwrd != null and kwrd != ""'>
+		        	kwrd = #{kwrd},
+		        </if>                
+                <if test='isAdmin != null and isAdmin != "" and isAdmin == "Y"'>
+                    del_yn = 'N',
+                </if>
+				mdfcn_id = #{mdfcnId},
+				mdfcn_dt = now()
+		WHERE
+			bbs_oid = #{bbsOid}
+			AND bbs_pst_oid = #{bbsPstOid}
+    </update>
+    
+    <update id="updateQnaBoardPostStatus" parameterType="egovframework.common.board.dto.BoardPostInsertDTO">
+    	UPDATE ${schema}.bbs_pst
+    		SET stts = #{stts}
+    			, ctgry = #{ctgry}
+                , del_yn = 'N'
+    			, mdfcn_id = #{mdfcnId}
+    			, mdfcn_dt = NOW()
+    	WHERE
+    		bbs_pst_oid = #{upBbsPstOid}
+    </update>
+
+    <!-- 동적 게시판 댓글 목록 resultMap -->
+    <resultMap id="boardCommentResultMap" type="egovframework.common.board.dto.BoardCommentDTO">
+        <id property="bbsCmntOid" column="bbs_cmnt_oid"/>
+        <result property="bbsPstOid" column="bbs_pst_oid"/>
+        <result property="userOid" column="user_oid"/>
+        <result property="bbsCmntCn" column="bbs_cmnt_cn"/>
+        <result property="wrtrNm" column="wrtr_nm"/>
+        <result property="wrtrPswd" column="wrtr_pswd"/>
+        <result property="upCmntOid" column="up_cmnt_oid"/>
+        <result property="cmntLv" column="cmnt_lv"/>
+        <result property="prvtCmntYn" column="prvt_cmnt_yn"/>
+        <result property="delYn" column="del_yn"/>
+        <result property="delDt" column="del_dt"/>
+        <result property="regId" column="reg_id"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnId" column="mdfcn_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+    </resultMap>
+
+    <!-- 동적 게시판 댓글 목록 조회 -->
+    <select id="selectBoardCommentList" resultMap="boardCommentResultMap">
+        SELECT
+            bbs_cmnt_oid,
+            bbs_pst_oid,
+            user_oid,
+            bbs_cmnt_cn,
+            wrtr_nm,
+            wrtr_pswd,
+            up_cmnt_oid,
+            cmnt_lv,
+            prvt_cmnt_yn,
+            del_yn,
+            del_dt,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        FROM
+            ${schema}.bbs_cmnt
+        WHERE
+            bbs_pst_oid = #{bbsPstOid}
+          AND del_yn = 'N'
+        ORDER BY
+            bbs_cmnt_oid ASC
+    </select>
+
+    <!-- 동적 게시판 댓글 저장 -->
+    <insert id="insertBoardComment" parameterType="egovframework.common.board.dto.BoardCommentDTO">
+        INSERT INTO ${schema}.bbs_cmnt (
+            bbs_pst_oid,
+            user_oid,
+            bbs_cmnt_cn,
+            wrtr_nm,
+            reg_id
+        )
+        VALUES (
+           #{bbsPstOid},
+           #{userOid},
+           #{bbsCmntCn},
+           #{wrtrNm},
+           'potal'
+       )
+    </insert>
+
+    <!-- 동적 게시판 첨부파일 조회 -->
+    <select id="selectBoardAttachList" resultType="egovframework.common.file.domain.FileDTO">
+        SELECT
+        tf.file_oid, tf.tbl_nm, tf.tbl_oid, tf.orgnl_file_nm
+        , tf.strg_file_nm, tf.strg_file_path, tf.strg_file_cpct, tf.strg_sml_file_nm
+        , tf.strg_sml_file_path, tf.strg_sml_file_cpct, tf.strg_md_file_nm
+        , tf.strg_md_file_path, tf.strg_md_file_cpct, tf.file_type_nm, tf.file_type
+        , tf.thmb_yn, tf.dwnld_cnt, tf.atch_file_seq, tf.img_sbst_txt_cn
+        , tf.use_yn, tf.reg_id, tf.reg_dt, tf.mdfcn_id, tf.mdfcn_dt
+        FROM
+        ${schema}.bbs_pst tbp
+        LEFT JOIN ${schema}.file tf ON
+        tf.tbl_oid = tbp.bbs_pst_oid
+        AND tf.use_yn = 'Y'
+        <where>
+            <if test='tblOid != null and tblOid != 0'>
+                AND tbp.bbs_pst_oid = #{tblOid} <!-- 테이블pk 컬럼사용 -->
+            </if>
+            <if test='tblNm != null and tblNm != ""'>
+                AND tf.tbl_nm = #{tblNm}
+            </if>
+            AND tf.file_type = 'ATTACHMENT'
+        </where>
+        ORDER BY
+        atch_file_seq
+    </select>
+
+    <!-- 동적 게시판 조회수 증가 -->
+    <update id="updateBoardViewCnt" parameterType="egovframework.common.board.dto.BoardPostDTO">
+        UPDATE ${schema}.bbs_pst
+        SET inq_cnt = inq_cnt + 1
+        WHERE bbs_pst_oid = #{bbsPstOid}
+    </update>
+
+    <!-- 동적 게시판 내 게시글 삭제 SOFT DELETE -->
+    <delete id="deleteBoardPost" parameterType="egovframework.common.board.dto.BoardPostDTO">
+        /* deleteBoardPost */
+        UPDATE ${schema}.bbs_pst
+        SET del_yn = 'Y'
+          , del_dt = now()
+          , mdfcn_id = #{mdfcnId}
+          , mdfcn_dt = now()
+        WHERE
+            bbs_oid = #{bbsOid}
+          AND bbs_pst_oid = #{bbsPstOid}
+    </delete>
+
+    <!-- 게시글 답변 존재 여부 확인 -->
+    <select id="countReplyByBbsPstOid" parameterType="java.lang.Long" resultType="int">
+        /* countReplyByBbsPstOid */
+        SELECT COUNT(*)
+        FROM ${schema}.bbs_pst
+        WHERE up_bbs_pst_oid = #{bbsPstOid}
+          AND del_yn = 'N'
+    </select>
+
+    <!-- 동적 게시판 내 게시글 내 코멘트 삭제 SOFT DELETE -->
+    <delete id="deleteBoardComment" parameterType="egovframework.common.board.dto.BoardPostDTO">
+        /* deleteBoardComment */
+        UPDATE ${schema}.bbs_cmnt
+        SET del_yn = 'Y'
+          , del_dt = now()
+          , mdfcn_id = #{mdfcnId}
+          , mdfcn_dt = now()
+        <where>
+        	<if test='bbsPstOid != null and bbsPstOid != 0'>
+        		AND bbs_pst_oid = #{bbsPstOid}
+        	</if>
+        	<if test='bbsCmntOid != null and bbsCmntOid != 0'>
+        		AND bbs_cmnt_oid = #{bbsCmntOid}
+        	</if>        	
+        </where>
+    </delete>
+    
+    <!-- 동적 Q&A 만족도 평가 여부 확인 -->
+	<select id="selectSatisfactionCountByBbsPstOid" parameterType="egovframework.common.board.dto.BoardPostSatisfactionDTO" resultType="int">
+	    SELECT
+	    	COUNT(*)
+	    FROM
+	    	${schema}.qna_dgstfn_evl
+	    WHERE
+	    	tbl_nm = #{tblNm}
+	    	AND tbl_oid = #{tblOid}
+	</select>
+	
+    <!-- 동적 Q&A 만족도 평가 저장되었는지 확인 -->
+	<select id="selectValidSatisfactionExists" parameterType="egovframework.common.board.dto.BoardPostSatisfactionDTO" resultType="int">
+	    SELECT
+	    	COUNT(*)
+	    FROM
+	    	${schema}.qna_dgstfn_evl
+	    WHERE
+	    	tbl_nm = #{tblNm}
+	    	AND tbl_oid = #{tblOid}
+	    	AND stts != 'PENDING'
+	</select>	
+	
+	<!-- 동적 Q&A 만족도 평가 저장 -->
+	<update id="updateSatisfactionCountByBbsPstOid" parameterType="egovframework.common.board.dto.BoardPostSatisfactionDTO">
+		UPDATE ${schema}.qna_dgstfn_evl
+			SET stts = #{stts}
+				, chc = #{chc}
+				, mdfcn_id = #{updId}
+				, mdfcn_dt = NOW()
+		WHERE
+			tbl_nm = #{tblNm}
+			AND tbl_oid = #{tblOid}
+	</update>
+	
+	<!-- 동적 생명윤리 QNA 히스토리 저장 -->
+	<insert id="insertUserBoardHistory" parameterType="egovframework.common.board.dto.BoardPostInsertDTO">
+		INSERT INTO ${schema}.bbs_hstry(
+			tbl_nm, tbl_oid, stts
+			, reg_id
+		)
+		VALUES(
+			#{tblNm}, #{tblOid}, #{stts}
+			, #{regId}
+		)
+	</insert>
+	
+	<!-- 동적 생명윤리 Q&A 히스토리 중복확인 -->
+	<select id="selectUserBoardHistoryCount" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+			${schema}.bbs_hstry
+		WHERE
+			tbl_nm = #{tblNm}
+			AND tbl_oid = #{tblOid}
+			AND stts = #{stts}
+	</select>
+	
+	<!-- 생명윤리 qna 엑셀 조회 -->
+    <select id="selectQnaDetailedStatList" resultType="egovframework.common.board.dto.BoardQnaExcelDTO">
+	    SELECT
+	    	tbp.bbs_pst_oid AS bbsPstOid,
+	        tbb.bbs_nm AS bbsNm,                         -- 게시구분 (생명윤리법QNA 등)
+	        tbp.ctgry,                                   -- 문의구분
+
+	        IF(qde.satisfaction IS NULL, '', IF(qde.satisfaction='LIKE', '만족', IF(qde.satisfaction='DISLIKE', '불만족', ''))) AS satisfaction,                            -- 만족도
+            IF(qde.satisfaction_date IS NULL, '', qde.satisfaction_date) AS satisfactionDate,              -- 만족도 평가일
+	        tbp.bbs_pst_ttl AS bbsPstTtl,                -- 제목
+	        DATE_FORMAT(tbp.reg_dt, '%Y-%m-%d %H:%i:%s') AS questionDate,                  -- 질문일 (reg_dt)
+	        tbp.bbs_pst_cn_txt AS questionContent,           -- 질문내용
+	        
+	        ans_cn.reg_id AS answererId,                 -- 답변자 (답변 게시글 등록자 ID)
+	        ans_cn.bbs_pst_cn_txt AS answerContent,          -- 답변내용
+	        DATE_FORMAT(ans.first_reply_dt, '%Y-%m-%d %H:%i:%s') AS draftDate,             -- 초안작성일 (TEMP 최초 시점)
+	        DATE_FORMAT(hist.final_comp_dt, '%Y-%m-%d %H:%i:%s') AS finalAnswerDate,       -- 답변일 (COMP 최초 시점)
+	
+	        /* 소요일 계산 (초일불산입 + 휴일제외) */
+	        -- [초안 소요일]
+	        IFNULL(GREATEST(0,
+	            DATEDIFF(ans.first_reply_dt, tbp.reg_dt) - 
+	            IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+	                    WHERE d.dt <![CDATA[ >= ]]> DATE(tbp.reg_dt) 
+	                      AND d.dt <![CDATA[ <= ]]> DATE(ans.first_reply_dt) 
+	                      AND d.wrkdy_yn = 'N'), 0)
+	        ), 0) AS draftResponseWorkDays,
+	
+	        -- [최종 소요일]
+	        IFNULL(GREATEST(0,
+	            DATEDIFF(hist.final_comp_dt, tbp.reg_dt) - 
+	            IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+	                    WHERE d.dt <![CDATA[ >= ]]> DATE(tbp.reg_dt) 
+	                      AND d.dt <![CDATA[ <= ]]> DATE(hist.final_comp_dt) 
+	                      AND d.wrkdy_yn = 'N'), 0)
+	        ), 0) AS finalResponseWorkDays
+	
+	    FROM ${schema}.bbs_pst tbp
+	    INNER JOIN ${schema}.bbs tbb ON tbb.bbs_oid = tbp.bbs_oid
+	    
+	    LEFT JOIN ${schema}.bbs_pst ans_cn ON
+	        ans_cn.up_bbs_pst_oid = tbp.bbs_pst_oid
+	        AND ans_cn.del_yn = 'N'
+	
+	    LEFT JOIN (
+	        SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS first_reply_dt
+	        FROM ${schema}.bbs_hstry tbh
+	        INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+	        WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'TEMP'
+	          AND reply.del_yn = 'N'
+	        GROUP BY reply.up_bbs_pst_oid
+	    ) ans ON tbp.bbs_pst_oid = ans.up_bbs_pst_oid
+	
+	    LEFT JOIN (
+	        SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS final_comp_dt
+	        FROM ${schema}.bbs_hstry tbh
+	        INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+	        WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'COMP'
+	          AND reply.del_yn = 'N'
+	        GROUP BY reply.up_bbs_pst_oid
+	    ) hist ON tbp.bbs_pst_oid = hist.up_bbs_pst_oid
+	
+        LEFT JOIN (
+            SELECT 
+                tbl_oid
+                , chc AS satisfaction
+                , mdfcn_dt AS satisfaction_date
+            FROM ${schema}.qna_dgstfn_evl
+            WHERE tbl_nm = 'bbs_pst'
+            AND stts = 'COMPLETED'
+        ) qde ON tbp.bbs_pst_oid = qde.tbl_oid
+        
+	    <where>
+	        tbp.up_bbs_pst_oid IS NULL  -- 질문글만 대상
+	        
+	        <choose>
+	            <when test='isAdmin == "Y"'>
+	                <if test="delYn != null and delYn != ''">
+	                    AND tbp.del_yn = #{delYn}
+	                </if>
+	            </when>
+	            <otherwise>
+	                AND tbp.del_yn = 'N'
+	                AND tbp.open_yn = 'Y'
+	            </otherwise>
+	        </choose>
+	
+	        <if test='isAdmin == "Y" and prvtPstYn != null and prvtPstYn != ""'>
+	            AND tbp.prvt_pst_yn = #{prvtPstYn}
+	        </if>
+	
+	        <if test="regStartDt != null and regStartDt != ''">
+	            AND tbp.reg_dt <![CDATA[ >= ]]> #{regStartDt}
+	        </if>
+	        <if test="regEndDt != null and regEndDt != ''">
+	            AND tbp.reg_dt <![CDATA[ < ]]> DATE_ADD(#{regEndDt}, INTERVAL 1 DAY)
+	        </if>
+	
+	        <if test='bbsOid != null and bbsOid != 0'>
+	            AND tbp.bbs_oid = #{bbsOid}
+	        </if>
+	        <if test="ctgry != null and ctgry != ''">
+	            AND tbp.ctgry = #{ctgry}
+	        </if>
+	
+	        <if test="keyword != null and keyword != ''">
+	            AND (
+	            <choose>
+	                <when test="searchType == 'title'">
+	                    MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+	                </when>
+	                <when test="searchType == 'content'">
+	                    MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE)
+	                </when>
+	                <otherwise>
+	                    MATCH(tbp.bbs_pst_ttl) AGAINST(#{keyword} IN BOOLEAN MODE)
+	                    OR MATCH(tbp.bbs_pst_cn_txt) AGAINST(#{keyword} IN BOOLEAN MODE)
+	                </otherwise>
+	            </choose>
+	            )
+	        </if>
+	    </where>
+	    GROUP BY tbp.bbs_pst_oid
+	    ORDER BY tbp.reg_dt DESC
+	</select>
+</mapper>

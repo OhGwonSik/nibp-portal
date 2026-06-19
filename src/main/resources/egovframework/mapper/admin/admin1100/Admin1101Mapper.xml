@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin1100.mapper.Admin1101Mapper">
+
+    <!-- 정기발간자료 목록 조회 -->
+    <select id="selectAdmin1101List" 
+            parameterType="egovframework.admin.admin1100.domain.Admin1101FilterDTO" 
+            resultType="egovframework.admin.admin1100.domain.Admin1101VO">
+        SELECT
+            p.fxtm_pbls_data_oid,
+            p.fxtm_pbls_data_ttl,
+            p.aut,
+            p.page_num,
+            p.pblcn_dt,
+            p.cvr_img1_oid,
+            p.cvr_img2_oid,
+            p.open_yn,
+            p.use_yn,
+            p.inq_cnt,
+            p.sort_seq,
+            p.reg_id,
+            p.reg_dt,
+            p.mdfcn_id,
+            p.mdfcn_dt
+        FROM ${schema}.fxtm_pbls_data p
+        <where>
+            p.use_yn = 'Y'
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND p.fxtm_pbls_data_ttl LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="openYn != null and openYn != ''">
+                AND p.open_yn = #{openYn}
+            </if>
+            <if test="bgngDt != null and endDt != null">
+                AND p.pblcn_dt BETWEEN #{bgngDt} AND #{endDt}
+            </if>
+        </where>
+    </select>
+
+    <!-- 정기발간자료 단건 조회 -->
+    <select id="selectAdmin1101"
+            parameterType="Long"
+            resultType="egovframework.admin.admin1100.domain.Admin1101VO">
+        SELECT
+            p.fxtm_pbls_data_oid,
+            p.fxtm_pbls_data_ttl,
+            p.aut,
+            p.page_num,
+            p.pblcn_dt,
+            p.cvr_img1_oid,
+            p.cvr_img2_oid,
+            p.open_yn,
+            p.use_yn,
+            p.inq_cnt,
+            p.sort_seq,
+            p.reg_id,
+            p.reg_dt,
+            p.mdfcn_id,
+            p.mdfcn_dt,
+            f1.orgnl_file_nm AS cover_file_name,
+            f2.orgnl_file_nm AS full_file_name
+        FROM ${schema}.fxtm_pbls_data p
+             LEFT JOIN ${schema}.file f1
+                       ON p.cvr_img1_oid = f1.file_oid
+             LEFT JOIN ${schema}.file f2
+                       ON p.cvr_img2_oid = f2.file_oid
+        WHERE p.fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+          AND p.use_yn = 'Y'
+    </select>
+
+    <!-- 정기발간자료 섹션 목록 조회 -->
+    <select id="selectAdmin1101SectionList" 
+            parameterType="Long" 
+            resultType="egovframework.admin.admin1100.domain.Admin1101SectionVO">
+        SELECT
+            fxtm_pbls_sect_oid,
+            fxtm_pbls_data_oid,
+            fxtm_pbls_sect_type,
+            fxtm_pbls_sect_ttl,
+            sort_seq,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        FROM ${schema}.fxtm_pbls_sect
+        WHERE fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+        ORDER BY sort_seq, fxtm_pbls_sect_oid
+    </select>
+
+    <!-- 정기발간자료 아이템 목록 조회 -->
+    <select id="selectAdmin1101ItemList"
+            parameterType="Long"
+            resultType="egovframework.admin.admin1100.domain.Admin1101ItemVO">
+        SELECT
+            i.fxtm_pbls_item_oid,
+            i.fxtm_pbls_sect_oid,
+            i.fxtm_pbls_item_ttl,
+            i.aut,
+            i.page_num,
+            i.atch_file_oid,
+            i.sort_seq,
+            i.reg_id,
+            i.reg_dt,
+            i.mdfcn_id,
+            i.mdfcn_dt,
+            f.orgnl_file_nm AS attach_file_name
+        FROM ${schema}.fxtm_pbls_item i
+                 LEFT JOIN ${schema}.FILE f ON i.atch_file_oid = f.file_oid
+        WHERE i.fxtm_pbls_sect_oid = #{fxtmPblsSectOid}
+        ORDER BY i.sort_seq, i.fxtm_pbls_item_oid
+    </select>
+
+    <!-- 정기발간자료 엑셀 다운로드용 목록 조회 -->
+    <select id="selectAdmin1101ExcelList" 
+            parameterType="egovframework.admin.admin1100.domain.Admin1101FilterDTO" 
+            resultType="egovframework.admin.admin1100.domain.Admin1101ExcelDTO">
+        SELECT
+            p.fxtm_pbls_data_oid,
+            p.fxtm_pbls_data_ttl,
+            p.pblcn_dt,
+            p.open_yn,
+            p.inq_cnt
+        FROM ${schema}.fxtm_pbls_data p
+        <where>
+            p.use_yn = 'Y'
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND p.fxtm_pbls_data_ttl LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="openYn != null and openYn != ''">
+                AND p.open_yn = #{openYn}
+            </if>
+            <if test="bgngDt != null and endDt != null">
+                AND p.pblcn_dt BETWEEN #{bgngDt} AND #{endDt}
+            </if>
+        </where>
+    </select>
+
+    <!-- 정기발간자료 메인 등록 -->
+    <insert id="insertAdmin1101" 
+            parameterType="egovframework.admin.admin1100.domain.Admin1101VO" 
+            useGeneratedKeys="true" 
+            keyProperty="fxtmPblsDataOid">
+        INSERT INTO ${schema}.fxtm_pbls_data (
+            fxtm_pbls_data_ttl,
+            aut,
+            page_num,
+            pblcn_dt,
+            cvr_img1_oid,
+            cvr_img2_oid,
+            open_yn,
+            use_yn,
+            inq_cnt,
+            sort_seq,
+            reg_id,
+            reg_dt
+        ) VALUES (
+            #{fxtmPblsDataTtl},
+            #{aut},
+            #{pageNum},
+            #{pblcnDt},
+            #{cvrImg1Oid},
+            #{cvrImg2Oid},
+            #{openYn},
+            'Y',
+            0,
+            COALESCE(#{sortSeq}, 0),
+            #{regId},
+            NOW()
+        )
+    </insert>
+
+    <!-- 정기발간자료 섹션 등록 -->
+    <insert id="insertAdmin1101Section" 
+            parameterType="egovframework.admin.admin1100.domain.Admin1101SectionVO" 
+            useGeneratedKeys="true" 
+            keyProperty="fxtmPblsSectOid">
+        INSERT INTO ${schema}.fxtm_pbls_sect (
+            fxtm_pbls_data_oid,
+            fxtm_pbls_sect_type,
+            fxtm_pbls_sect_ttl,
+            sort_seq,
+            reg_id,
+            reg_dt
+        ) VALUES (
+            #{fxtmPblsDataOid},
+            #{fxtmPblsSectType},
+            #{fxtmPblsSectTtl},
+            COALESCE(#{sortSeq}, 0),
+            #{regId},
+            NOW()
+        )
+    </insert>
+
+    <!-- 정기발간자료 아이템 등록 -->
+    <insert id="insertAdmin1101Item" 
+            parameterType="egovframework.admin.admin1100.domain.Admin1101ItemVO" 
+            useGeneratedKeys="true" 
+            keyProperty="fxtmPblsItemOid">
+        INSERT INTO ${schema}.fxtm_pbls_item (
+            fxtm_pbls_sect_oid,
+            fxtm_pbls_item_ttl,
+            aut,
+            page_num,
+            atch_file_oid,
+            sort_seq,
+            reg_id,
+            reg_dt
+        ) VALUES (
+            #{fxtmPblsSectOid},
+            #{fxtmPblsItemTtl},
+            #{aut},
+            #{pageNum},
+            #{atchFileOid},
+            COALESCE(#{sortSeq}, 0),
+            #{regId},
+            NOW()
+        )
+    </insert>
+
+    <!-- 정기발간자료 메인 수정 -->
+    <update id="updateAdmin1101" parameterType="egovframework.admin.admin1100.domain.Admin1101VO">
+        UPDATE ${schema}.fxtm_pbls_data
+        SET fxtm_pbls_data_ttl = #{fxtmPblsDataTtl},
+            aut = #{aut},
+            page_num = #{pageNum},
+            pblcn_dt = #{pblcnDt},
+            cvr_img1_oid = #{cvrImg1Oid},
+            cvr_img2_oid = #{cvrImg2Oid},
+            open_yn = #{openYn},
+            mdfcn_id = #{mdfcnId},
+            mdfcn_dt = NOW()
+        WHERE fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+    </update>
+
+    <!-- 정기발간자료 섹션 수정 -->
+    <update id="updateAdmin1101Section" parameterType="egovframework.admin.admin1100.domain.Admin1101SectionVO">
+        UPDATE ${schema}.fxtm_pbls_sect
+        <set>
+            <if test="fxtmPblsSectType != null and fxtmPblsSectType != ''">
+                fxtm_pbls_sect_type = #{fxtmPblsSectType},
+            </if>
+            <if test="fxtmPblsSectTtl != null">
+                fxtm_pbls_sect_ttl = #{fxtmPblsSectTtl},
+            </if>
+            <if test="sortSeq != null">
+                sort_seq = #{sortSeq},
+            </if>
+            mdfcn_id = #{mdfcnId},
+            mdfcn_dt = NOW()
+        </set>
+        WHERE fxtm_pbls_sect_oid = #{fxtmPblsSectOid}
+    </update>
+
+    <!-- 정기발간자료 아이템 수정 -->
+    <update id="updateAdmin1101Item" parameterType="egovframework.admin.admin1100.domain.Admin1101ItemVO">
+        UPDATE ${schema}.fxtm_pbls_item
+        SET fxtm_pbls_item_ttl = #{fxtmPblsItemTtl},
+            aut = #{aut},
+            page_num = #{pageNum},
+            atch_file_oid = #{atchFileOid},
+            sort_seq = #{sortSeq},
+            mdfcn_id = #{mdfcnId},
+            mdfcn_dt = NOW()
+        WHERE fxtm_pbls_item_oid = #{fxtmPblsItemOid}
+    </update>
+
+    <!-- 정기발간자료 조회수 증가 -->
+    <update id="updateAdmin1101ViewCnt" parameterType="Long">
+        UPDATE ${schema}.fxtm_pbls_data
+        SET inq_cnt = inq_cnt + 1
+        WHERE fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+    </update>
+
+    <!-- 정기발간자료 메인 삭제 (논리 삭제) -->
+    <update id="deleteAdmin1101" parameterType="Long">
+        UPDATE ${schema}.fxtm_pbls_data
+        SET use_yn = 'N',
+            mdfcn_dt = NOW()
+        WHERE fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+    </update>
+
+    <!-- 정기발간자료 섹션 삭제 -->
+    <delete id="deleteAdmin1101Section" parameterType="Long">
+        DELETE FROM ${schema}.fxtm_pbls_sect
+        WHERE fxtm_pbls_sect_oid = #{fxtmPblsSectOid}
+    </delete>
+
+    <!-- 정기발간자료 아이템 삭제 -->
+    <delete id="deleteAdmin1101Item" parameterType="Long">
+        DELETE FROM ${schema}.fxtm_pbls_item
+        WHERE fxtm_pbls_item_oid = #{fxtmPblsItemOid}
+    </delete>
+
+    <!-- 정기발간자료 섹션 전체 삭제 (periodicalNo 기준) -->
+    <delete id="deleteAdmin1101SectionByPeriodical" parameterType="Long">
+        DELETE FROM ${schema}.fxtm_pbls_sect
+        WHERE fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+    </delete>
+
+    <!-- 정기발간자료 아이템 전체 삭제 (sectionNo 기준) -->
+    <delete id="deleteAdmin1101ItemBySection" parameterType="Long">
+        DELETE FROM ${schema}.fxtm_pbls_item
+        WHERE fxtm_pbls_sect_oid = #{fxtmPblsSectOid}
+    </delete>
+
+</mapper>

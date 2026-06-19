@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>통계 > 그래프</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="right_wrap">
+        <div class="location_wrap">
+            <div class="search_wrap s_type">
+                <ul>
+                    <li>
+                        <label for="datepicker1">기준월</label>
+                        <span class="datepicker"><input type="text" value="" id="admin709TargetDate" class="monthpick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span>
+                    </li>
+                </ul>
+                <div class="s_wrap"><a id="admin709SearchBtn" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+            </div>
+        </div>
+        <hr class="h_bg_type">
+        <div class="sub_cont_wrap">
+            <h3 class="stit">방문자 현황(명)</h3>
+            <div class="graph_wrap"><div id="chart_visitor" style="width: 100%; height: 300px;"></div></div>
+            <h3 class="stit">질의 현황(건)</h3>
+            <div class="graph_wrap"><div id="chart_inquiry" style="width: 100%; height: 300px;"></div></div>
+            <h3 class="stit">응답 현황(건)</h3>
+            <div class="graph_wrap"><div id="chart_response" style="width: 100%; height: 300px;"></div></div>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin709 = {
+        /**
+         * 상태
+         */
+        state: {
+            all: {},
+            charts: {},  // ECharts 인스턴스 저장
+            chartData: {
+                visitor: {
+                    categories: [],
+                    series: []
+                },
+                inquiry: {
+                    categories: [],
+                    series: []
+                },
+                response: {
+                    categories: [],
+                    series: []
+                }
+            }
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+            _this.initCharts();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼 클릭
+            document.getElementById('admin709SearchBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                _this.fetchData();
+            });
+
+   	        const today = new Date();
+            const todayStr = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0');
+   	        $('#admin709TargetDate').val(todayStr);
+
+            // 윈도우 리사이즈 시 차트 리사이즈
+            window.addEventListener('resize', function() {
+                Object.values(_this.state.charts).forEach(chart => {
+                    chart.resize();
+                });
+            });
+        },
+
+        /**
+         * 차트 초기화
+         */
+        initCharts: async function() {
+            const _this = this;
+            await _this.fetchData();
+            // 방문자 현황 차트
+            _this.state.charts.visitor = _this.createHorizontalBarChart(
+                'chart_visitor',
+                _this.state.chartData.visitor
+            );
+
+            // 질의 현황 차트
+            _this.state.charts.inquiry = _this.createHorizontalBarChart(
+                'chart_inquiry',
+                _this.state.chartData.inquiry
+            );
+
+            // 응답 현황 차트
+            _this.state.charts.response = _this.createHorizontalBarChart(
+                'chart_response',
+                _this.state.chartData.response
+            );
+        },
+
+        /**
+         * 가로 막대 차트 생성
+         * @param {string} domId - 차트를 렌더링할 DOM ID
+         * @param {object} data - 차트 데이터 { categories: [], series: [] }
+         * @returns {object} ECharts 인스턴스
+         */
+        createHorizontalBarChart: function(domId, data) {
+            const chartDom = document.getElementById(domId);
+            const chart = echarts.init(chartDom);
+
+            const option = this.getChartOption(data);
+            chart.setOption(option);
+
+            return chart;
+        },
+
+        /**
+         * 차트 옵션 생성
+         * @param {object} data - 차트 데이터
+         * @returns {object} ECharts 옵션
+         */
+        getChartOption: function(data) {
+            const colors = ['#F4D1AA', '#B3CFF2'];  // 이전달 누적: 연한 주황, 이번달: 연한 파랑
+
+            // 데이터가 없는 경우 빈 차트 옵션 반환
+            if (!data || !data.series || data.series.length === 0) {
+                return {
+                    qnaTtl: {
+                        text: '데이터가 없습니다',
+                        left: 'center',
+                        top: 'middle',
+                        textStyle: {
+                            color: '#999',
+                            fontSize: 14
+                        }
+                    }
+                };
+            }
+
+            return {
+                color: colors,
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function (params) {
+                        let result = params[0].name + '<br/>';
+                        params.forEach(function (item) {
+                            result += item.marker + item.seriesName + ': ' + item.value.toLocaleString() + '<br/>';
+                        });
+                        return result;
+                    }
+                },
+                legend: {
+                    data: data.series.map(s => s.name),
+                    bottom: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '15%',
+                    top: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        formatter: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: data.categories
+                },
+                series: data.series.map((s, index) => ({
+                    name: s.name,
+                    type: 'bar',
+                    stack: 'total',
+                    data: s.data,
+                    label: {
+                        show: true,
+                        position: 'inside',
+                        formatter: function(params) {
+                            return params.value > 0 ? params.value.toLocaleString() : '';
+                        }
+                    },
+                    itemStyle: {
+                        color: colors[index % colors.length]
+                    }
+                }))
+            };
+        },
+
+        /**
+         * 데이터 조회 (API 호출)
+         */
+        fetchData: async function() {
+            const _this = this;
+
+            const params = {
+                targetDate: document.getElementById('admin709TargetDate').value
+            }
+
+            if(!params.targetDate){
+                uiCommon.fnShowAlertModal("기준월을 선택하세요");
+                return;
+            }
+
+            const response = await API.get('/api/admin/admin709/engagement-statistics', params, {showLoading: true});
+
+            if (response) {
+                // 선택된 월 가져오기 (예: "2025-12" -> 12)
+                const targetMonth = parseInt(params.targetDate.split('-')[1], 10);
+
+                // API 응답을 차트 데이터로 변환
+                _this.state.chartData.visitor = _this.transformToChartData(response.visitorStatistics, targetMonth);
+                _this.state.chartData.inquiry = _this.transformToChartData(response.inquiryStatistics, targetMonth);
+                _this.state.chartData.response = _this.transformToChartData(response.responseStatistics, targetMonth);
+
+                // 차트 업데이트
+                _this.updateCharts();
+            }
+        },
+
+        /**
+         * API 응답 데이터를 차트 데이터 형식으로 변환
+         * @param {Array} statisticsList - API 응답 배열 [{statYear, prevAcc, targetVal}, ...]
+         * @param {number} targetMonth - 선택된 월 (1~12)
+         * @returns {object} 차트 데이터 { categories: [], series: [] }
+         */
+        transformToChartData: function(statisticsList, targetMonth) {
+            if (!statisticsList || statisticsList.length === 0) {
+                return {
+                    categories: [],
+                    series: []
+                };
+            }
+
+            // 연도별 카테고리 생성 (Y축 레이블)
+            const categories = statisticsList.map(item => item.statYear + '년');
+
+            // 시리즈 데이터 생성
+            const targetValData = statisticsList.map(item => item.targetVal || 0);
+            const targetValName = targetMonth + '월';
+
+            // 1월인 경우 이전달 누적이 없으므로 이번달 시리즈만 반환
+            if (targetMonth === 1) {
+                return {
+                    categories: categories,
+                    series: [
+                        { name: targetValName, data: targetValData }
+                    ]
+                };
+            }
+
+            // 2월 이상인 경우 이전달 누적 + 이번달 시리즈 반환
+            const prevAccData = statisticsList.map(item => item.prevAcc || 0);
+            // 2월이면 "1월", 3월 이상이면 "1월~N월"
+            const prevAccName = targetMonth === 2 ? '1월' : '1월~' + (targetMonth - 1) + '월';
+
+            return {
+                categories: categories,
+                series: [
+                    { name: prevAccName, data: prevAccData },
+                    { name: targetValName, data: targetValData }
+                ]
+            };
+        },
+
+        /**
+         * 차트 업데이트
+         * - 차트가 이미 생성된 경우 데이터만 갱신
+         */
+        updateCharts: function() {
+            const _this = this;
+
+            // 방문자 현황 차트
+            if (_this.state.charts.visitor) {
+                _this.state.charts.visitor.setOption(_this.getChartOption(_this.state.chartData.visitor));
+            }
+
+            // 질의 현황 차트
+            if (_this.state.charts.inquiry) {
+                _this.state.charts.inquiry.setOption(_this.getChartOption(_this.state.chartData.inquiry));
+            }
+
+            // 응답 현황 차트
+            if (_this.state.charts.response) {
+                _this.state.charts.response.setOption(_this.getChartOption(_this.state.chartData.response));
+            }
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        admin709.init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.common.audit.mapper.PersonalInfoProcLogMapper">
+
+	<insert id="insertPersonalInfoProcLog" parameterType="egovframework.common.audit.domain.PersonalInfoProcLog">
+		<!-- insertPersonalInfoProcLog -->
+		INSERT INTO ${schema}.prvc_prcs_proc_log (
+			acs_dt,
+			acs_user_oid,
+			acs_id,
+			acs_ip,
+			menu_nm,
+			flfmt_task_dtl,
+			info_prcs_subj,
+			rsn,
+			reg_id,
+			reg_dt
+		)
+		VALUES (
+			IFNULL(#{acsDt}, NOW()),
+			#{acsuserOid},
+			#{acsId},
+			#{acsIp},
+			#{menuNm},
+			#{flfmtTaskDtl},
+			#{infoPrcsSubj},
+			#{rsn},
+			IFNULL(#{regId}, 'SYSTEM'),
+			IFNULL(#{regDt}, NOW())
+		)
+	</insert>
+</mapper>

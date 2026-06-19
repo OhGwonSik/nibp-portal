@@ -1,0 +1,22 @@
+.select-box {
+    position: relative;
+    width: auto;
+    height: 30px;
+    background: url(/usr/images/common/ico_select.gif) right center no-repeat; 
+    border: 1px solid #cbcbcb;
+}
+.select-box label {
+    top: 0;
+    left: 10px;
+	line-height:30px;
+	background:#fff;
+}
+.select-box select {
+    width: 100%;
+    height: 30px;
+    min-height: 30px;
+    line-height: 30px;
+    padding: 0 55px 0 0;
+    opacity: 0;
+    filter: alpha(opacity=0); /* IE 8 */
+}

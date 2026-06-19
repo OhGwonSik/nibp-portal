@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin800.mapper.Admin804Mapper">
+
+    <select id="selectAccessLogWithFilter">
+        SELECT
+        user_acs_log_oid AS userAcsLogOid,
+        user_oid AS userOid,
+        user_id,
+        acs_type AS acsType,
+        rqt_uri AS rqtUri,
+        rqt_mthd AS rqtMthd,
+        stts_cd AS sttsCd,
+        rspns_time_ms AS rspnsTimeMs,
+        error_msg AS errorMsg,
+        ${schema}.fn_decrypt_aes(ip_addr, #{aesKey}) AS ipAddr,
+        brwsr_nm AS brwsrNm,
+        os_nm AS osNm,
+        dvc_type AS dvcType,
+        reg_dt AS regDt
+        FROM
+        ${schema}.user_acs_log
+        <where>
+            <if test="filter.searchType != null and filter.searchValue != null and filter.searchValue != ''">
+                <choose>
+                    <when test="filter.searchType == 'userId'">
+                        AND user_id LIKE CONCAT('%', #{filter.searchValue}, '%')
+                    </when>
+                    <when test="filter.searchType == 'rqtUri'">
+                        AND rqt_uri LIKE CONCAT('%', #{filter.searchValue}, '%')
+                    </when>
+                    <when test="filter.searchType == 'ipAddr'">
+                        AND ${schema}.fn_decrypt_aes(ip_addr, #{aesKey}) LIKE CAST(CONCAT('%', #{filter.searchValue}, '%') AS CHAR)
+                    </when>
+                </choose>
+            </if>
+            <if test="filter.startDate != null and filter.startDate != ''">
+                AND reg_dt <![CDATA[>=]]> #{filter.startDate}
+            </if>
+            <if test="filter.endDate != null and filter.endDate != ''">
+                AND reg_dt <![CDATA[<=]]> #{filter.endDate}
+            </if>
+			<if test="filter.excelExportYm != null and filter.excelExportYm != ''">
+			    AND reg_dt <![CDATA[>=]]> STR_TO_DATE(CONCAT(REPLACE(#{filter.excelExportYm}, '-', ''), '01'), '%Y%m%d')
+			    
+			    AND reg_dt <![CDATA[<]]> DATE_ADD(STR_TO_DATE(CONCAT(REPLACE(#{filter.excelExportYm}, '-', ''), '01'), '%Y%m%d'), INTERVAL 1 MONTH)
+			</if>
+        </where>
+    </select>
+
+</mapper>

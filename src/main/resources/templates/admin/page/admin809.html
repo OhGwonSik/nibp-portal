@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자정보수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <h3 class="stit">관리자정보수정</h3>
+        <div class="table_layout02">
+            <table>
+                <caption>관리자정보수정</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row"><label for="lab_01">성명(한글)</label></th>
+                    <td><input type="text" name="" id="admin809UserNmKorn" value="" class="w100" minlength="1" maxlength="50"></td>
+                    <th scope="row" class="point bl"><label for="lab_02">성명(영문)</label></th>
+                    <td><input type="text" name="" id="admin809UserNmEn" value="" class="w100" minlength="1" maxlength="50"></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point"><label for="lab_03">생년월일</label></th>
+                    <td colspan="3">
+                        <div class="flex_col "><input type="text" name="" id="admin809UserBrdt" value="" minlength="8" maxlength="8" pattern="^\d{8}$"> <p class="c_red">※ '-' 는 포함하지 않습니다.</p><p>예시)1981년 01월 01일 → 19810101</p></div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point"><label for="lab_04">아이디</label></th>
+                    <td colspan="3">
+                        <div class="flex_col "><input type="text" name="" id="admin809UserId" value="" disabled="" minlength="6" maxlength="10" pattern="^[a-zA-Z0-9]{6,10}$"> <p class="c_red">※ 6자 이상 10자 이하의 영문 또는 영문/숫자 조합</p></div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point"><label for="lab_05">이메일</label></th>
+                    <td colspan="3">
+                        <div class="flex_col "><input type="text" name="" id="admin809EmlLocal" value=""> @ <input type="text" name="" id="admin809EmlDmn" value="">
+                            <select id="admin809EmlInpTyp" title="">
+                                <option value="직접입력" selected>직접입력</option>
+                                <option value="gmail.com">gmail.com</option>
+                                <option value="naver.com">naver.com</option>
+                                <option value="hanmail.net">hanmail.net</option>
+                                <option value="daum.net">daum.net</option>
+                            </select>
+                            <a href="javascript:;" id="admin809EmlDuplicationCheck" class="s_btn_basic bg_type02">중복확인</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point"><label for="lab_06">휴대폰</label></th>
+                    <td colspan="3">
+                        <div class="flex_col ">
+                            <input type="text" name="" id="admin809MpnoPfx" value="" minlength="3" maxlength="3" pattern="^[0-9]{3}$"> -
+                            <input type="text" name="" id="admin809MpnoMid" value="" minlength="4" maxlength="4" pattern="^[0-9]{4}$"> -
+                            <input type="text" name="" id="admin809MpnoSfx" value="" minlength="4" maxlength="4" pattern="^[0-9]{4}$">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="lab_09">부서</label></th>
+                    <td><input type="text" name="" id="admin809DeptNm" value="" class="w100"></td>
+                    <th scope="row" class="bl"><label for="lab_10">직위</label></th>
+                    <td><input type="text" name="" id="admin809PstnNm" value="" class="w100"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="lab_09">상태</label></th>
+                    <td><input type="text" name="" id="admin809UseYn" value="" disabled="" class="w100"></td>
+                    <th scope="row" class="bl"><label for="lab_10">개인정보취급권한</label></th>
+                    <td><input type="text" name="" id="admin809PrivacyYn" value="" disabled="" class="w100"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="admin809ChangePwd" class="btn_basic bg_type01 open_popup" data-popup="change_pwd">비밀번호변경</a>
+            <a href="javascript:;" id="admin809Update" class="btn_basic bg_type02">수정</a>
+            <a href="javascript:;" id="admin809Cancel" class="btn_basic line_type02">취소</a>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="admin_modal">
+    <th:block th:replace="~{admin/modal/change_pwd :: change_pwd}"></th:block>
+</th:block>
+<script layout:fragment="scripts" th:inline="javascript">
+    const admin809 = {
+        state:{
+          userInfo: {},
+        },
+
+        infoSelectors : {
+            userNmKorn : "admin809UserNmKorn",
+            userNmEng : "admin809UserNmEn",
+            userBrdt : "admin809UserBrdt",
+            userId : "admin809UserId",
+            emlLcal : "admin809EmlLocal",
+            emlDmn : "admin809EmlDmn",
+            emlInpTyp : "admin809EmlInpTyp",
+            mpnoPfx : "admin809MpnoPfx",
+            mpnoMid : "admin809MpnoMid",
+            mpnoSfx : "admin809MpnoSfx",
+            deptNm : "admin809DeptNm",
+            jbpsNm : "admin809PstnNm",
+            useYn : "admin809UseYn",
+            prvcUseYn : "admin809PrivacyYn"
+        },
+        eventSelectors : {
+            admin809EmlDuplicationCheck : "admin809EmlDuplicationCheck",
+            admin809ChangePwd : "admin809ChangePwd",
+            admin809Update : "admin809Update",
+            admin809Cancel : "admin809Cancel",
+            admin809UserBrdt : "admin809UserBrdt",
+            admin809MpnoPfx : "admin809MpnoPfx",
+            admin809MpnoMid : "admin809MpnoMid",
+            admin809MpnoSfx : "admin809MpnoSfx",
+            admin809EmlInpTyp : "admin809EmlInpTyp",
+            admin809CurrentPwd : "admin809CurrentPwd",
+            admin809NewPwd : "admin809NewPwd",
+            admin809NewPwdConfirm : "admin809NewPwdConfirm"
+        },
+        init: async function() {
+            try {
+                const me = await this.fetchDetail();
+                this.setInformations(me); // 정보 설정
+            } catch(e) {
+                console.error("admin809 init error", e);
+                this.state.userInfo = {};
+            }
+
+            this.initEvent(); // 이벤트 바인딩
+        },
+        fetchDetail: async function() {            
+            return await API.get("/auth/me");
+        },
+        fetchUpdate: async function() {
+            const data = {
+                userNmKorn : document.getElementById(this.infoSelectors.userNmKorn).value,
+                userNmEng : document.getElementById(this.infoSelectors.userNmEng).value,
+                brdt : document.getElementById(this.infoSelectors.userBrdt).value,
+                userId : document.getElementById(this.infoSelectors.userId).value,
+                emlLcal : document.getElementById(this.infoSelectors.emlLcal).value,
+                emlDmn : document.getElementById(this.infoSelectors.emlDmn).value,
+                emlInpTyp : '직접입력' === document.getElementById(this.infoSelectors.emlInpTyp).value ? '직접입력' : '선택',
+                mpnoPfx : document.getElementById(this.infoSelectors.mpnoPfx).value,
+                mpnoMid : document.getElementById(this.infoSelectors.mpnoMid).value,
+                mpnoSfx : document.getElementById(this.infoSelectors.mpnoSfx).value,
+                deptNm : document.getElementById(this.infoSelectors.deptNm).value,
+                jbpsNm : document.getElementById(this.infoSelectors.jbpsNm).value,
+            };
+            if(!this.validateUpdateData(data)) {
+                return;
+            }
+
+            const confirm = await uiCommon.fnShowConfirmModal("수정하시겠습니까?", async () => {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    const result = await API.put("/auth/admin/me", data);
+                    this.setInformations(result);
+                    uiCommon.fnShowAlertModal("수정이 완료되었습니다.");
+
+                } catch(e) {
+                    console.error("admin809 fetchUpdate error", e);
+                }
+            });
+        },
+        checkEmailEvent: async function() {
+            const emlLocal = document.getElementById(this.infoSelectors.emlLcal).value;
+            const emlDmn = document.getElementById(this.infoSelectors.emlDmn).value;
+            const data = {
+                emlLcal : emlLocal,
+                emlDmn : emlDmn
+            };
+
+            const result = await API.post("/auth/admin/checkEmail", data);
+            uiCommon.fnShowAlertModal(result ? "이미 사용 중인 이메일입니다." : "사용 가능한 이메일입니다.");
+        },
+        setInformations: function(data) {
+            const _this = this;
+            this.state.userInfo = data; // 리스트 저장
+            const infoSelectors = _this.infoSelectors;
+
+            document.getElementById(infoSelectors.userNmKorn).value = data.userNmKorn;
+            document.getElementById(infoSelectors.userNmEng).value = data.userNmEng;
+            document.getElementById(infoSelectors.userBrdt).value = data.brdt;
+            document.getElementById(infoSelectors.userId).value = data.userId;
+            document.getElementById(infoSelectors.emlLcal).value = data.emlLcal;
+            document.getElementById(infoSelectors.emlDmn).value = data.emlDmn;
+            if("직접입력" === data.emlInpTyp) {
+                document.getElementById(infoSelectors.emlInpTyp).value = "직접입력";
+            } else {
+                document.getElementById(infoSelectors.emlInpTyp).value = data.emlDmn;
+            }
+            document.getElementById(infoSelectors.mpnoPfx).value = data.mpnoPfx;
+            document.getElementById(infoSelectors.mpnoMid).value = data.mpnoMid;
+            document.getElementById(infoSelectors.mpnoSfx).value = data.mpnoSfx;
+            document.getElementById(infoSelectors.deptNm).value = data.deptNm;
+            document.getElementById(infoSelectors.jbpsNm).value = data.jbpsNm;
+            
+            if("Y" === data.useYn) {
+                document.getElementById(infoSelectors.useYn).value = '활성';
+            } else if("N" === data.useYn) {
+                document.getElementById(infoSelectors.useYn).value = '비활성';
+            } else {
+                document.getElementById(infoSelectors.useYn).value = '';
+            }
+
+            if("Y" === data.prvcUseYn) {
+                document.getElementById(infoSelectors.prvcUseYn).value = '활성';
+            } else if("N" === data.prvcUseYn) {
+                document.getElementById(infoSelectors.prvcUseYn).value = '비활성';
+            } else {
+                document.getElementById(infoSelectors.prvcUseYn).value = '';
+            }
+        },
+        emailComboEvent: function() {
+            const _this = this;
+            const value = document.getElementById(_this.eventSelectors.admin809EmlInpTyp).value;
+
+            if("직접입력" === value) {
+                document.getElementById(_this.infoSelectors.emlDmn).value = "";
+                document.getElementById(_this.infoSelectors.emlDmn).readOnly = false;
+                document.getElementById(_this.infoSelectors.emlDmn).removeAttribute("disabled");
+            } else {
+                document.getElementById(_this.infoSelectors.emlDmn).value = value;
+                document.getElementById(_this.infoSelectors.emlDmn).readOnly = true;
+                document.getElementById(_this.infoSelectors.emlDmn).setAttribute("disabled", "disabled");
+            }
+        },
+        initEvent: function() {
+            const _this = this;
+            const eventSelectors = _this.eventSelectors;
+            const infoSelectors = _this.infoSelectors;
+            
+            document.getElementById(eventSelectors.admin809EmlDuplicationCheck).addEventListener("click", function(e){
+                e.preventDefault();
+                _this.checkEmailEvent();
+            }); // 중복체크
+            document.getElementById(eventSelectors.admin809ChangePwd).addEventListener("click", function(e){
+                e.preventDefault();
+                _this.changePwdEvent();
+            }); // 비밀번호 변경 버튼
+            document.getElementById(eventSelectors.admin809Update).addEventListener("click", function(e){
+                e.preventDefault();
+                _this.saveBntEvent();
+            }); // 수정 버튼
+            document.getElementById(eventSelectors.admin809Cancel).addEventListener("click", function(e){
+                e.preventDefault();
+                _this.cancelBntEvent();
+            }); // 취소 버튼
+            document.getElementById(eventSelectors.admin809EmlInpTyp).addEventListener("change", function(e){
+                e.preventDefault();
+                _this.emailComboEvent();
+            }); // 이메일 입력 타입 변경
+        },
+        validateUpdateData: function(data) {
+            // 필수값 체크
+            const requiredFields = {
+                "userNmKorn" : "이름(한글)",
+                "userNmEng" : "이름(영어)",
+                "brdt" : "생년월일",
+                "userId" : "아이디",
+                "emlLocal" : "이메일(이메일)",
+                "emlDmn" : "이메일(도메인)",
+                "emlInpTyp" : "이메일(입력타입)",
+                "mpnoPfx" : "휴대폰(앞자리)",
+                "mpnoMid" : "휴대폰(중간자리)",
+                "mpnoSfx" : "휴대폰(마지막자리)"
+            };
+
+            for (const [key, value] of Object.entries(requiredFields)) {
+                if (!data[key]) {
+                    uiCommon.fnShowAlertModal(`${value}은(는) 필수 입력값입니다.`);
+                    return false;
+                }
+            }
+
+            if(!common.checkMinString(data.userNmKorn, 2) && !common.checkMaxString(data.userNmKorn, 50)) {
+                uiCommon.fnShowAlertModal("이름은 2자리 이상 50자리 이하로 입력해주세요.");
+                return false;
+            }
+            if(!common.checkMinString(data.userNmEng, 2) && !common.checkMaxString(data.userNmEng, 50)) {
+                uiCommon.fnShowAlertModal("이름은 2자리 이상 50자리 이하로 입력해주세요.");
+                return false;
+            }
+
+            if(!common.regBirth(data.brdt)) {
+                uiCommon.fnShowAlertModal("생년월일은 YYYYMMDD 형식으로 입력해주세요.");
+                return false;
+            }
+
+            if(!common.regEmail(data.emlLcal + "@" + data.emlDmn)) {
+                uiCommon.fnShowAlertModal("올바르지 않는 이메일 입니다.");
+                return false;
+            }
+
+            if(!common.regMobileNumber(data.mpnoPfx, data.mpnoMid, data.mpnoSfx)) {
+                uiCommon.fnShowAlertModal("올바르지 않는 휴대폰 번호 입니다.");
+                return false;
+            }
+
+            return true;
+        },
+        cancelBntEvent: function(){
+            this.setInformations(this.state.userInfo);
+        },
+        saveBntEvent: function(){
+            this.fetchUpdate();
+        },
+        changePwdEvent: function(){
+            change_pwd.initModal();
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+       admin809.init(); 
+    });
+</script>
+</body>
+</html>

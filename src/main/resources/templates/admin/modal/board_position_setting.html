@@ -1,0 +1,361 @@
+<th:block th:fragment="board_position_setting" xmlns:th="http://www.thymeleaf.org">
+    <div id="board_position_setting" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap wp700">
+                <h1 class="p_tit">게시판 위치 설정</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap m-height500">
+                        <div class="popup_cont_inner">
+                            <div class="table_layout02 list_type s_table mb10">
+                                <table>
+                                    <caption>게시판 위치 설정</caption>
+                                    <colgroup>
+                                        <col style="width:auto">
+                                        <col style="width:135px;">
+                                        <col style="width:100px;">
+                                    </colgroup>
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">메뉴명</th>
+                                        <th scope="col">게시판 사용 여부</th>
+                                        <th scope="col">사용 위치</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="boardPositionTbody">
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="btn_wrap mt30">
+                        <a href="javascript:;" class="btn_basic bg_type01" id="board_position_confirm">확인</a>
+                        <a href="javascript:;" class="btn_basic bg_type02 position_setting_close">취소</a>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close position_setting_close">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        let board_position_setting = {
+            /**
+             * 상태
+             */
+            state: {
+                all: [],
+                boardTypeMap : {
+                    'COMMON': 'common_board',
+                    'USER': 'user_board',
+                    'FAQ': 'faq_board',
+                    'QNA': 'qna_board',
+                    'PHOTO': 'gallery_board',
+                    'THUMBNAIL': 'thumbnail_board'
+                },
+                selectedBoardInfo : {},
+                positionType: null  // 'COMMON' (사용자) 또는 'ADMIN' (관리자), null이면 일반 게시판
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function (boardRow, positionType) {
+                uiCommon.fnShowModal('board_position_setting');
+                this.init(boardRow, positionType);
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: async function (boardRow, positionType) {
+                // 이벤트 바인딩
+                this.initEvent();
+                this.state.positionType = positionType || null;  // COMMON, ADMIN 또는 null (일반 게시판)
+
+                // positionType이 있으면 해당 auth_level의 게시판 정보를 재조회
+                if (positionType) {
+                    this.state.selectedBoardInfo = await this.fnGetBoardInfo(boardRow.bbsOid, positionType);
+                } else {
+                    this.state.selectedBoardInfo = boardRow;
+                }
+
+                this.state.all = await this.fnGetMenuData();
+
+                this.renderMenuTree();
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function (){
+                const _this = this;
+
+                // 닫기 버튼 클릭
+                $(".position_setting_close").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    uiCommon.fnHideModal('board_position_setting');
+                });
+                
+                // 저장 버튼 클릭
+                document.querySelector('#board_position_confirm').onclick = async ()=>{
+
+                    const board = this.state.selectedBoardInfo;
+
+                    if (!board) {
+                        uiCommon.fnShowAlertModal('게시판 정보를 찾을 수 없습니다.');
+                        return;
+                    }
+
+                    // 체크 되어있는지 검증
+                    const checked = document.querySelector('.position-toggle:checked');
+                    if (!checked) {
+                        uiCommon.fnShowAlertModal('사용 위치를 선택해주세요.');
+                        return;
+                    }
+                    
+                    const upMenuOid = Number(checked.dataset.menu);
+
+                    const menuData = {
+                            bbsOid: board.bbsOid,
+                            menuNm: board.bbsNm,
+                            menuPage: this.state.boardTypeMap[board.bbsSeCd],
+                            //menuCd: this.state.positionType === 'ADMIN' ? 'ADMIN_BOARD' + board.bbsOid : 'BOARD' + board.bbsOid,
+                            //menuUrl: this.state.positionType === 'ADMIN' ?  `/admin/board?bbsOid=${board.bbsOid}&menuCd=BOARD${board.bbsOid}` : `/board?bbsOid=${board.bbsOid}&menuCd=BOARD${board.bbsOid}`,
+                            upMenuOid: upMenuOid,
+                            menuLv: 3,
+                            menuSeq: 9999,
+                            menuType: 'BOARD',
+                            bbsUseYn: 'Y',
+                            prvcUseYn: 'N',
+                            useYn: 'Y',
+                            npagYn: 'N',
+                            menuExpln: board.bbsNm,
+                            menuAuthLv: this.state.positionType || 'COMMON'  // 동적게시판: COMMON 또는 ADMIN, 일반게시판: COMMON
+                        };
+                    
+                    try {
+                       if (!board.positionMenuOid) {
+
+                    	   const nextSeq = await API.get("/api/admin/admin808/menu/next-seq");
+                    	   
+                    	   const menuCd = `${nextSeq}`;
+                    	   menuData.menuCd = this.state.positionType === 'ADMIN' ? 'ADMIN_BOARD' + menuCd : 'BOARD' + menuCd;
+                    	   menuData.menuUrl = this.state.positionType === 'ADMIN' ?  `/admin/board?bbsOid=${board.bbsOid}&menuCd=ADMIN_BOARD${menuCd}` : `/board?bbsOid=${board.bbsOid}&menuCd=BOARD${menuCd}`;
+                    	   
+                           await API.put("/api/admin/admin808/menu/insert", menuData);
+
+                           uiCommon.fnShowAlertModal("게시판 위치가 등록되었습니다.", async () => {
+                               await uiCommon.fnHideModal("board_position_setting");
+                               await admin807.searchBoardList();
+                           });
+
+                       } else {
+                           menuData.menuOid = board.positionMenuOid;
+                           menuData.menuCd = board.menuCd;
+                           menuData.menuUrl = board.positionMenuUrl;
+
+                           await API.patch('/api/admin/admin808/menu/update', menuData);
+
+                           uiCommon.fnShowAlertModal("게시판 위치가 수정되었습니다.", async () => {
+                               await uiCommon.fnHideModal("board_position_setting");
+                               await admin807.searchBoardList();
+                           });
+                       }
+                   }
+                   catch (err) {
+                       console.error(err);
+                       uiCommon.fnShowAlertModal("저장 중 오류가 발생했습니다.");
+                   }
+                }
+            },
+            
+            /**
+             * 게시판 정보 재조회 (menuAuthLv별로)
+             */
+            fnGetBoardInfo: async function (bbsOid, menuAuthLv) {
+                try {
+                    const params = new URLSearchParams({
+                        bbsOid: bbsOid,
+                        menuAuthLv: menuAuthLv
+                    });
+                    const response = await API.get(`/api/admin/admin807/board/list?${params.toString()}`);
+
+                    if (response.list && response.list.length > 0) {
+                        return response.list[0];
+                    }
+                    return null;
+                } catch (error) {
+                    console.error(error);
+                    return null;
+                }
+            },
+
+            /**
+             * 메뉴 데이터 조회
+             */
+            fnGetMenuData: async function () {
+                try {
+                    return await API.get('/api/admin/admin808/menu/list');
+                } catch (error) {
+                    console.error(error);
+                    return [];
+                }
+            },
+            
+            renderMenuTree: function () {
+                const list = this.state.all;
+                const tbody = document.querySelector("#boardPositionTbody");
+                tbody.innerHTML = "";
+
+                // positionType에 따라 메뉴 필터링
+                const filterByAuthLevel = (menu) => {
+                    if (!this.state.positionType) return true;  // null이면 모든 메뉴 표시
+                    return menu.menuAuthLv === this.state.positionType;
+                };
+
+                let html = '';
+                list.forEach(depth1 => {
+                    // auth_level로 필터링
+                    if (!filterByAuthLevel(depth1)) return;
+
+                    /*
+                     * 대메뉴
+                     **/
+                    const toggleCol = depth1.bbsUseYn === "Y"
+                        ? `
+                            <span class="s_check">
+                                <label class="toggle">
+                                    <input type="checkbox" class="position-toggle" data-menu="${depth1.menuOid}">
+                                    <span class="track"></span>
+                                </label>
+                            </span>
+                          `
+                        : "";
+                    html += `
+                        <tr>
+                            <td class="tal">
+                                <strong class="Depth">
+                                    <a href="javascript:;" class="toggle-btn" data-target="grp_${depth1.menuOid}">열림</a>
+                                    ${depth1.menuNm}
+                                </strong>
+                            </td>
+                            <td>${depth1.bbsUseYn}</td>
+                            <td>${toggleCol}</td>
+                        </tr>
+                    `;
+
+                    /*
+					 *중메뉴
+                     **/
+                    if (depth1.subMenus && depth1.subMenus.length > 0) {
+
+                        depth1.subMenus.forEach(depth2 => {
+
+                        	const toggleCol = depth2.bbsUseYn === "Y"
+                        	    ? `
+                        	        <span class="s_check">
+                        	            <label class="toggle">
+                        	                <input type="checkbox" class="position-toggle" data-menu="${depth2.menuOid}">
+                        	                <span class="track"></span>
+                        	            </label>
+                        	        </span>
+                        	      `
+                        	    : "";
+
+                            html += `
+                                <tr class="t_Depth grp_${depth1.menuOid}" style="display: none;">
+                                    <td class="tal"><strong class="Depth d_02">${depth2.menuNm}</strong></td>
+                                    <td>${depth2.bbsUseYn}</td>
+                                    <td>${toggleCol}</td>
+                                </tr>
+                            `;
+
+                            /*
+                             * 소메뉴
+                             **/
+                            if (depth2.subMenus && depth2.subMenus.length > 0) {
+
+                                depth2.subMenus.forEach(depth3 => {
+                                    html += `
+                                        <tr class="t_Depth grp_${depth1.menuOid}" style="display: none;">
+                                            <td class="tal"><strong class="Depth d_03">${depth3.menuNm}</strong></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    `;
+                                });
+                            }
+                        });
+                    }
+                });
+                tbody.innerHTML = html;
+
+                this.bindToggleEvent();
+
+                // 게시판 위치설정이 된 경우 자동 OPEN
+                this.autoOpenAndCheck();
+            },
+
+            /*
+             * 토글 이벤트
+             **/
+            bindToggleEvent: function () {
+
+                // 대메뉴 열림/닫힘
+                $(document).off("click.toggle").on("click.toggle", ".toggle-btn", function () {
+                    const target = $(this).data("target");
+                    const rows = $("." + target);
+
+                    const isHidden = rows.first().css("display") === "none";
+                    rows.toggle(isHidden);
+
+                    $(this).text(isHidden ? "닫힘" : "열림");
+                });
+
+                // 사용 위치 - 단일 선택
+                $(document).off("change.position").on("change.position", ".position-toggle", function () {
+                    if ($(this).is(":checked")) {
+                        $(".position-toggle").not(this).prop("checked", false);
+                    }
+                });
+            },
+            
+            /**
+             * 자동 열기 + 자동 체크
+             */
+            autoOpenAndCheck: function () {
+
+           	    const board = this.state.selectedBoardInfo;
+
+           	    if (!board.upMenuOid) return;
+
+           	    const parent = Number(board.upMenuOid);
+
+           	    // 중메뉴 자동 체크
+           	    const chk = document.querySelector(`.position-toggle[data-menu="${parent}"]`);
+           	    if (chk) chk.checked = true;
+
+           	    // depth1 찾기 (부모 대메뉴)
+           	    let depth1MenuNo = null;
+
+           	    this.state.all.forEach(d1 => {
+           	        if (d1.subMenus) {
+           	            d1.subMenus.forEach(d2 => {
+           	                if (d2.menuOid === parent) {
+           	                    depth1MenuNo = d1.menuOid;   // ★ 대메뉴 번호 찾기 성공
+           	                }
+           	            });
+           	        }
+           	    });
+
+				if (!depth1MenuNo) return;
+				
+			    // 대메뉴 열기
+			    $(`.grp_${depth1MenuNo}`).css("display", "table-row");
+			    
+			    const btn = $(`.toggle-btn[data-target="grp_${depth1MenuNo}"]`);
+			    btn.addClass("off"); 
+           	}         
+        };
+    </script>
+</th:block>

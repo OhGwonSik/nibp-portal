@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${boardInfo.bbsNm}">게시판</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="search_wrap" th:if="${boardInfo.srchUseYn == 'Y'}">
+        <ul>
+            <li th:if="${boardInfo.ctgryYn == 'Y' and boardInfo.ctgryList != null}">
+                <label for="search_category">분류</label>
+                <select id="search_category" class="w30" title="검색분류 선택">
+                    <option value="">전체 분류</option>
+                    <option th:each="cat : ${#strings.arraySplit(#strings.replace(#strings.replace(#strings.replace(boardInfo.ctgryList, '(', ''), ')', ''), '''', ''), ',')}"
+                            th:value="${#strings.trim(cat)}" th:text="${#strings.trim(cat)}"></option>
+                </select>
+            </li>
+            <li>
+                <label for="board_search_type">검색</label>
+                <select id="board_search_type" title="검색 옵션 선택" class="wp300">
+                    <option value="all">전체</option>
+                    <option value="title">제목</option>
+                    <option value="content">내용</option>
+                </select>
+                <input type="text" id="board_keyword" placeholder="검색어를 입력하세요" title="검색어를 입력해주세요.">
+            </li>
+            <li>
+                <label>공개여부</label>
+                <span class="radio-box"><input type="radio" id="option1" value="" name="radio_01" checked><label for="option1">전체</label></span>
+                <span class="radio-box"><input type="radio" id="option2" value="Y" name="radio_01"><label for="option2">공개</label></span>
+                <span class="radio-box"><input type="radio" id="option3" value="N" name="radio_01"><label for="option3">비공개</label></span>
+            </li>
+            <li>
+                <label for="boardPostRegStartDt">등록일</label>
+                <div class="flex_col"><span class="datepicker"><input type="text" value="시작일" id="boardPostRegStartDt" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span> ~ <span class="datepicker"><input type="text" value="종료일" id="boardPostRegEndDt" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span></div>
+            </li>                      
+        </ul>
+        <div class="s_wrap"><a id="board_btn_search" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_desc">
+            <p>총 <strong id="total_count" th:text="${boardPostList != null ? boardPostList.total : 0}">0</strong>건</p>
+            <div class="btn_wrap">
+                <a href="javascript:;" id="btn_register_post" class="btn_basic bg_type01"
+                   th:href="@{/admin/board/write(bbsOid=${boardInfo.bbsOid}, menuCd=${boardRequestDto.menuCd})}">등록</a>
+            </div>
+        </div>
+        <div class="table_layout02 list_type mb20">
+            <table>
+                <caption th:text="${boardInfo.bbsNm} + ' 리스트'">리스트</caption>
+
+                <colgroup>
+                    <col th:if="${boardInfo.pstOidExpsrYn == 'Y'}" style="width: 60px;">
+                    <col th:if="${boardInfo.ctgryYn == 'Y'}" style="width: 120px;">
+                    <col style="width: auto;">
+                    <col th:if="${boardInfo.wrtrExpsrYn == 'Y'}" style="width: 100px;">
+                    <col th:if="${boardInfo.prgrsSttsExpsrYn == 'Y'}" style="width: 100px;">
+                    <col th:if="${boardInfo.wrtDtExpsrYn == 'Y'}" style="width: 100px;">
+                    <col th:if="${boardInfo.ddlnDtExpsrYn == 'Y'}" style="width: 100px;">
+                    <col th:if="${boardInfo.inqCntExpsrYn == 'Y'}" style="width: 80px;">
+                    <col th:if="${boardInfo.atchFileEnYn == 'Y'}" style="width: 90px;">
+                    <col style="width: 90px;">
+                    <col style="width: 90px;">
+                </colgroup>
+
+                <thead>
+                <tr>
+                    <th scope="col" th:if="${boardInfo.pstOidExpsrYn == 'Y'}">번호</th>
+                    <th scope="col" th:if="${boardInfo.ctgryYn == 'Y'}">분류</th>
+                    <th scope="col">제목</th>
+                    <th scope="col" th:if="${boardInfo.wrtrExpsrYn == 'Y'}">작성자</th>
+                    <th scope="col" th:if="${boardInfo.ddlnDtExpsrYn == 'Y'}">마감일</th>
+                    <th scope="col" th:if="${boardInfo.prgrsSttsExpsrYn == 'Y'}">진행상태</th>
+                    <th scope="col" th:if="${boardInfo.wrtDtExpsrYn == 'Y'}">등록일</th>
+                    <th scope="col" th:if="${boardInfo.inqCntExpsrYn == 'Y'}">조회수</th>
+                    <th scope="col" th:if="${boardInfo.atchFileEnYn == 'Y'}">첨부파일</th>
+                    <th scope="col">공개여부</th>
+                    <th scope="col">사용여부</th>
+                </tr>
+                </thead>
+
+                <tbody id="board_tbody">
+                <tr th:if="${boardPostList == null or boardPostList.list == null or boardPostList.list.isEmpty()}">
+                    <td class="tac" th:colspan="${3
+                            + (boardInfo.pstOidExpsrYn == 'Y' ? 1 : 0)
+                            + (boardInfo.ctgryYn == 'Y' ? 1 : 0)
+                            + (boardInfo.wrtrExpsrYn == 'Y' ? 1 : 0)
+                            + (boardInfo.wrtDtExpsrYn == 'Y' ? 1 : 0)
+                            + (boardInfo.ddlnDtExpsrYn == 'Y' ? 1 : 0)
+                            + (boardInfo.prgrsSttsExpsrYn == 'Y' ? 1 : 0)
+                            + (boardInfo.atchFileEnYn == 'Y' ? 1 : 0)
+                            + (boardInfo.inqCntExpsrYn == 'Y' ? 1 : 0)
+                        }">조회된 결과가 없습니다.</td>
+                </tr>
+
+                <th:block th:if="${boardPostList != null and boardPostList.list != null}">
+                    <tr th:each="item : ${boardPostList.list}">
+                        <td th:if="${boardInfo.pstOidExpsrYn == 'Y'}">
+                            <span th:text="${item.bbsPstOid}"></span>
+                        </td>
+                        <td th:if="${boardInfo.ctgryYn == 'Y'}" th:text="${item.ctgry}"></td>
+
+                        <td class="tal">
+                            <a href="javascript:" class="a_link post_link" th:data-id="${item.bbsPstOid}" th:text="${item.bbsPstTtl}"></a>
+                        </td>
+
+                        <td th:if="${boardInfo.wrtrExpsrYn == 'Y'}" th:text="${item.wrtrNm}"></td>
+                        <td th:if="${boardInfo.ddlnDtExpsrYn == 'Y'}" th:switch="${boardInfo.bbsSubSeCd}">
+                            <th:block th:case="'RECRUITMENT'">
+                                <span th:text="${#temporals.format(item.endDt, 'yyyy-MM-dd')}"></span>
+                            </th:block>
+                            <th:block th:case="'BID_ANNOUNCEMENT'">
+                                <span th:text="${#temporals.format(item.endDt, 'yyyy-MM-dd')}"></span>
+                            </th:block>
+                            <th:block th:case="*">
+                                <span th:text="${item.ddlnDt != null ? #temporals.format(item.ddlnDt, 'yyyy-MM-dd') : '-'}"></span>
+                            </th:block>
+                        </td>
+                        <td th:if="${boardInfo.prgrsSttsExpsrYn == 'Y'}" th:text="${item.stts}"></td>
+                        <td th:if="${boardInfo.wrtDtExpsrYn == 'Y'}" th:text="${#temporals.format(item.regDt, 'yyyy-MM-dd')}"></td>
+
+                        <td th:if="${boardInfo.inqCntExpsrYn == 'Y'}" th:text="${item.inqCnt}"></td>
+
+                        <td th:if="${boardInfo.atchFileEnYn == 'Y'}">
+                            <i th:if="${item.attachments != null and !#lists.isEmpty(item.attachments)}" class="icon_file"></i>
+                            <span th:if="${item.attachments == null or #lists.isEmpty(item.attachments)}">-</span>
+                        </td>
+                        <td th:text="${item.openYn == 'Y' ? '공개': '비공개'}"></td>
+                        <td th:text="${item.delYn == 'N' ? '사용': '삭제'}"></td>
+                    </tr>
+                </th:block>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin_common_board = {
+        state: {
+            all: /*[[${boardPostList}]]*/ {},
+            config: /*[[${boardInfo}]]*/ {},
+            reqDto: /*[[${boardRequestDto}]]*/ {},
+            pageIndex: 1,
+            pageCnt: /*[[${boardInfo.pageCnt}]]*/ 10,
+            pagingCnt: /*[[${boardInfo.pagingCnt}]]*/ 5
+        },
+
+        getSearchStateId: function () {
+            return 'common_board_' + this.state.config.bbsOid;
+        },
+
+        init: function () {
+            const _this = this;
+
+            uiCommon.datepicker.init('#boardPostRegStartDt', {
+                onSelect: function(selectedDate, inst) {
+                    const startDate = $(this).datepicker('getDate');
+                    const endDatePicker = $('#boardPostRegEndDt');
+                    
+                    // 종료일의 최소 선택 가능 날짜를 시작일로 설정
+                    endDatePicker.datepicker('option', 'minDate', startDate);
+                    
+                    const currentEndDate = endDatePicker.datepicker('getDate');
+                    // 시작일이 종료일보다 미래일 경우, 종료일을 시작일로 강제 변경
+                    if (currentEndDate && startDate && startDate.getTime() > currentEndDate.getTime()) {
+                        endDatePicker.datepicker('setDate', startDate);
+                    }
+                    
+                    // 날짜 변경 시 자동 검색
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                }
+            });
+
+            uiCommon.datepicker.init('#boardPostRegEndDt', {
+                onSelect: function(selectedDate, inst) {
+                    const endDate = $(this).datepicker('getDate');
+                    const startDatePicker = $('#boardPostRegStartDt');
+                    
+                    // 시작일의 최대 선택 가능 날짜를 종료일로 설정
+                    startDatePicker.datepicker('option', 'maxDate', endDate);
+                    
+                    const currentStartDate = startDatePicker.datepicker('getDate');
+                    // 종료일이 시작일보다 과거일 경우, 시작일을 종료일로 강제 변경
+                    if (currentStartDate && endDate && endDate.getTime() < currentStartDate.getTime()) {
+                        startDatePicker.datepicker('setDate', endDate);
+                    }
+                    
+                    // 날짜 변경 시 자동 검색
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                }
+            });
+
+            // 저장된 검색조건 복원 또는 기본값 설정
+            const saved = SearchState.restoreForm(this.getSearchStateId(), '.search_wrap');
+            if (saved) {
+                this.state.pageIndex = saved._extra.pageIndex || 1;
+            } else {
+                const today = new Date();
+                const weekAgo = new Date();
+                weekAgo.setDate(today.getDate() - 7);
+                $('#boardPostRegStartDt').datepicker('setDate', weekAgo);
+                $('#boardPostRegEndDt').datepicker('setDate', today);
+            }
+
+            this.initEvent();
+            this.getListData();
+        },
+
+        initEvent: function () {
+            const _this = this;
+            
+         	// 공개여부 라디오 버튼 변경 시 자동 검색
+            const radioButtons = document.querySelectorAll('input[name="radio_01"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function () {
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                });
+            });
+
+            // 검색 버튼
+            const searchBtn = document.getElementById("board_btn_search");
+            if(searchBtn) {
+                searchBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                });
+            }
+
+            // 키워드 엔터키 검색
+            const keywordInput = document.getElementById("board_keyword");
+            if(keywordInput) {
+                keywordInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        _this.state.pageIndex = 1;
+                        _this.getListData();
+                    }
+                });
+            }
+
+            // 분류 변경 시 검색
+            const categorySelect = document.getElementById("search_category");
+            if(categorySelect) {
+                categorySelect.addEventListener('change', function () {
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                });
+            }
+
+            // 클릭 이벤트 위임 (테이블용 tbody, 리스트용 ul 둘 다)
+            const tbody = document.getElementById("board_tbody");
+            const ul = document.getElementById("board_ul");
+
+            if(tbody) tbody.addEventListener("click", (e) => _this.fnHandleClick(e));
+            if(ul) ul.addEventListener("click", (e) => _this.fnHandleClick(e));
+        },
+
+        fnHandleClick: function(e) {
+            const link = e.target.closest(".post_link");
+            if (!link) return;
+            e.preventDefault();
+            this.fnGoToDetail(Number(link.dataset.id));
+        },
+
+        renderPagination: function () {
+            const _this = this;
+            if (!_this.state.all) return;
+
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: _this.state.all.pages || 1,
+                blockSize: _this.state.pagingCnt,
+                onPageChange: function(page) {
+                    _this.state.pageIndex = page;
+                    _this.getListData();
+                }
+            });
+        },
+
+        getListData: async function () {
+            // 검색조건 저장
+            SearchState.saveForm(this.getSearchStateId(), '.search_wrap', { pageIndex: this.state.pageIndex });
+
+            const param = new URLSearchParams({
+                bbsOid: this.state.config.bbsOid,
+                page: this.state.pageIndex,
+                size: this.state.pageCnt,
+                menuCd: this.state.reqDto.menuCd,
+                keyword: document.getElementById('board_keyword').value.trim() || '',
+                searchType: document.getElementById('board_search_type').value.trim() || '',
+                ctgry: document.getElementById('search_category') ? document.getElementById('search_category').value : '',
+          		regStartDt: document.getElementById('boardPostRegStartDt').value || '',
+                regEndDt: document.getElementById('boardPostRegEndDt').value || '',
+                openYn: document.querySelector('input[name="radio_01"]:checked').value || '',
+                isAdmin: 'Y'
+            });
+
+            try {
+                const response = await API.get('/api/admin/board/list/filter?' + param);
+                this.state.all = response;
+                this.renderTableList();
+                this.renderPagination();
+                // 총 건수 업데이트
+                const totalCountEl = document.getElementById('total_count');
+                if (totalCountEl) {
+                    totalCountEl.textContent = response.total || 0;
+                }
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+            }
+        },
+
+        /**
+         * 테이블 렌더링
+         */
+        renderTableList: function () {
+            const _this = this;
+            const tbody = document.getElementById("board_tbody");
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+
+            const list = _this.state.all ? _this.state.all.list : [];
+            const cfg = _this.state.config;
+
+            if (!list || list.length === 0) {
+                // 기존 colspan 계산 로직 복구
+                let colCount = 3;
+                if(cfg.pstOidExpsrYn === 'Y') colCount++;
+                if(cfg.ctgryYn === 'Y') colCount++;
+                if(cfg.wrtrExpsrYn === 'Y') colCount++;
+                if(cfg.wrtDtExpsrYn === 'Y') colCount++;
+                if(cfg.ddlnDtExpsrYn === 'Y') colCount++;
+                if(cfg.prgrsSttsExpsrYn === 'Y') colCount++;
+                if(cfg.atchFileEnYn === 'Y') colCount++;
+                if(cfg.inqCntExpsrYn === 'Y') colCount++;
+
+                tbody.innerHTML = `<tr><td class="tac" colspan="${colCount}">조회된 결과가 없습니다.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            list.forEach(function (item) {
+                let rowHtml = '<tr>';
+
+                // 번호
+                if (cfg.pstOidExpsrYn === 'Y') {
+                    rowHtml += `<td><span>${item.bbsPstOid}</span></td>`;
+                }
+                // 분류
+                if (cfg.ctgryYn === 'Y') {
+                    rowHtml += `<td>${item.ctgry || ''}</td>`;
+                }
+                // 제목
+                rowHtml += `<td class="tal"><a href="javascript:" class="a_link post_link" data-id="${item.bbsPstOid}">${item.bbsPstTtl}</a></td>`;
+                // 작성자
+                if (cfg.wrtrExpsrYn === 'Y') {
+                    rowHtml += `<td>${item.wrtrNm || ''}</td>`;
+                }
+                // 마감일
+                if (cfg.ddlnDtExpsrYn === 'Y') {
+                    let deadlineDate = '-';
+                    if (cfg.bbsSubSeCd === 'RECRUITMENT' || cfg.bbsSubSeCd === 'BID_ANNOUNCEMENT') {
+                        deadlineDate = item.endDt ? common.formatDate(item.endDt) : '-';
+                    } else {
+                        deadlineDate = item.ddlnDt ? common.formatDate(item.ddlnDt) : '-';
+                    }
+                    rowHtml += `<td><span>${deadlineDate}</span></td>`;
+                }
+                // 진행상태
+                if (cfg.prgrsSttsExpsrYn === 'Y') {
+                    rowHtml += `<td>${item.stts || ''}</td>`;
+                }
+                // 등록일
+                if (cfg.wrtDtExpsrYn === 'Y') {
+                    rowHtml += `<td>${common.formatDate(item.regDt)}</td>`;
+                }
+                // 조회수
+                if (cfg.inqCntExpsrYn === 'Y') {
+                    rowHtml += `<td>${item.inqCnt || 0}</td>`;
+                }
+                // 첨부파일
+                if (cfg.atchFileEnYn === 'Y') {
+                    const hasAttachment = item.attachments && item.attachments.length > 0;
+                    rowHtml += hasAttachment ? `<td><i class="icon_file"></i></td>` : `<td><span>-</span></td>`;
+                }
+
+                rowHtml += `<td>${item.openYn == 'Y'? '공개' : '비공개' || ''}</td>`;
+                rowHtml += `<td>${item.delYn == 'N'? '사용' : '삭제' || ''}</td>`;
+
+                rowHtml += '</tr>';
+                html += rowHtml;
+            });
+            tbody.innerHTML = html;
+        },
+
+        fnGoToDetail: async function (bbsPstOid) {
+            const _this = this;
+            await _this.updateViewCount(bbsPstOid);
+            const menuCd = _this.state.reqDto.menuCd;
+            location.href = `${contextPath}/admin/board/post?menuCd=${menuCd}&bbsOid=${_this.state.config.bbsOid}&bbsPstOid=${bbsPstOid}`;
+        },
+
+        updateViewCount: async function (bbsPstOid) {
+            if(!bbsPstOid) return;
+            const _this = this;
+
+            try {
+                const param = {
+                    bbsPstOid: bbsPstOid,
+                    menuCd: _this.state.reqDto.menuCd
+                }
+
+                await API.patch('/api/admin/board/view-count', param);
+            } catch (error) {
+                console.error('조회수 증가 실패:', error);
+            }
+        }
+    }
+    $(document).ready(function () {
+        admin_common_board.init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 본인인증 완료</title>
+</head>
+<body>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // 중복 실행 방지 플래그
+    if (window.adminAuthCompleted) {
+        window.close();
+    } else {
+        window.adminAuthCompleted = true;
+
+        try {
+            if (window.opener && !window.opener.closed) {
+                // 부모창의 콜백 함수 호출
+                if (typeof window.opener.adminNiceAuthCallback === 'function') {
+                    window.opener.adminNiceAuthCallback();
+                } else {
+                    // 콜백 함수가 없으면 직접 이동
+                    window.opener.location.href = /*[[${#httpServletRequest.contextPath}]]*/ + '/admin/main';
+                }
+            }
+        } catch (e) {
+            // 오류 발생 시에도 창은 닫음
+        }
+
+        // 즉시 창 닫기
+        window.close();
+    }
+    /*]]>*/
+</script>
+</body>
+</html>

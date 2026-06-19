@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>통계 > 월별 주요 통계</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div id="admin702SearchWrap" class="search_wrap s_type">
+        <ul>
+            <li>
+                <label for="datepicker1">기간</label>
+                <span class="datepicker"><input type="text" value="" id="admin702ToDate"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span>
+            </li>
+        </ul>
+        <div class="s_wrap"><a id="admin702SearchBtn" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_top_btn">
+            <a href="javascript:;" id="admin702ExcelDownloadBtn" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+        </div>
+        <div class="table_layout02 list_type mt10 mb20">
+            <table>
+                <caption>월별 주요 통계 테이블</caption>
+                <colgroup>
+                    <col style="width: auto;">
+                    <col style="width: 13%;">
+                    <col style="width: 13%;">
+                    <col style="width: 13%;">
+                    <col style="width: 13%;">
+                    <col style="width: 13%;">
+                    <col style="width: 13%;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col" rowspan="2">구분</th>
+                    <th scope="col" rowspan="2">방문자수<br>(일평균)</th>
+                    <th scope="col" colspan="3">질의응답 수</th>
+                    <th scope="col" colspan="2">질의응답일</th>
+                </tr>
+                <tr>
+                    <th scope="col">등록질의</th>
+                    <th scope="col">초안작성</th>
+                    <th scope="col">최종답변</th>
+                    <th scope="col">초안작성</th>
+                    <th scope="col">최종답변</th>
+                </tr>
+                </thead>
+                <tbody id="admin702QnaStatisticsContainer">
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin702 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: {}
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+            
+         	// 월별 Datepicker 초기화
+            _this.initDatePickers();            
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            document.getElementById("admin702SearchBtn").addEventListener("click", async function(e) {
+                e.preventDefault();
+                await _this.fnGetMonthlyQnaStatisticsData();
+            });
+
+            document.getElementById("admin702ExcelDownloadBtn").addEventListener("click", async function(e) {
+                e.preventDefault();
+                await _this.fnDownloadExcel();
+            });
+
+            // 이번달
+   	        const today = new Date();
+            const todayStr = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0');
+   	        $('#admin702ToDate').val(todayStr);
+
+            _this.fnGetMonthlyQnaStatisticsData();
+        },
+        
+        /**
+         * Datepicker 초기화
+         */
+        initDatePickers: function() {
+            const _this = this;
+            
+            // 'month' 옵션 가져오기 (admin708은 'year'였음)
+            const monthOptions = uiCommon.monthpicker.getDefaultOptions('month');
+            
+            // 현재 입력된 값(또는 이번 달)으로 시작 날짜 설정
+            let currentVal = document.getElementById('admin702ToDate').value;
+            if (!currentVal) {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                currentVal = `${year}-${month}`;
+                document.getElementById('admin702ToDate').value = currentVal;
+            }
+            
+            // Date 객체 변환 (YYYY-MM -> Date)
+            const [y, m] = currentVal.split('-').map(Number);
+            monthOptions.startDate = new Date(y, m - 1, 1);
+            monthOptions.selectedDates = [new Date(y, m - 1, 1)];
+
+            // 날짜 선택 시 값 설정 후 조회 함수 호출
+            monthOptions.onSelect = function({date, formattedDate}) {
+                document.getElementById('admin702ToDate').value = formattedDate;
+                // 월 변경 시 자동 조회
+                _this.fnGetMonthlyQnaStatisticsData(); 
+            };
+            
+            // Datepicker 적용
+            uiCommon.monthpicker.init('#admin702ToDate', monthOptions);
+            
+            // 초기 로딩 시 데이터 조회
+            _this.fnGetMonthlyQnaStatisticsData();
+        },        
+
+        fnGetMonthlyQnaStatisticsData: async function(){
+            const _this = this;
+            const toDate = document.getElementById('admin702ToDate').value;
+            
+            const params = {
+                toDate: toDate
+            };
+
+            const response = await API.get('/api/admin/admin702/monthly-qna-statistics', params,  {showLoading: true});
+            _this.state.all = response || {};
+            _this.renderTable();
+        },
+
+        fnDownloadExcel: async function() {
+            const _this = this;
+            const reason = await uiCommon.fnShowPromptModal('엑셀 다운로드 받으시겠습니까?', {
+                qnaTtl: '엑셀 다운로드 요청',
+                defaultValue: '',
+                placeholder: '사유 입력',
+            });
+
+            
+            // 취소 시 조용히 종료
+            if (reason === null) {
+                return;
+            }
+
+            // 빈 값 체크
+            if (reason.trim() === '') {
+                uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                return;
+            }
+
+            // 2자 미만 체크
+            if (reason.trim().length < 2) {
+                uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                return;
+            }
+            
+            const param = { 
+                toDate: $("#admin702ToDate").val(),
+                reason: reason.trim()
+            };
+            
+            const response = await API.excelDownload("/api/admin/admin702/excel/export", param,  {showLoading: true});
+        },
+
+        renderTable: function(){
+            const _this = this;
+            const tbody = document.getElementById("admin702QnaStatisticsContainer");
+            tbody.innerHTML = "";
+
+            const formatNumberWithCommas = (numStr) => {
+                if (numStr === null || numStr === undefined || numStr === '' || numStr === '-') return '-';
+                if (typeof numStr !== 'string') numStr = String(numStr);
+
+                if (numStr.endsWith('%') || numStr === 'N/A' || numStr === 'Error') {
+                    return numStr;
+                }
+                
+                const numberValue = parseFloat(numStr.replace(/,/g, ''));
+                if (isNaN(numberValue)) {
+                    return numStr; 
+                }
+
+                return numberValue.toLocaleString('ko-KR');
+            };
+
+            const pageItems = _this.state.all; 
+
+            if(Object.keys(pageItems).length === 0){
+                const row = document.createElement("tr");
+                const col = document.createElement("td")
+                col.setAttribute("colspan", 7)
+                col.setAttribute("class", "tac")
+                col.textContent = "조회된 결과가 없습니다.";
+                row.appendChild(col);
+                tbody.appendChild(row);
+                return;
+            }
+
+            // 정렬 순서
+            const displayOrderKeys = [
+                "YEARLY", 
+                "CURRENT", 
+                "PREVIOUS", 
+                "MOM_CHANGE", 
+                "LAST_YEAR", 
+                "YOY_CHANGE"
+            ];
+            
+            for (const displayOrderKey of displayOrderKeys) {
+                // 아이템 추출
+                const item = pageItems[displayOrderKey];
+                if (!item) {
+                    continue; 
+                }
+
+                const row = document.createElement("tr");
+                // MOM_CHANGE, YOY_CHANGE 행은 배경색 추가
+                if(displayOrderKey === 'MOM_CHANGE' || displayOrderKey === 'YOY_CHANGE'){
+                    row.classList.add("bg_red");
+                }
+
+                // 구분 (Month Group / Label) Column
+                const monthGrpCol = document.createElement("td");
+                monthGrpCol.classList.add("tac");
+                // MOM_CHANGE, YOY_CHANGE 행은 굵은 텍스트로 표시
+                if(displayOrderKey === 'MOM_CHANGE' || displayOrderKey === 'YOY_CHANGE'){
+                    const strong = document.createElement("strong");
+                    strong.textContent = item.monthGrp;
+                    monthGrpCol.appendChild(strong);
+                } else {
+                    monthGrpCol.textContent = item.monthGrp;
+                }
+                row.appendChild(monthGrpCol);
+
+                const visitorCol = document.createElement("td");
+                visitorCol.classList.add("tac");
+                const vistorText = (formatNumberWithCommas(item.visitor || 0) + "명 ") + 
+                                         ("(" + formatNumberWithCommas(item.dailyVisitorAverage || 0) + "명)");
+                // MOM_CHANGE, YOY_CHANGE 행은 굵은 텍스트 및 값에 따라 색깔로 표시
+                if(displayOrderKey === 'MOM_CHANGE' || displayOrderKey === 'YOY_CHANGE'){
+                    const strong = document.createElement("strong");
+                    strong.textContent = vistorText;
+                    visitorCol.appendChild(strong);
+                    if(item.visitor < 0){
+                        strong.classList.add("c_red");
+                    } else if(item.visitor > 0) {
+                        strong.classList.add("c_blue");
+                    }
+                } else {
+                    visitorCol.textContent = vistorText;
+                }
+                row.appendChild(visitorCol);
+                row.appendChild(createTableCell(formatNumberWithCommas(item.questionCount), displayOrderKey, "건"));
+                row.appendChild(createTableCell(formatNumberWithCommas(item.draftCount), displayOrderKey, "건"));
+                row.appendChild(createTableCell(formatNumberWithCommas(item.finalCount), displayOrderKey, "건"));
+                row.appendChild(createTableCell(formatNumberWithCommas(item.draftAverageDate), displayOrderKey, "일"));
+                row.appendChild(createTableCell(formatNumberWithCommas(item.finalAverageDate), displayOrderKey, "일"));
+
+                tbody.appendChild(row);
+            }
+
+            // 공통 테이블 셀 생성 함수
+            function createTableCell(text, displayOrderKey, additionalText = '') {
+                const td = document.createElement("td");
+                td.classList.add("tac");
+                const textValue = (Number(text) || 0);
+
+                // MOM_CHANGE, YOY_CHANGE 행은 굵은 텍스트 및 값에 따라 색깔+기호추가 표시
+                if(displayOrderKey === 'MOM_CHANGE' || displayOrderKey === 'YOY_CHANGE'){
+                    const span = document.createElement("span");
+                    span.textContent = "";
+
+                    if(textValue < 0){
+                        span.textContent = "▼ ";
+                        td.classList.add("c_red");
+                    } else {
+                        span.textContent = "▲ ";
+                        td.classList.add("c_blue");
+                    }
+                    td.appendChild(span);
+
+                    const strong = document.createElement("strong");
+                    strong.textContent = (textValue + additionalText);
+                    
+                    td.appendChild(strong);
+                } else {
+                    td.textContent = (textValue + additionalText);
+                }
+                return td;
+            }
+        }
+
+
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        admin702.init();
+    });
+</script>
+</body>
+</html>

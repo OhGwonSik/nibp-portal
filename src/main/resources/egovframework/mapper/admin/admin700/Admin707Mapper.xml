@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin700.mapper.Admin707Mapper">
+	
+	<select id="selectQnaCategoryStat" resultType="egovframework.admin.admin700.domain.QnaCategoryStatDTO">
+        /* 통계 대상 게시판 및 기간 내 데이터 추출 (CTE) */
+        WITH TargetBoard AS (
+            /* 통계 설정(Y)된 QnA 게시판 식별 (생명윤리 QNA)*/
+            SELECT bbs_oid
+            FROM ${schema}.bbs
+            WHERE bbs_se_cd = 'QNA'
+              AND stats_yn = 'Y'
+              AND use_yn = 'Y'
+        ),
+        RawData AS (
+            SELECT
+                /* 카테고리가 없거나 공백이면 빈 문자열로 통일 -> '미지정' 집계용 */
+                IFNULL(p.ctgry, '') AS ctgry,
+                
+                /* 답변 여부 확인 (1:있음, 0:없음) - EXISTS 사용으로 성능 최적화 */
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM ${schema}.bbs_pst ans
+                        WHERE ans.up_bbs_pst_oid = p.bbs_pst_oid 
+                          AND ans.del_yn = 'N'
+                    ) THEN 1 
+                    ELSE 0 
+                END AS has_answer,
+                
+                /* 만족도 (LIKE/DISLIKE) */
+                s.chc AS satisfaction
+            FROM 
+                ${schema}.bbs_pst p
+                INNER JOIN TargetBoard b ON p.bbs_oid = b.bbs_oid
+                LEFT JOIN ${schema}.qna_dgstfn_evl s 
+                    ON p.bbs_pst_oid = s.tbl_oid
+                    AND s.tbl_nm = 'bbs_pst'
+                    AND s.stts = 'COMPLETED'
+            WHERE 
+                p.del_yn = 'N'
+                AND p.up_bbs_pst_oid IS NULL /* 질문글만 대상 */
+                
+                /* 날짜 검색 YYYY-MM 파라미터를 해당 월의 전체 기간으로 변환 */
+                AND p.reg_dt <![CDATA[ >= ]]> STR_TO_DATE(CONCAT(#{searchDate}, '-01 00:00:00'), '%Y-%m-%d %H:%i:%s')
+                AND p.reg_dt <![CDATA[ <= ]]> STR_TO_DATE(CONCAT(LAST_DAY(STR_TO_DATE(CONCAT(#{searchDate}, '-01'), '%Y-%m-%d')), ' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+        )
+
+        /* 구분별 집계 */
+        
+        /* 질의 (전체 질문 수) */
+        SELECT 
+            '질의' AS gubun,
+            COUNT(*) AS totalCnt,
+            IFNULL(SUM(CASE WHEN ctgry = '연구공통' THEN 1 END), 0) AS researchCommon,
+            IFNULL(SUM(CASE WHEN ctgry = '인간대상연구' THEN 1 END), 0) AS humanSubject,
+            IFNULL(SUM(CASE WHEN ctgry = '인체유래물연구' THEN 1 END), 0) AS humanDerived,
+            IFNULL(SUM(CASE WHEN ctgry = '인체유래물은행' THEN 1 END), 0) AS humanBank,
+            IFNULL(SUM(CASE WHEN ctgry = '배아 등의 생성 및 관리' THEN 1 END), 0) AS embryoCreate,
+            IFNULL(SUM(CASE WHEN ctgry = '배아 등을 이용한 연구' THEN 1 END), 0) AS embryoResearch,
+            IFNULL(SUM(CASE WHEN ctgry = '유전자검사 및 치료' THEN 1 END), 0) AS geneTest,
+            IFNULL(SUM(CASE WHEN ctgry = '기관위원회 운영' THEN 1 END), 0) AS committee,
+            IFNULL(SUM(CASE WHEN ctgry = '기타' THEN 1 END), 0) AS etc,
+            IFNULL(SUM(CASE WHEN ctgry = '' THEN 1 END), 0) AS unspecified
+        FROM RawData
+
+        UNION ALL
+
+        /* 응답 (답변이 달린 질문 수) */
+        SELECT 
+            '응답' AS gubun,
+            IFNULL(SUM(has_answer), 0) AS totalCnt,
+            IFNULL(SUM(CASE WHEN ctgry = '연구공통' AND has_answer = 1 THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '인간대상연구' AND has_answer = 1 THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '인체유래물연구' AND has_answer = 1 THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '인체유래물은행' AND has_answer = 1 THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '배아 등의 생성 및 관리' AND has_answer = 1 THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '배아 등을 이용한 연구' AND has_answer = 1 THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '유전자검사 및 치료' AND has_answer = 1 THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '기관위원회 운영' AND has_answer = 1 THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '기타' AND has_answer = 1 THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '' AND has_answer = 1 THEN 1 END), 0)
+        FROM RawData
+
+        UNION ALL
+
+        /* 만족 (LIKE) */
+        SELECT 
+            '만족' AS gubun,
+            IFNULL(SUM(CASE WHEN satisfaction = 'LIKE' THEN 1 END), 0) AS totalCnt,
+            IFNULL(SUM(CASE WHEN ctgry = '연구공통' AND satisfaction = 'LIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '인간대상연구' AND satisfaction = 'LIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '인체유래물연구' AND satisfaction = 'LIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '인체유래물은행' AND satisfaction = 'LIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '배아 등의 생성 및 관리' AND satisfaction = 'LIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '배아 등을 이용한 연구' AND satisfaction = 'LIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '유전자검사 및 치료' AND satisfaction = 'LIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '기관위원회 운영' AND satisfaction = 'LIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '기타' AND satisfaction = 'LIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '' AND satisfaction = 'LIKE' THEN 1 END), 0)
+        FROM RawData
+
+        UNION ALL
+
+        /* 불만족 (DISLIKE) */
+        SELECT 
+            '불만족' AS gubun,
+            IFNULL(SUM(CASE WHEN satisfaction = 'DISLIKE' THEN 1 END), 0) AS totalCnt,
+            IFNULL(SUM(CASE WHEN ctgry = '연구공통' AND satisfaction = 'DISLIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '인간대상연구' AND satisfaction = 'DISLIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '인체유래물연구' AND satisfaction = 'DISLIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '인체유래물은행' AND satisfaction = 'DISLIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '배아 등의 생성 및 관리' AND satisfaction = 'DISLIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '배아 등을 이용한 연구' AND satisfaction = 'DISLIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '유전자검사 및 치료' AND satisfaction = 'DISLIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '기관위원회 운영' AND satisfaction = 'DISLIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '기타' AND satisfaction = 'DISLIKE' THEN 1 END), 0),
+            IFNULL(SUM(CASE WHEN ctgry = '' AND satisfaction = 'DISLIKE' THEN 1 END), 0)
+        FROM RawData
+    </select>
+</mapper>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_board_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>Q&A 답변 관리</title>
+</head>
+<body>
+<div layout:fragment="admin_board_content" class="sub_cont_wrap">
+
+    <h3 class="stit">Q&amp;A 문의</h3>
+    <div class="table_layout02 has_editor">
+        <table>
+            <caption>Q&amp;A 문의</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row">제목</th>
+                <td colspan="3" th:text="${post.bbsPstTtl}"></td>
+            </tr>
+            <tr>
+                <th scope="row">분류</th>
+                <td th:text="${post.ctgry}"></td>
+                <th scope="row" class="bl">등록일시</th>
+                <td th:text="${#temporals.format(post.regDt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            </tr>
+            <tr>
+                <th scope="row">공개여부</th>
+                <td>
+                    <span th:if="${post.prvtPstYn == 'Y'}">비공개</span>
+                    <span th:unless="${post.prvtPstYn == 'Y'}">공개</span>
+                </td>
+                <th scope="row" class="bl">상단고정 기간</th>
+                <td>
+                    <span th:if="${post.bgngDt != null}"
+                          th:text="${#temporals.format(post.bgngDt, 'yyyy-MM-dd')}"></span>
+                    <span th:if="${post.bgngDt != null and post.endDt != null}"> ~ </span>
+                    <span th:if="${post.endDt != null}"
+                          th:text="${#temporals.format(post.endDt, 'yyyy-MM-dd')}"></span>
+                    <span th:if="${post.bgngDt == null and post.endDt == null}">-</span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">내용</th>
+                <td colspan="3">
+                    <div style="min-height: 100px;" th:utext="${post.bbsPstCn}"></div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_wrap mb30">
+        <a href="javascript:;" id="btnList" class="btn_basic bg_type01">목록</a>
+        <a href="javascript:;" id="btnDeleteQuestion" class="btn_basic line_type02">삭제</a>
+    </div>
+
+    <h3 class="stit">Q&amp;A 답변</h3>
+    <div class="table_layout02">
+        <table>
+            <caption>Q&amp;A 답변</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row">답변제목</th>
+                <td>
+                    <input type="text" id="answerTitle" class="w100" title="답변제목 입력"
+                        th:value="${post.answers != null ? post.answers.bbsPstTtl : ''}">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="answerEditor">답변내용</label></th>
+                <td>
+                    <textarea name="answerEditor" id="answerEditor" rows="10"
+                        th:text="${post.answers != null ? post.answers.bbsPstCn : ''}"></textarea>
+                </td>
+            </tr>
+            <tr th:if="${post.answers != null}">
+                <th scope="row">답변일시</th>
+                <td th:text="${#temporals.format(post.answers.regDt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_wrap">
+        <a href="javascript:;" id="btnSaveAnswer" class="btn_basic bg_type01">저장</a>
+    </div>
+
+</div>
+
+<script layout:fragment="board_scripts" th:inline="javascript" type="text/javascript">
+    const admin807_detail2 = {
+        state: {
+            boardInfo: /*[[${boardInfo}]]*/ {},
+            question: /*[[${post}]]*/ {},         // 질문 데이터
+            ansCn: /*[[${post.answers}]]*/ null,  // 답변 데이터 (없으면 null)
+            targetBoardMenu: /*[[${targetBoardMenu}]]*/ {},
+            menuCd: ''
+        },
+
+        init: function () {
+           	const params = new URLSearchParams(window.location.search);
+        	const menuCd = params.get("menuCd");
+        	this.state.menuCd = menuCd;
+        	
+            this.initEditor();
+            this.initEvent();
+        },
+
+        initEditor: function () {
+            if (typeof CommonCKEditor !== 'undefined') {
+                CommonCKEditor.init({editorId: 'answerEditor'});
+            }
+        },
+
+        initEvent: function () {
+            const _this = this;
+
+            // 목록 이동
+            document.getElementById("btnList").addEventListener("click", () => {
+                const menuCd = this.state.menuCd;
+                location.href = `${contextPath}/admin/board/admin807-list1?menuCd=${menuCd}&bbsOid=${this.state.boardInfo.bbsOid}`;
+            });
+
+            // 문의 삭제
+            document.getElementById("btnDeleteQuestion").addEventListener("click", () => {
+                _this.fnDeleteQuestion();
+            });
+
+            // 답변 저장 (등록/수정)
+            document.getElementById("btnSaveAnswer").addEventListener("click", () => {
+                _this.fnSaveAnswer();
+            });
+        },
+
+        // 답변 저장 로직 (인서트 공통이라 formData로 전송해야함)
+        fnSaveAnswer: async function () {
+            const title = document.getElementById("answerTitle").value.trim();
+            const content = typeof CommonCKEditor !== 'undefined'
+                ? CommonCKEditor.getContent('answerEditor')
+                : document.getElementById("answerEditor").value;
+
+            if (!title) return uiCommon.fnShowAlertModal("답변 제목을 입력해주세요.");
+            if (!content) return uiCommon.fnShowAlertModal("답변 내용을 입력해주세요.");
+
+            const isUpdate = (this.state.ansCn != null);
+
+            const payload = {
+                bbsOid: this.state.boardInfo.bbsOid,
+                bbsPstTtl: title,
+                bbsPstCn: content,
+                upBbsPstOid: this.state.question.bbsPstOid,
+                prvtPstYn: this.state.question.prvtPstYn,
+                menuCd: this.state.menuCd
+            };
+
+            if (isUpdate) {
+                payload.bbsPstOid = this.state.ansCn.bbsPstOid;
+            }
+
+            // FormData 생성
+            const formData = new FormData();
+
+            formData.append("data", new Blob([JSON.stringify(payload)], {type: "application/json"}));
+
+
+            const url = isUpdate
+                ? '/api/common/board/post/update'
+                : '/api/common/board/post/insert';
+
+            try {
+                await API.upload(url, formData);
+
+                uiCommon.fnShowAlertModal("답변이 저장되었습니다.", () => {
+                    location.reload();
+                });
+            } catch (e) {
+                console.error(e);
+                uiCommon.fnShowAlertModal("저장 중 오류가 발생했습니다.");
+            }
+        },
+
+        // 문의글 삭제
+        fnDeleteQuestion: function () {
+            uiCommon.fnShowConfirmModal("문의글을 삭제하시겠습니까?\n(등록된 답변도 함께 삭제됩니다)", async () => {
+                uiCommon.fnHideConfirmModal();
+                const menuCd = this.state.menuCd;
+                const deleteList = [];
+
+                // 질문글 추가 (무조건 존재)
+                deleteList.push({
+                    bbsOid: this.state.boardInfo.bbsOid,
+                    bbsPstOid: this.state.question.bbsPstOid,
+                    menuCd: this.state.menuCd
+                });
+
+                // 답변글 추가 (존재할 경우에만)
+                if (this.state.ansCn && this.state.ansCn.bbsPstOid) {
+                    deleteList.push({
+                        bbsOid: this.state.boardInfo.bbsOid,
+                        bbsPstOid: this.state.ansCn.bbsPstOid,
+                        menuCd: menuCd
+                    });
+                }
+
+                try {
+                    await API.patch('/api/common/board/delete', deleteList);
+
+                    uiCommon.fnShowAlertModal("삭제되었습니다.", () => {
+                        location.href = `${contextPath}/admin/board/admin807-list1?menuCd=${menuCd}&bbsOid=${this.state.boardInfo.bbsOid}`;
+                    });
+                } catch (e) {
+                    console.error(e);
+                    uiCommon.fnShowAlertModal("삭제 중 오류가 발생했습니다.");
+                }
+            });
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+        admin807_detail2.init();
+    });
+</script>
+</body>
+</html>

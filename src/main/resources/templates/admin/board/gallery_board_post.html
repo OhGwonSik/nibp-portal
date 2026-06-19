@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${boardInfo != null ? boardInfo.bbsNm : '게시판'} + ' > 상세정보'">게시판 상세정보</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02 has_editor">
+            <table>
+                <caption th:text="${boardInfo != null ? boardInfo.bbsNm : '게시판'} + ' 상세'">게시판 상세</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr th:if="${boardInfo.wrtDtExpsrYn == 'Y'}">
+                    <th scope="row">등록일시</th>
+                    <td colspan="3" th:text="${#temporals.format(post.regDt, 'yyyy-MM-dd HH:mm')}"></td>
+                </tr>
+
+                <tr>
+                    <th scope="row">제목</th>
+                    <td colspan="3">
+                        <span th:if="${boardInfo.ctgryYn == 'Y' and post.ctgry != null}"
+                              th:text="'[' + ${post.ctgry} + '] '"></span>
+                        <span th:text="${post.bbsPstTtl}"></span>
+                    </td>
+                </tr>
+
+                <tr th:if="${boardInfo.wrtrExpsrYn == 'Y' or boardInfo.inqCntExpsrYn == 'Y'}">
+                    <th:block th:if="${boardInfo.wrtrExpsrYn == 'Y' and boardInfo.inqCntExpsrYn == 'Y'}">
+                        <th scope="row">작성자</th>
+                        <td th:text="${post.wrtrNm}">-</td>
+                        <th scope="row" class="bl">조회수</th>
+                        <td th:text="${post.inqCnt}">0</td>
+                    </th:block>
+                    <th:block th:if="${boardInfo.wrtrExpsrYn == 'Y' and boardInfo.inqCntExpsrYn != 'Y'}">
+                        <th scope="row">작성자</th>
+                        <td colspan="3" th:text="${post.wrtrNm}">-</td>
+                    </th:block>
+                    <th:block th:if="${boardInfo.wrtrExpsrYn != 'Y' and boardInfo.inqCntExpsrYn == 'Y'}">
+                        <th scope="row">조회수</th>
+                        <td colspan="3" th:text="${post.inqCnt}">0</td>
+                    </th:block>
+                </tr>
+
+                <tr>
+                    <th scope="row">내용</th>
+                    <td colspan="3" th:utext="${post.bbsPstCn}" class="post-content"></td>
+                </tr>
+
+                <tr>
+                    <th scope="row">썸네일</th>
+                    <td colspan="3">
+                        <th:block th:if="${post.thmbPath != null and post.thmbPath != ''}">
+                            <img th:src="@{|${basicFilePath}${post.thmbPath}|}" alt="썸네일 이미지" style="max-width: 200px; height: auto; border: 1px solid #ddd;">
+                        </th:block>
+                        <span th:if="${post.thmbPath == null or post.thmbPath == ''}">-</span>
+                    </td>
+                </tr>
+
+                <tr th:if="${boardInfo.atchFileEnYn == 'Y'}">
+                    <th scope="row">첨부파일</th>
+                    <td colspan="3">
+                        <th:block th:if="${fileList != null and !fileList.isEmpty()}">
+                            <th:block th:each="file : ${fileList}">
+                                <th:block th:if="${file.thmbYn == 'N'}">
+                                    <a th:href="@{|${basicFilePath}${file.strgFilePath}/${file.strgFileNm}|}"
+                                       class="a_link"
+                                       th:attr="download=${file.orgnlFileNm}"
+                                       th:text="${file.orgnlFileNm}"></a>
+                                </th:block>
+                            </th:block>
+                        </th:block>
+
+                        <th:block th:if="${fileList == null or #lists.isEmpty(fileList.?[thmbYn == 'N'])}">
+                            <span>-</span>
+                        </th:block>
+                    </td>
+                </tr>
+
+                <tr th:if="${fileList != null and !fileList.isEmpty() and fileList[0].imgSbstTxtCn != null and fileList[0].imgSbstTxtCn != ''}">
+                    <th scope="row">첫 번째 이미지 대체 텍스트</th>
+                    <td colspan="3" th:text="${fileList[0].imgSbstTxtCn}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="btn_wrap">
+            <a href="javascript:;" id="btn_list" class="btn_basic bg_type01">목록</a>
+            <a href="javascript:;" id="btn_update" class="btn_basic bg_type02">수정</a>
+            <a href="javascript:;" id="btn_delete" class="btn_basic line_type02">삭제</a>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript">
+    const admin_gallery_board_post = {
+        state: {
+            config: /*[[${boardInfo}]]*/ {},
+            post: /*[[${post}]]*/ {},
+            fileList: /*[[${fileList}]]*/ {},
+            reqDto: /*[[${boardRequestDto}]]*/ {}
+        },
+
+        init: function () {
+            this.initEvent();
+        },
+
+        initEvent: function () {
+            const _this = this;
+
+            // 목록 버튼
+            $('#btn_list').on('click', function (e) {
+                e.preventDefault();
+                _this.fnGoToListPage();
+            });
+
+            // 수정 버튼
+            $('#btn_update').on('click', function (e) {
+                e.preventDefault();
+                const bbsPstOid = _this.state.post.bbsPstOid;
+                const bbsOid = _this.state.config.bbsOid;
+                const menuCd = _this.state.reqDto.menuCd;
+                window.location.href = `${contextPath}/admin/board/write?bbsOid=${bbsOid}&menuCd=${menuCd}&bbsPstOid=${bbsPstOid}`;
+            });
+
+            // 삭제 버튼
+            $('#btn_delete').on('click', async function (e) {
+                e.preventDefault();
+
+                uiCommon.fnShowConfirmModal('삭제하시겠습니까?', async () => {
+                    uiCommon.fnHideConfirmModal();
+                    const param = {
+                        bbsOid : _this.state.config.bbsOid,
+                        bbsPstOid: _this.state.post.bbsPstOid
+                    }
+
+                    if (!param.bbsPstOid) {
+                        uiCommon.fnShowAlertModal('게시글 번호가 없습니다.');
+                        return;
+                    }
+
+                    try {
+                        await API.patch('/api/admin/board/delete', [param]);
+                        uiCommon.fnShowAlertModal('삭제되었습니다.', () => _this.fnGoToListPage());
+                    } catch (error) {
+                        console.error('삭제 실패:', error);
+                        uiCommon.fnShowAlertModal('삭제에 실패했습니다.');
+                    }
+                });
+            });
+        },
+
+        fnGoToListPage: function () {
+            const bbsOid = this.state.config.bbsOid;
+            const menuCd = this.state.reqDto.menuCd;
+            window.location.href = `${contextPath}/admin/board?bbsOid=${bbsOid}&menuCd=${menuCd}`;
+        }
+    };
+
+    $(document).ready(function() {
+        admin_gallery_board_post.init();
+    });
+</script>
+</body>
+</html>

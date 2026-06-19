@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nibp-portal
+    ports:
+      - "8082:8082"
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8082
+      TZ: Asia/Seoul
+
+      JAVA_OPTS: >-
+        -Xms512m
+        -Xmx2048m
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -Duser.timezone=Asia/Seoul
+        -Dfile.encoding=UTF-8
+
+    volumes:
+      - /mnt/disk/logs/portal:/app/logs
+      - /mnt/disk/files/portal:/app/files
+      - /mnt/disk/temp/portal:/app/temp  # CKEditor 임시 파일
+      - /mnt/disk/temp-chunk/portal:/app/temp-chunk  # 청크 업로드 임시 파일
+    restart: unless-stopped
+    networks:
+      - nibp-network
+networks:
+  nibp-network:
+    name: nibp-network
+    driver: bridge

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin600.mapper.Admin618Mapper">
+	
+	<!--팝업존 목록 조회-->
+	<select id="selectAdmin618List" parameterType="egovframework.admin.admin600.domain.Admin618FilterDTO" resultType="egovframework.admin.admin600.domain.Admin618VO">
+		SELECT
+            popup_zone_oid
+			, popup_zone_nm
+			, smry
+			, popup_zone_link
+			, thmb_path
+			, inq_cnt
+			, open_yn
+			, use_yn
+			, reg_id
+			, reg_dt
+			, mdfcn_id
+			, mdfcn_dt
+		FROM ${schema}.popup_zone
+		<where>
+			<if test="keyword != null and keyword != ''">
+				AND (
+					popup_zone_oid LIKE CONCAT('%', #{keyword}, '%')
+					OR popup_zone_nm LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+			<if test="openYn != null and openYn != ''">
+				AND open_yn = #{openYn}
+			</if>
+			<if test="regDtSt != null and regDtEd != null">
+				AND DATE_FORMAT(reg_dt, '%Y-%m-%d') <![CDATA[ >= ]]> #{regDtSt}
+				AND DATE_FORMAT(reg_dt, '%Y-%m-%d') <![CDATA[ <= ]]> #{regDtEd}
+			</if>
+		</where>
+	</select>
+
+	<select id="selectAdmin618" parameterType="Long" resultType="egovframework.admin.admin600.domain.Admin618VO">
+		SELECT
+			popup_zone_oid
+			 , popup_zone_nm
+			 , smry
+			 , popup_zone_link
+			 , thmb_path
+			 , inq_cnt
+			 , open_yn
+			 , use_yn
+			 , reg_id
+			 , reg_dt
+			 , mdfcn_id
+			 , mdfcn_dt
+		FROM ${schema}.popup_zone
+		WHERE popup_zone_oid = #{popupZoneOid}
+	</select>
+
+	<!-- 팝업존 등록 -->
+	<insert id="insertAdmin618" parameterType="egovframework.admin.admin600.domain.Admin618DTO"
+        useGeneratedKeys="true" keyProperty="popupZoneOid">
+		INSERT INTO ${schema}.popup_zone (
+			popup_zone_nm
+			, smry
+			, popup_zone_link
+			, thmb_path
+			, inq_cnt
+			, open_yn
+			, use_yn
+			, reg_id
+			, reg_dt
+			, mdfcn_id
+			, mdfcn_dt
+		) VALUES (
+			#{popupZoneNm}
+			, #{smry}
+			, #{popupZoneLink}
+			, #{thmbPath}
+			, 0
+			, #{openYn}
+			, 'Y'
+			, #{regId}
+			, NOW()
+			, #{mdfcnId}
+			, NOW()
+		)
+	</insert>
+
+	<!-- 팝업존 수정 -->
+	<update id="updateAdmin618" parameterType="egovframework.admin.admin600.domain.Admin618DTO">
+		UPDATE ${schema}.popup_zone
+		<set>
+			<if test="popupZoneNm != null">
+				popup_zone_nm = #{popupZoneNm},
+			</if>
+			<if test="smry != null">
+				smry = #{smry},
+			</if>
+			<if test="popupZoneLink != null">
+				popup_zone_link = #{popupZoneLink},
+			</if>
+			<if test="thmbPath != null">
+				thmb_path = #{thmbPath},
+			</if>
+			<if test="openYn != null">
+				open_yn = #{openYn},
+			</if>
+			<if test="mdfcnId != null">
+				mdfcn_id = #{mdfcnId},
+			</if>
+			mdfcn_dt = NOW(),
+            use_yn = 'Y'
+		</set>
+		WHERE
+			popup_zone_oid = #{popupZoneOid}
+	</update>
+
+	<!-- 팝업존 일괄 삭제 -->
+	<update id="deleteAdmin618" parameterType="egovframework.admin.admin600.domain.Admin618DeleteDTO">
+		UPDATE ${schema}.popup_zone
+		SET
+			use_yn = 'N'
+			, mdfcn_id = #{mdfcnId}
+			, mdfcn_dt = NOW()
+		WHERE
+			popup_zone_oid IN
+			<foreach collection="popupZoneOids" item="popupZoneOid" open="(" separator="," close=")">
+				#{popupZoneOid}
+			</foreach>
+	</update>
+
+	<!-- 팝업존 엑셀 다운로드용 목록 조회 -->
+	<select id="selectAdmin618ExcelList" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" resultType="egovframework.admin.admin600.domain.Admin618ExcelDTO">
+		SELECT
+			popup_zone_oid AS popupZoneOid,
+			popup_zone_nm AS popupZoneNm,
+			inq_cnt AS inqCnt,
+			CASE
+				WHEN open_yn = 'Y' THEN '공개'
+				WHEN open_yn = 'N' THEN '미공개'
+				ELSE ''
+			END AS openState,
+			DATE_FORMAT(reg_dt, '%Y-%m-%d') AS regDt
+		FROM ${schema}.popup_zone
+		<where>
+			use_yn = 'Y'
+			<if test="keyword != null and keyword != ''">
+				AND (
+					popup_zone_oid LIKE CONCAT('%', #{keyword}, '%')
+					OR popup_zone_nm LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+			<if test="openYn != null and openYn != ''">
+				AND open_yn = #{openYn}
+			</if>
+			<if test="startDt != null and endDt != null">
+				AND DATE_FORMAT(reg_dt, '%Y-%m-%d') <![CDATA[ >= ]]> #{startDt}
+				AND DATE_FORMAT(reg_dt, '%Y-%m-%d') <![CDATA[ <= ]]> #{endDt}
+			</if>
+		</where>
+		ORDER BY popup_zone_oid DESC
+	</select>
+
+	<!-- 팝업존 조회수 증가 -->
+	<update id="updateAdmin618HitCnt" parameterType="Long">
+		UPDATE ${schema}.popup_zone
+		SET inq_cnt = inq_cnt + 1
+		WHERE popup_zone_oid = #{popupZoneOid}
+	</update>
+</mapper>

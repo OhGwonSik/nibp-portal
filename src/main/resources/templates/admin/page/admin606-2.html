@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > FAQ > FAQ 상세정보</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <h3 class="stit">FAQ 상세정보</h3>
+        <div class="table_layout02 has_editor">
+            <table>
+                <caption>FAQ 상세정보</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row">등록일시</th>
+                    <td id="admin606_2_regDt"></td>
+                    <th scope="row" class="bl">조회수</th>
+                    <td id="admin606_2_viewCnt"></td>
+                </tr>
+                <tr>
+                    <th scope="row">질문</th>
+                    <td colspan="3" id="admin606_2_question"></td>
+                </tr>
+                <tr>
+                    <th scope="row">분류</th>
+                    <td id="admin606_2_cateNm"></td>
+                    <th scope="row" class="bl">공개여부</th>
+                    <td id="admin606_2_openYn"></td>
+                </tr>
+                <tr>
+                    <th scope="row">답변</th>
+                    <td colspan="3" id="admin606_2_answer" class="post-content"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="admin606_2_btn_list" class="btn_basic bg_type02">목록</a>
+            <a href="javascript:;" id="admin606_2_btn_update" class="btn_basic bg_type01">수정</a>
+            <a href="javascript:;" id="admin606_2_btn_delete" class="btn_basic line_type02">삭제</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin606_2 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            faqData: null,      // FAQ 상세 데이터
+            faqDtlOid: null,        // FAQ 번호
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // 이벤트 바인딩
+            this.initEvent();
+
+            // URL에서 faqDtlOid 추출 및 데이터 조회
+            this.getData();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 목록 버튼 클릭
+            document.getElementById("admin606_2_btn_list").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnGoToListPage();
+            });
+
+            // 수정 버튼 클릭
+            document.getElementById("admin606_2_btn_update").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnGoToUpdatePage();
+            });
+
+            // 삭제 버튼 클릭
+            document.getElementById("admin606_2_btn_delete").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnDelete();
+            });
+        },
+
+        /**
+         * FAQ 상세 데이터 조회
+         */
+        getData: async function () {
+            const params = new URLSearchParams(window.location.search);
+            const faqDtlOid = params.get("faqDtlOid");
+
+            if (!faqDtlOid) {
+                uiCommon.fnShowAlertModal('FAQ 조회에 실패했습니다.', () => this.fnGoToListPage());
+                return;
+            }
+
+            this.state.faqDtlOid = faqDtlOid;
+
+            try {
+                // 조회수 증가
+                await this.updateViewCount(faqDtlOid);
+
+                // 조회수 증가 후 데이터 조회
+                const response = await API.get('/api/admin/admin606/select?faqDtlOid=' + faqDtlOid);
+
+                this.state.faqData = response;
+                this.renderData();
+            } catch (error) {
+                console.error('FAQ 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('FAQ 조회에 실패했습니다.', () => this.fnGoToListPage());
+            }
+        },
+
+        /**
+         * 조회수 증가
+         */
+        updateViewCount: async function (faqDtlOid) {
+            try {
+                await API.patch('/api/admin/admin606/view-count/' + faqDtlOid);
+            } catch (error) {
+                console.error('조회수 증가 실패:', error);
+            }
+        },
+
+        /**
+         * 데이터 렌더링
+         */
+        renderData: function () {
+            const data = this.state.faqData;
+
+            if (!data) {
+                return;
+            }
+
+            // 등록일시
+            document.getElementById('admin606_2_regDt').textContent = common.formatDateTime(data.regDt) || '';
+            // 조회수
+            document.getElementById('admin606_2_viewCnt').textContent = data.inqCnt || 0;
+            // 질문
+            document.getElementById('admin606_2_question').textContent = data.qstnCn || '';
+            // 분류
+            document.getElementById('admin606_2_cateNm').textContent = data.ctgryNm || '';
+            // 공개여부
+            document.getElementById('admin606_2_openYn').textContent = data.openYn === 'Y' ? '공개' : '비공개';
+            // 답변
+            document.getElementById('admin606_2_answer').innerHTML = data.ansCn || '';
+        },
+
+        /**
+         * FAQ 삭제
+         */
+        fnDelete: function () {
+            const _this = this;
+
+            uiCommon.fnShowConfirmModal('이 FAQ를 삭제하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    await API.patch('/api/admin/admin606/delete', { faqDtlOids: [_this.state.faqDtlOid] });
+                    uiCommon.fnShowAlertModal('삭제되었습니다.', () => _this.fnGoToListPage());
+                } catch (error) {
+                    console.error('삭제 실패:', error);
+                    uiCommon.fnShowAlertModal('삭제에 실패했습니다.');
+                }
+            });
+        },
+
+        /**
+         * 페이지 이동 - FAQ 목록
+         */
+        fnGoToListPage: function () {
+            window.location.href = contextPath + '/admin/page/admin606';
+        },
+
+        /**
+         * 페이지 이동 - FAQ 수정
+         */
+        fnGoToUpdatePage: function () {
+            window.location.href = contextPath + '/admin/page/admin606-1?faqDtlOid=' + this.state.faqDtlOid;
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        admin606_2.init();
+    });
+</script>
+</body>
+</html>

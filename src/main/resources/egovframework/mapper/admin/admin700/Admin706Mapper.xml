@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin700.mapper.Admin706Mapper">
+	
+	<select id="selectQnaAvgTimeStat" resultType="egovframework.admin.admin700.domain.QnaAvgTimeStatDTO">
+        /* 캘린더 생성 (검색 기간만큼의 빈 달력 생성) */
+        WITH RECURSIVE calendar AS (
+            /* 시작 날짜 설정 */
+            SELECT
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        STR_TO_DATE(CONCAT(#{startDate}, '-01-01'), '%Y-%m-%d')
+                    </when>
+                    <otherwise>
+                        STR_TO_DATE(CONCAT(#{startDate}, '-01'), '%Y-%m-%d')
+                    </otherwise>
+                </choose> AS m_date
+            
+            UNION ALL
+            
+            /* 재귀 반복 (1달 또는 1년씩 더함) */
+            SELECT 
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        DATE_ADD(m_date, INTERVAL 1 YEAR)
+                    </when>
+                    <otherwise>
+                        DATE_ADD(m_date, INTERVAL 1 MONTH)
+                    </otherwise>
+                </choose>
+            FROM calendar
+            WHERE 
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        DATE_ADD(m_date, INTERVAL 1 YEAR) <![CDATA[ <= ]]> STR_TO_DATE(CONCAT(#{endDate}, '-01-01'), '%Y-%m-%d')
+                    </when>
+                    <otherwise>
+                        DATE_ADD(m_date, INTERVAL 1 MONTH) <![CDATA[ <= ]]> STR_TO_DATE(CONCAT(#{endDate}, '-01'), '%Y-%m-%d')
+                    </otherwise>
+                </choose>
+        ),
+
+        /* 2. 실제 데이터 집계 (질문등록일 → 최종답변완료일, 비영업일 제외) */
+        stat_data AS (
+            SELECT
+                /* 조인 키 생성 (년도 or 월) - 최종답변완료일 기준 */
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        DATE_FORMAT(hist.final_comp_dt, '%Y')
+                    </when>
+                    <otherwise>
+                        DATE_FORMAT(hist.final_comp_dt, '%Y-%m')
+                    </otherwise>
+                </choose> AS join_date
+
+                /* 평균 소요일 계산: (최종답변완료일 - 질문등록일) 비영업일 제외, 일 단위 변환 */
+                , ROUND(AVG(GREATEST(0, (DATEDIFF(hist.final_comp_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[ >= ]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[ <= ]]> DATE(hist.final_comp_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2) AS avg_days
+            FROM
+                ${schema}.bbs_pst tbbp
+                INNER JOIN ${schema}.bbs tbb
+                    ON tbb.bbs_oid = tbbp.bbs_oid
+                INNER JOIN (
+                    SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS final_comp_dt
+                    FROM ${schema}.bbs_hstry tbh
+                    INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+                    WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'COMP'
+                      AND reply.up_bbs_pst_oid IS NOT NULL
+                      AND reply.del_yn = 'N'
+                    GROUP BY reply.up_bbs_pst_oid
+                ) hist ON tbbp.bbs_pst_oid = hist.up_bbs_pst_oid
+            WHERE
+                tbb.bbs_se_cd = 'QNA'        /* QnA 게시판 */
+                AND tbbp.up_bbs_pst_oid IS NULL  /* 질문 글 기준 */
+                AND tbbp.del_yn = 'N'          /* 삭제되지 않은 게시물 */
+                AND tbb.stats_yn = 'Y'     /* 통계 포함 여부 */
+                AND tbb.use_yn = 'Y'
+
+                /* 검색 기간 필터 (최종답변완료일 기준) */
+                AND hist.final_comp_dt <![CDATA[ >= ]]>
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        STR_TO_DATE(CONCAT(#{startDate}, '-01-01 00:00:00'), '%Y-%m-%d %H:%i:%s')
+                    </when>
+                    <otherwise>
+                        STR_TO_DATE(CONCAT(#{startDate}, '-01 00:00:00'), '%Y-%m-%d %H:%i:%s')
+                    </otherwise>
+                </choose>
+
+                AND hist.final_comp_dt <![CDATA[ <= ]]>
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        STR_TO_DATE(CONCAT(#{endDate}, '-12-31 23:59:59'), '%Y-%m-%d %H:%i:%s')
+                    </when>
+                    <otherwise>
+                        /* 해당 월의 마지막 날짜의 23:59:59까지 */
+                        STR_TO_DATE(CONCAT(LAST_DAY(STR_TO_DATE(CONCAT(#{endDate}, '-01'), '%Y-%m-%d')), ' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+                    </otherwise>
+                </choose>
+            GROUP BY 
+                join_date
+        )
+
+        /* 최종 조회 */
+        SELECT
+            <choose>
+                <when test='searchType == "YEAR"'>
+                    DATE_FORMAT(c.m_date, '%Y')
+                </when>
+                <otherwise>
+                    DATE_FORMAT(c.m_date, '%Y-%m')
+                </otherwise>
+            </choose> AS searchDate
+            
+            /* 데이터가 없으면 0으로 치환 */
+            , IFNULL(sd.avg_days, 0) AS avgDays
+        FROM
+            calendar c
+            LEFT JOIN stat_data sd 
+                ON 
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        DATE_FORMAT(c.m_date, '%Y') = sd.join_date
+                    </when>
+                    <otherwise>
+                        DATE_FORMAT(c.m_date, '%Y-%m') = sd.join_date
+                    </otherwise>
+                </choose>
+        ORDER BY
+            c.m_date ASC
+    </select>
+</mapper>

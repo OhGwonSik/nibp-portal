@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.portal.notice.mapper.NoticeMapper">
+
+    <resultMap id="noticeResultMap" type="egovframework.portal.notice.dto.NoticeDTO">
+        <id property="ntcOid" column="ntc_oid"/>
+        <result property="ntcNm" column="ntc_nm"/>
+        <result property="ntcCn" column="ntc_cn"/>
+        <result property="ntcCnTxt" column="ntc_cn_txt"/>
+        <result property="bgngDt" column="bgng_dt"/>
+        <result property="endDt" column="end_dt"/>
+        <result property="openYn" column="open_yn"/>
+        <result property="useYn" column="use_yn"/>
+        <result property="inqCnt" column="inq_cnt"/>
+        <result property="regId" column="reg_id"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnId" column="mdfcn_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        <!-- 첨부파일 -->
+        <collection property="attachments" ofType="egovframework.common.file.domain.FileDTO">
+            <id property="fileOid" column="file_oid"/>
+            <result property="tblNm" column="tbl_nm"/>
+            <result property="tblOid" column="tbl_oid"/>
+            <result property="orgnlFileNm" column="orgnl_file_nm"/>
+            <result property="strgFileNm" column="strg_file_nm"/>
+            <result property="strgFilePath" column="strg_file_path"/>
+            <result property="strgFileCpct" column="strg_file_cpct"/>
+            <result property="fileTypeNm" column="file_type_nm"/>
+            <result property="fileType" column="file_type"/>
+            <result property="thmbYn" column="thmb_yn"/>
+            <result property="atchFileSeq" column="atch_file_seq"/>
+            <result property="useYn" column="file_use_yn"/>
+            <result property="regId" column="file_reg_user_id"/>
+            <result property="regDt" column="file_reg_dt"/>
+            <result property="mdfcnId" column="file_upd_user_id"/>
+            <result property="mdfcnDt" column="file_upd_dt"/>
+        </collection>
+    </resultMap>
+    <!-- Notice 게시판 게시글 목록 조회 with Filter -->
+    <select id="selectNoticePostListWithFilter" resultType="egovframework.portal.notice.dto.NoticeDTO">
+        SELECT
+            n.ntc_oid,
+            n.ntc_nm,
+            n.ntc_cn,
+            n.ntc_cn_txt,
+            n.bgng_dt,
+            n.end_dt,
+            n.open_yn,
+            n.use_yn,
+            n.inq_cnt,
+            n.reg_id,
+            n.reg_dt,
+            n.mdfcn_id,
+            n.mdfcn_dt,
+            IF(CURDATE() >= n.bgng_dt AND (n.end_dt IS NULL OR n.end_dt >= CURDATE()), 'Y', 'N') AS upend_fix_yn
+        FROM ${schema}.ntc n
+        <where>
+            n.use_yn = 'Y'
+            AND n.open_yn = 'Y'
+            <if test="keyword != null and keyword != ''">
+                AND
+                <choose>
+                    <when test="searchType == 'ntcNm'">
+                        n.ntc_nm LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'ntcCn'">
+                        n.ntc_cn_txt LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'all'">
+                        (n.ntc_nm LIKE CONCAT('%', #{keyword}, '%')
+                        OR n.ntc_cn_txt LIKE CONCAT('%', #{keyword}, '%'))
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY upend_fix_yn DESC, n.ntc_oid DESC
+    </select>
+
+    <!-- Notice 게시판 게시글 조회 -->
+    <select id="selectNoticeById" resultType="egovframework.portal.notice.dto.NoticeDTO">
+        SELECT
+            ntc_oid,
+            ntc_nm,
+            ntc_cn,
+            ntc_cn_txt,
+            bgng_dt,
+            end_dt,
+            upend_fix_yn,
+            open_yn,
+            use_yn,
+            inq_cnt,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        FROM
+            ${schema}.ntc
+        WHERE
+            ntc_oid = #{ntc_oid}
+    </select>
+
+    <!-- notice 게시판 이전 게시글 조회 -->
+    <select id="selectPrevNotice" resultType="egovframework.portal.notice.dto.NoticeDTO">
+        SELECT ntc_oid, ntc_nm
+        FROM (
+            SELECT
+                ntc_oid,
+                ntc_nm,
+                IF(CURDATE() >= bgng_dt AND (end_dt IS NULL OR end_dt >= CURDATE()), 'Y', 'N') AS upend_fix_yn
+            FROM ${schema}.ntc
+            WHERE use_yn = 'Y' AND open_yn = 'Y'
+            ORDER BY
+                IF(CURDATE() >= bgng_dt AND (end_dt IS NULL OR end_dt >= CURDATE()), 'Y', 'N') DESC,
+                ntc_oid DESC
+        ) AS sorted_list
+        WHERE (upend_fix_yn, ntc_oid) &lt; (
+            SELECT
+                IF(CURDATE() >= bgng_dt AND (end_dt IS NULL OR end_dt >= CURDATE()), 'Y', 'N'),
+                ntc_oid
+            FROM ${schema}.ntc
+            WHERE ntc_oid = #{ntcOid}
+        )
+        ORDER BY upend_fix_yn DESC, ntc_oid DESC
+        LIMIT 1
+    </select>
+
+    <!-- notice 게시판 다음 게시글 조회 -->
+    <select id="selectNextNotice" resultType="egovframework.portal.notice.dto.NoticeDTO">
+        SELECT ntc_oid, ntc_nm
+        FROM (
+            SELECT
+                ntc_oid,
+                ntc_nm,
+                IF(CURDATE() >= bgng_dt AND (end_dt IS NULL OR end_dt >= CURDATE()), 'Y', 'N') AS upend_fix_yn
+            FROM ${schema}.ntc
+            WHERE use_yn = 'Y' AND open_yn = 'Y'
+            ORDER BY
+                IF(CURDATE() >= bgng_dt AND (end_dt IS NULL OR end_dt >= CURDATE()), 'Y', 'N') DESC,
+                ntc_oid DESC
+        ) AS sorted_list
+        WHERE (upend_fix_yn, ntc_oid) &gt; (
+            SELECT
+                IF(CURDATE() >= bgng_dt AND (end_dt IS NULL OR end_dt >= CURDATE()), 'Y', 'N'),
+                ntc_oid
+            FROM ${schema}.ntc
+            WHERE ntc_oid = #{ntcOid}
+        )
+        ORDER BY upend_fix_yn ASC, ntc_oid ASC
+        LIMIT 1
+    </select>
+
+    <select id="updateNoticeInqCnt" resultType="egovframework.portal.notice.dto.NoticeDTO">
+        UPDATE ${schema}.ntc
+        SET inq_cnt = inq_cnt + 1
+        WHERE ntc_oid = #{ntcOid}
+    </select>
+</mapper>

@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin500.mapper.Admin502Mapper">
+
+	<!--설문 응답 결과 조회-->
+	<select id="selectAdmin502ResultList" parameterType="Long" resultType="Map">
+		/* selectAdmin502ResultList */
+		<!-- 리커트 척도용 숫자 생성기 (1~10) -->
+	    WITH RECURSIVE score_gen(n) AS (
+	        SELECT 1
+	        UNION ALL
+	        SELECT n + 1 FROM score_gen WHERE n <![CDATA[<]]> 10
+	    ),
+	    
+	    <!-- 전체 통계 데이터 통합 (UNION ALL) -->
+	    survey_stats AS (
+	        
+	        <!-- 객관식 / 이미지 선택형 (MULTI, IMG_SEL) -->
+	        SELECT
+	            sq.srvy_qitem_oid, sq.srvy_qitem_type,
+	            so.srvy_qitem_opt_oid, so.srvy_qitem_opt_txt, so.srvy_qitem_opt_seq,
+	            NULL AS srvy_rspns_no, NULL AS srvy_rspns_rank, NULL AS srvy_rspns_txt,
+	            NULL AS reg_dt, NULL AS srvy_rspdnt_nm,
+	            COUNT(sr.srvy_rspns_oid) AS resp_count,
+	            NULL AS average_value,
+	            NULL AS strg_file_path, NULL AS strg_file_nm,
+	            NULL AS orgnl_file_nm /* [추가] 원본 파일명 자리 */
+	        FROM ${schema}.srvy_qitem sq
+	        JOIN ${schema}.srvy_qitem_opt so ON sq.srvy_qitem_oid = so.srvy_qitem_oid
+	        LEFT JOIN ${schema}.srvy_rspns sr ON so.srvy_qitem_opt_oid = sr.srvy_qitem_opt_oid
+	        WHERE sq.srvy_oid = #{srvyOid}
+	          AND sq.srvy_qitem_type IN ('MULTI', 'IMG_SEL')
+	        GROUP BY sq.srvy_qitem_oid, so.srvy_qitem_opt_oid
+
+	        UNION ALL
+
+	        <!-- 리커트 척도 (LIKERT) -->
+	        SELECT
+	            sq.srvy_qitem_oid, sq.srvy_qitem_type,
+	            NULL AS srvy_qitem_opt_oid, NULL AS srvy_qitem_opt_txt, NULL AS srvy_qitem_opt_seq,
+	            sg.n AS srvy_rspns_no,
+	            NULL AS srvy_rspns_rank, NULL AS srvy_rspns_txt,
+	            NULL AS reg_dt, NULL AS srvy_rspdnt_nm,
+	            COUNT(sr.srvy_rspns_oid) AS resp_count,
+	            NULL AS average_value,
+	            NULL AS strg_file_path, NULL AS strg_file_nm,
+	            NULL AS orgnl_file_nm
+	        FROM ${schema}.srvy_qitem sq
+	        JOIN score_gen sg ON sg.n BETWEEN sq.likert_min AND sq.likert_max
+	        LEFT JOIN ${schema}.srvy_rspns sr ON sq.srvy_qitem_oid = sr.srvy_qitem_oid AND sr.srvy_rspns_no = sg.n
+	        WHERE sq.srvy_oid = #{srvyOid}
+	          AND sq.srvy_qitem_type = 'LIKERT'
+	        GROUP BY sq.srvy_qitem_oid, sg.n
+
+	        UNION ALL
+
+	        <!-- 순위형 (RANK) -->
+	        SELECT
+	            sq.srvy_qitem_oid, sq.srvy_qitem_type,
+	            so.srvy_qitem_opt_oid, so.srvy_qitem_opt_txt, so.srvy_qitem_opt_seq,
+	            NULL AS srvy_rspns_no,
+	            sr.srvy_rspns_rank,
+	            NULL AS srvy_rspns_txt,
+	            NULL AS reg_dt, NULL AS srvy_rspdnt_nm,
+	            COUNT(sr.srvy_rspns_oid) AS resp_count,
+	            NULL AS average_value,
+	            NULL AS strg_file_path, NULL AS strg_file_nm,
+	            NULL AS orgnl_file_nm
+	        FROM ${schema}.srvy_qitem sq
+	        JOIN ${schema}.srvy_qitem_opt so ON sq.srvy_qitem_oid = so.srvy_qitem_oid
+	        LEFT JOIN ${schema}.srvy_rspns sr ON so.srvy_qitem_opt_oid = sr.srvy_qitem_opt_oid
+	        WHERE sq.srvy_oid = #{srvyOid}
+	          AND sq.srvy_qitem_type = 'RANK'
+	        GROUP BY sq.srvy_qitem_oid, so.srvy_qitem_opt_oid, sr.srvy_rspns_rank
+
+	        UNION ALL
+
+	        <!-- 비율형 (RATIO) -->
+	        SELECT
+	            sq.srvy_qitem_oid, sq.srvy_qitem_type,
+	            so.srvy_qitem_opt_oid, so.srvy_qitem_opt_txt, so.srvy_qitem_opt_seq,
+	            NULL AS srvy_rspns_no, NULL AS srvy_rspns_rank, NULL AS srvy_rspns_txt,
+	            NULL AS reg_dt, NULL AS srvy_rspdnt_nm,
+	            COUNT(sr.srvy_rspns_oid) AS resp_count,
+	            AVG(sr.srvy_rspns_no) AS average_value,
+	            NULL AS strg_file_path, NULL AS strg_file_nm,
+	            NULL AS orgnl_file_nm
+	        FROM ${schema}.srvy_qitem sq
+	        JOIN ${schema}.srvy_qitem_opt so ON sq.srvy_qitem_oid = so.srvy_qitem_oid
+	        LEFT JOIN ${schema}.srvy_rspns sr ON so.srvy_qitem_opt_oid = sr.srvy_qitem_opt_oid
+	        WHERE sq.srvy_oid = #{srvyOid}
+	          AND sq.srvy_qitem_type = 'RATIO'
+	        GROUP BY sq.srvy_qitem_oid, so.srvy_qitem_opt_oid
+
+	        UNION ALL
+
+	        <!-- 텍스트 응답 (주관식, 기타의견) + 이미지 응답형 통합 조회 -->
+	        SELECT
+	            sq.srvy_qitem_oid, sq.srvy_qitem_type,
+	            sr.srvy_qitem_opt_oid,
+	            NULL AS srvy_qitem_opt_txt, NULL AS srvy_qitem_opt_seq,
+	            NULL AS srvy_rspns_no, NULL AS srvy_rspns_rank,
+	            sr.srvy_rspns_txt,
+	            DATE_FORMAT(sr.reg_dt, '%Y-%m-%d %H:%i:%s') as reg_dt,
+	            IFNULL(spd.srvy_rspdnt_nm, '게스트') AS srvy_rspdnt_nm,
+	            0 AS resp_count,
+	            NULL AS average_value,
+
+	            f.strg_file_path,
+	            f.strg_file_nm,
+	            f.orgnl_file_nm
+
+	        FROM ${schema}.srvy_qitem sq
+	        JOIN ${schema}.srvy_rspns sr ON sq.srvy_qitem_oid = sr.srvy_qitem_oid
+	        LEFT JOIN ${schema}.srvy_rspdnt spd ON sr.srvy_rspdnt_oid = spd.srvy_rspdnt_oid
+
+	        <!-- 파일 테이블 조인 (이미지 응답형용) -->
+	        LEFT JOIN ${schema}.file f
+	          ON sr.srvy_rspns_oid = f.tbl_oid
+	          AND f.tbl_nm = 'srvy_rspns'
+	          AND f.use_yn = 'Y'
+
+	        WHERE sq.srvy_oid = #{srvyOid}
+	          <!-- 텍스트가 있거나 OR 파일이 있는 경우 -->
+	          AND (
+	              (sr.srvy_rspns_txt IS NOT NULL AND sr.srvy_rspns_txt != '')
+	              OR
+	              (f.file_oid IS NOT NULL)
+	          )
+	          <!-- 문항 유형 조건: 주관식, 멀티(기타), 이미지응답형 -->
+	          AND sq.srvy_qitem_type IN ('SHORT', 'LONG', 'MULTI', 'IMG_RESP')
+	    )
+
+	    <!-- 최종 조회 및 정렬 -->
+	    SELECT
+	        q.srvy_qitem_oid,
+	        q.srvy_qitem_ttl, q.srvy_qitem_type, q.srvy_qitem_seq,
+	        q.plrl_chc_yn, q.srvy_qitem_lmt,
+	        q.likert_min, q.likert_max, q.likert_min_lbl, q.likert_max_lbl,
+	        stats.srvy_qitem_opt_oid, stats.srvy_qitem_opt_txt, stats.srvy_qitem_opt_seq,
+	        stats.srvy_rspns_no, stats.srvy_rspns_rank, stats.srvy_rspns_txt,
+	        stats.reg_dt, stats.srvy_rspdnt_nm, stats.resp_count,
+	        stats.average_value,
+
+	        stats.strg_file_path,
+	        stats.strg_file_nm,
+	        stats.orgnl_file_nm,
+
+	        CASE
+	            WHEN q.up_srvy_qitem_oid IS NULL THEN CAST(q.srvy_qitem_seq AS CHAR)
+	            WHEN p.srvy_qitem_type IS NULL THEN CAST(q.srvy_qitem_seq AS CHAR)
+	            ELSE CONCAT(p.srvy_qitem_seq, '-', q.srvy_qitem_seq)
+	        END AS displayQNo
+
+	    FROM ${schema}.srvy_qitem q
+	    JOIN survey_stats stats ON q.srvy_qitem_oid = stats.srvy_qitem_oid
+	    LEFT JOIN ${schema}.srvy_qitem p ON q.up_srvy_qitem_oid = p.srvy_qitem_oid
+	    LEFT JOIN ${schema}.srvy_qitem gp ON p.up_srvy_qitem_oid = gp.srvy_qitem_oid
+	    WHERE q.srvy_oid = #{srvyOid}
+	      AND q.srvy_qitem_type IS NOT NULL
+	    ORDER BY
+	        CASE WHEN gp.srvy_qitem_oid IS NOT NULL THEN gp.srvy_qitem_seq WHEN p.srvy_qitem_oid IS NOT NULL  THEN p.srvy_qitem_seq ELSE q.srvy_qitem_seq END ASC,
+	        CASE WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NULL THEN 0 WHEN gp.srvy_qitem_oid IS NOT NULL THEN p.srvy_qitem_seq ELSE q.srvy_qitem_seq END ASC,
+	        CASE WHEN gp.srvy_qitem_oid IS NOT NULL THEN q.srvy_qitem_seq ELSE 0 END ASC,
+	        stats.srvy_qitem_opt_seq ASC,
+	        stats.srvy_rspns_no ASC,
+	        stats.srvy_rspns_rank ASC,
+	        stats.reg_dt DESC
+	</select>
+
+	<!-- 설문 기본 정보 조회 -->
+	<select id="selectAdmin502BasicInfo" parameterType="egovframework.admin.admin500.domain.Admin502DTO" resultType="map">
+		SELECT
+			s.srvy_oid,
+			s.srvy_ttl,
+			DATE_FORMAT(s.srvy_bgng_dt, '%Y-%m-%d') as srvy_bgng_dt,
+			DATE_FORMAT(s.srvy_end_dt, '%Y-%m-%d') as srvy_end_dt,
+			-- 참여자수 (설문 완료자)
+			COUNT(DISTINCT CASE WHEN sr.cmpl_yn = 'Y' THEN sr.srvy_rspdnt_oid END) as participant_count -- 참여자수 (설문 완료자)
+		FROM
+		    ${schema}.srvy s
+		LEFT JOIN ${schema}.srvy_rspdnt sr
+		  ON s.srvy_oid = sr.srvy_oid
+		WHERE
+		    s.srvy_oid = #{srvyOid}
+        GROUP BY
+            s.srvy_oid, s.srvy_ttl, s.srvy_bgng_dt, s.srvy_end_dt
+	</select>
+
+	<select id="selectSurveyQuestionList" parameterType="egovframework.admin.admin500.domain.Admin502DTO" resultType="egovframework.admin.admin500.domain.Admin502QuestionDTO">
+		/* selectSurveyQuestionList */
+			SELECT
+	        q.srvy_qitem_oid,
+	        q.srvy_qitem_ttl,
+	        q.srvy_qitem_seq,
+	        q.up_srvy_qitem_oid,
+	        p.srvy_qitem_type AS parent_qst_typ
+	    FROM ${schema}.srvy_qitem q
+	    LEFT JOIN ${schema}.srvy_qitem p ON q.up_srvy_qitem_oid = p.srvy_qitem_oid
+	    WHERE q.srvy_oid = #{srvyOid}
+	      AND q.srvy_qitem_type IS NOT NULL ORDER BY
+	        CASE WHEN q.up_srvy_qitem_oid IS NULL THEN q.srvy_qitem_seq ELSE IFNULL(p.srvy_qitem_seq, q.srvy_qitem_seq) END ASC,
+	        CASE WHEN q.up_srvy_qitem_oid IS NULL THEN 0 ELSE 1 END ASC,
+	        q.srvy_qitem_seq ASC
+	</select>
+
+	<select id="selectSurveyRawDataList" parameterType="egovframework.admin.admin500.domain.Admin502DTO" resultType="egovframework.admin.admin500.domain.Admin502RawDataDTO">
+		/* selectSurveyRawDataList */
+		SELECT
+			r.srvy_rspdnt_oid,
+			IFNULL(spd.srvy_rspdnt_nm, '게스트') AS srvy_rspdnt_nm,
+			r.srvy_qitem_oid,
+			<!-- 답변 값 (우선순위: 텍스트 > 보기명 > 점수) -->
+			CASE
+				WHEN r.srvy_rspns_txt IS NOT NULL THEN r.srvy_rspns_txt
+				WHEN o.srvy_qitem_opt_txt IS NOT NULL THEN
+					CASE WHEN r.srvy_rspns_rank IS NOT NULL THEN CONCAT(r.srvy_rspns_rank, '순위:', o.srvy_qitem_opt_txt)
+					ELSE o.srvy_qitem_opt_txt END
+				WHEN r.srvy_rspns_no IS NOT NULL THEN CAST(r.srvy_rspns_no AS CHAR)
+				ELSE ''
+			END AS answer_val
+		FROM ${schema}.srvy_rspns r
+		JOIN ${schema}.srvy_rspdnt spd ON r.srvy_rspdnt_oid = spd.srvy_rspdnt_oid
+		LEFT JOIN ${schema}.srvy_qitem_opt o ON r.srvy_qitem_opt_oid = o.srvy_qitem_opt_oid
+		WHERE spd.srvy_oid = #{srvyOid}
+		  AND spd.cmpl_yn = 'Y'
+		ORDER BY r.srvy_rspdnt_oid, r.srvy_qitem_oid
+	</select>
+
+	<select id="selectAdmin502List" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" resultType="egovframework.admin.admin500.domain.Admin502VO">
+		/* selectAdmin502List */
+		SELECT
+			ts.srvy_oid
+			, ts.srvy_ttl
+			, ts.srvy_bgng_dt
+			, ts.srvy_end_dt
+			, SUM(CASE WHEN tsr.cmpl_yn = 'Y' THEN 1 ELSE 0 END) AS survey_cmpl_cnt
+			, CASE
+		        WHEN CURDATE() <![CDATA[ < ]]> ts.srvy_bgng_dt THEN '조사전'
+		        WHEN CURDATE() BETWEEN ts.srvy_bgng_dt AND ts.srvy_end_dt THEN '조사중'
+		        WHEN CURDATE() <![CDATA[ > ]]> ts.srvy_end_dt THEN '조사종료'
+		        ELSE '알수없음'
+		    END AS survey_status
+		FROM
+			${schema}.srvy ts
+		LEFT JOIN ${schema}.srvy_rspdnt tsr ON
+			tsr.srvy_oid = ts.srvy_oid
+		<where>
+			<if test='srvyOid != null and srvyOid != ""'>
+				AND ts.srvy_oid = #{srvyOid}
+			</if>
+			<if test='srvyTtl != null and srvyTtl != ""'>
+				AND ts.srvy_ttl LIKE CONCAT('%', #{srvyTtl}, '%')
+			</if>
+			<!-- 날짜 안에 해당하는 설문 조회 -->
+			<if test="srvyBgngDt != null and srvyBgngDt != ''">
+	            AND srvy_end_dt <![CDATA[ >= ]]> #{srvyBgngDt}
+	        </if>
+	        <if test="srvyEndDt != null and srvyEndDt != ''">
+	            AND srvy_bgng_dt <![CDATA[ <= ]]> #{srvyEndDt}
+	        </if>		
+			<if test='surveyStatus != null and surveyStatus != "" and surveyStatus != "전체"'>
+			    <choose>
+			        <when test='surveyStatus == "조사전"'>
+			            AND CURDATE() <![CDATA[<]]> ts.srvy_bgng_dt
+			        </when>
+			        <when test='surveyStatus == "조사중"'>
+			            AND CURDATE() BETWEEN ts.srvy_bgng_dt AND ts.srvy_end_dt
+			        </when>
+			        <when test='surveyStatus == "조사종료"'>
+			            AND CURDATE() <![CDATA[>]]> ts.srvy_end_dt
+			        </when>
+			    </choose>
+			</if>
+		</where>
+		GROUP BY
+			ts.srvy_oid, ts.srvy_ttl, ts.srvy_bgng_dt, ts.srvy_end_dt
+	</select>
+
+	<select id="selectSurveyRespondentList" resultType="egovframework.admin.admin500.domain.Admin502RespondentDTO">
+		/* selectSurveyRespondentList */
+		SELECT
+		    srvy_rspdnt_oid
+		    , ROW_NUMBER() OVER (ORDER BY reg_dt ASC) AS row_num
+		    , reg_dt
+		FROM
+			${schema}.srvy_rspdnt
+		WHERE
+			srvy_oid = #{srvyOid}
+			AND cmpl_yn = 'Y'
+		ORDER BY reg_dt ASC
+	</select>
+
+	<delete id="deleteSurveyRespondents">
+		/* deleteSurveyRespondents */
+		DELETE FROM ${schema}.srvy_rspdnt
+		WHERE
+			srvy_oid = #{srvyOid}
+			AND srvy_rspdnt_oid = #{srvyRspdntOid}
+	</delete>
+</mapper>

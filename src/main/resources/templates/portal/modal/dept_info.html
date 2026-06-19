@@ -1,0 +1,168 @@
+<th:block th:fragment="dept_info" xmlns:th="http://www.thymeleaf.org">
+    <div id="dept_info" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap">
+                <h1 class="p_tit" id="dept_info_title">부서정보</h1>
+                <div class="popup_inner">
+                    <div style="overflow:hidden;">
+                        <div class="table_layout">
+                            <table>
+                                <caption id="dept_info_caption">조직구성에 대한 상세 테이블입니다.</caption>
+                                <colgroup>
+                                    <col style="width:20%;">
+                                    <col style="width:20%;">
+                                    <col style="width:30%;">
+                                    <col style="width:auto;">
+                                </colgroup>
+                                <thead>
+                                <tr>
+                                    <th scope="col">직책</th>
+                                    <th scope="col">이름</th>
+                                    <th scope="col">전화번호</th>
+                                    <th scope="col">담당 업무</th>
+                                </tr>
+                                </thead>
+                                <tbody id="dept_info_tbody">
+                                <tr>
+                                    <td colspan="4" class="text-center">부서를 선택해주세요.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <span class="scroll_img">스크롤</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close btn_close_dept_info_pop">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dept_info = {
+
+            /**
+             * 상태
+             */
+            state: {
+                initialized: false,
+                currentDept: null
+            },
+
+            /**
+             * 모달 초기화 및 표시
+             * @param {Object} dept - 부서 정보 객체
+             */
+            initModal: function (dept) {
+                if (!dept) {
+                    console.error('부서 정보가 없습니다.');
+                    return;
+                }
+
+                this.state.currentDept = dept;
+                this.updateModalContent(dept);
+                uiCommon.fnShowModal('dept_info');
+            },
+
+            /**
+             * 모달 내용 업데이트
+             * @param {Object} dept - 부서 정보 객체
+             */
+            updateModalContent: function (dept) {
+                // 부서명 업데이트
+                const titleElement = document.getElementById('dept_info_title');
+                if (titleElement) {
+                    titleElement.textContent = dept.deptNm || '부서정보';
+                }
+
+                // Caption 업데이트
+                const captionElement = document.getElementById('dept_info_caption');
+                if (captionElement) {
+                    captionElement.textContent = `조직구성 ${dept.deptNm || ''}에 대한 상세 테이블입니다.`;
+                }
+
+                // 멤버 목록 업데이트
+                this.updateMemberList(dept.members || []);
+            },
+
+            /**
+             * 멤버 목록 테이블 업데이트
+             * @param {Array} members - 멤버 배열
+             */
+            updateMemberList: function (members) {
+                const tbody = document.getElementById('dept_info_tbody');
+
+                if (!tbody) {
+                    console.error('tbody 요소를 찾을 수 없습니다.');
+                    return;
+                }
+
+                // 멤버가 없는 경우
+                if (!members || members.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center">소속 인원이 없습니다.</td></tr>';
+                    return;
+                }
+
+                // 멤버 목록 렌더링
+                let html = '';
+                members.forEach(member => {
+                    const jbgd = member.jbgd || '-';
+                    const userNm = member.userNm || '-';
+                    const telno = member.telno || '-';
+                    const chrgJob = member.chrgJob || '-';
+
+                    html += `
+                        <tr>
+                            <td>${this.escapeHtml(jbgd)}</td>
+                            <td>${this.escapeHtml(userNm)}</td>
+                            <td>${common.formatTelNo(telno)}</td>
+                            <td>${this.escapeHtml(chrgJob)}</td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+            },
+
+            /**
+             * HTML 이스케이프 처리
+             * @param {string} text - 이스케이프할 텍스트
+             * @returns {string} 이스케이프된 텍스트
+             */
+            escapeHtml: function (text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return String(text).replace(/[&<>"']/g, m => map[m]);
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function () {
+                this.initEvent();
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function (){
+                const _this = this;
+
+                // 닫기 버튼 클릭
+                $('.btn_close_dept_info_pop').on('click', function (e) {
+                    e.preventDefault();
+                    uiCommon.fnHideModal('dept_info');
+                });
+            }
+        };
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            dept_info.init();
+        });
+    </script>
+</th:block>

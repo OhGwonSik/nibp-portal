@@ -1,0 +1,104 @@
+<!-- 공통 모달 프래그먼트 -->
+<div th:fragment="modal" xmlns:th="http://www.w3.org/1999/xhtml">
+    <!-- 알림 모달 (Alert) -->
+    <div id="commonAlertModal" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap w400">
+                <div class="p_tit">
+                    <span class="modal-title">알림</span>
+                </div>
+                <div class="popup_inner">
+                    <p id="commonAlertMessage" class="tac mb30" style="white-space: pre-line;"></p>
+                    <div class="btn_wrap">
+                        <button type="button" id="commonAlertConfirmBtn" class="btn_basic bg_type06" onclick="uiCommon.fnHideAlertModal()">확인</button>
+                    </div>
+                </div>
+                <a href="#" id="commonAlertCloseBtn" class="pop_close" onclick="uiCommon.fnHideAlertModal()">닫기</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 확인 모달 (Confirm) -->
+    <div id="commonConfirmModal" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap w400">
+                <div class="p_tit">
+                    <span class="modal-title">확인</span>
+                </div>
+                <div class="popup_inner">
+                    <p id="commonConfirmMessage" class="tac mb30" style="white-space: pre-line;"></p>
+                    <div class="btn_wrap">
+                        <button type="button" id="commonConfirmOkBtn" class="btn_basic mr5 bg_type06">확인</button>
+                        <button type="button" id="commonConfirmCancelBtn" class="btn_basic bg_type07">취소</button>
+                    </div>
+                </div>
+                <a href="#" id="commonConfirmCloseBtn" class="pop_close" onclick="uiCommon.fnHideConfirmModal()">닫기</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 입력 모달 (Prompt) -->
+    <div id="commonPromptModal" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap">
+                <div class="p_tit">
+                    <span id="commonPromptTitle" class="modal-title">입력</span>
+                </div>
+                <div class="popup_inner">
+                    <p id="commonPromptMessage" class="tac mb15" style="white-space: pre-line;"></p>
+                    <div class="mb30">
+                        <input type="text" id="commonPromptInput" class="inp_text" style="width: 100%;" />
+                    </div>
+                    <div class="btn_wrap">
+                        <button type="button" id="commonPromptOkBtn" class="btn_basic mr5 bg_type06">확인</button>
+                        <button type="button" id="commonPromptCancelBtn" class="btn_basic bg_type07">취소</button>
+                    </div>
+                </div>
+                <a href="#" id="commonPromptCloseBtn" class="pop_close" onclick="uiCommon.fnHidePromptModal()">닫기</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div id="commonLoadingOverlay" class="loading-container" style="display: none;">
+        <div class="spinner"></div>
+        <div id="commonLoadingMessage" class="loading-message"></div>
+    </div>
+
+    <style>
+        .loading-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .loading-message {
+            font-size: 1rem;
+            margin-top: 1rem;
+            color: white;
+        }
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: radial-gradient(farthest-side,#1d68c7 94%,#0000) top/9px 9px no-repeat,
+            conic-gradient(#0000 30%,#1d68c7);
+            -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 9px),#000 0);
+            animation: spinner-c7wet2 1s infinite linear;
+        }
+
+        @keyframes spinner-c7wet2 {
+            100% {
+                transform: rotate(1turn);
+            }
+        }
+    </style>
+</div>

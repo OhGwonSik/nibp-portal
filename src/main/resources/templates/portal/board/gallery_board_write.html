@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>포토 갤러리 게시판 > 상세보기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">정책원 앨범</h3>
+    <p class="btn_wrap_right mb10"><em class="point"></em>표시는 필수 입력 항목입니다.</p>
+    <div class="table_layout t_tal">
+        <table>
+            <caption>채용공고 등록 테이블</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row" class="point"><label for="lb_01">제목</label></th>
+                <td>
+                    <input type="text" id="lb_01" title="제목 입력해" class="w100" placeholder="제목을 입력해 주세요">
+                    <p class="mt5">
+                        <input type="checkbox" id="check_01" name="check">
+                        <label for="check_01" class="ml5">공지</label>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label>공개여부</label></th>
+                <td>
+                    <div class="radio-box">
+                        <span><input type="radio" id="radio_01_01" name="radio_01" checked=""><label for="radio_01_01">공개</label></span>
+                        <span><input type="radio" id="radio_01_02" name="radio_01"><label for="radio_01_02">비공개</label></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><label for="lb_03">내용</label></th>
+                <td><textarea title="내용 입력" placeholder="내용을 입력해 주세요" id="lb_03">에디터가 들어가는 영역입니다.</textarea></td>
+            </tr>
+            <tr>
+                <th scope="row"><label>썸네일</label></th>
+                <td>
+                    <div class="flex_col02">
+                        <span class="thumb_img"><img th:src="@{/portal/images/img_board_thumb.png}" alt="썸네일"></span>
+                        <button class="btn_delete">삭제</button>
+                    </div>
+                    <div class="file_upload">
+                        <label for="file" class=""><span>파일찾기</span></label>
+                        <input type="file" id="file" title="파일첨부">
+                        <span class="file_txt">* 썸네일 파일을 첨부해 주세요.</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="User_institutions">첨부파일</label></th>
+                <td>
+                    <div class="file_upload">
+                        <label for="file" class=""><span>파일찾기</span></label>
+                        <input type="file" id="file" title="파일첨부">
+                        <span class="file_txt">* 파일을 첨부해 주세요.</span>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+    <div class="btn_wrap mt20">
+        <a href="javascript:;" class="btn_basic">확인</a>
+        <a href="javascript:;" class="btn_basic bg_gray">취소</a>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript">
+    const gallery_board_write = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageCnt: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        gallery_board_write.init();
+    });
+</script>
+</body>
+</html>

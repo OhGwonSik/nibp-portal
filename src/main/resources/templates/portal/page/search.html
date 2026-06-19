@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>통합검색 > 결과</title>
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">통합검색</h3>
+    <div class="search_wrap">
+        <fieldset>
+            <legend title="통합검색">검색</legend>
+            <input type="text" id="searchInput" th:value="${keyword ?: ''}" title="검색어 입력" placeholder="검색어를 입력해 주세요.">
+            <button id="btnSearch">검색</button>
+        </fieldset>
+    </div>
+    
+	<div class="search_result_text">
+	    <strong class="c_blue02">
+	        “<strong id="state_keyword" th:text="${keyword ?: ''}">검색어</strong>”
+	    </strong>로 총 
+	    <strong class="color_02">
+	        <span id="state_total" th:text="${#numbers.formatInteger(searchList != null && searchList['totalSearchCount'] != null ? searchList['totalSearchCount'] : 0, 0, 'COMMA')}">0</span>건
+	    </strong>이 검색되었습니다.
+	</div>
+	
+	<div class="sub_tab_menu">
+	    <ul>
+	        <li th:classappend="${integratedSearchRequest?.rootMenuNo == null ? 'on' : ''}" class="tab-item">
+	            <a href="javascript:void(0);" 
+	               th:onclick="portalSearch.getSearchList([[${keyword}]], null, this)">
+	                전체 <em id="total-count-display" th:text="|${searchList != null && searchList['totalSearchCount'] != null ? searchList['totalSearchCount'] : 0}건|">0건</em>
+	            </a>
+	        </li>
+	        
+	        <li th:each="menu : ${rootMenuList}" 
+	            th:classappend="${integratedSearchRequest?.rootMenuNo == menu.menuOid} ? 'on' : ''" class="tab-item">
+	            
+	            <a href="javascript:void(0);" 
+	               th:onclick="portalSearch.getSearchList([[${keyword}]], [[${menu.menuOid}]], this)">
+	                
+	                <span th:text="${menu.menuNm}">메뉴명</span>
+	                
+	                <em th:with="groupList=${searchList != null && searchList['menuGroups'] != null ? searchList['menuGroups']?.?[rootMenuNo == __${menu.menuOid}__] : null}"
+	                    th:text="|${not #lists.isEmpty(groupList) ? groupList[0].pageInfo.total : 0}건|">
+	                    0건
+	                </em>
+	            </a>
+	        </li>
+	    </ul>
+	</div>
+	
+	<div id="result_card_container">
+	    <div th:if="${searchList == null or #lists.isEmpty(searchList['menuGroups'])}">
+	        <h4 class="search_tit pt0">
+	            검색결과 <span>(<em class="color_02">0</em>건)</span>
+	        </h4>
+	        <div class="search_result_list">
+	            <ul>
+	                <li style="text-align: center; padding: 80px 0; border-bottom: none;">
+	                    <p>검색 결과가 없습니다.</p>
+	                </li>
+	            </ul>
+	        </div>
+	    </div>
+	
+	    <div th:each="group, stts : ${searchList?.get('menuGroups')}" th:if="${searchList != null}">
+	        
+	        <h4 class="search_tit" th:classappend="${stts.first} ? 'pt0' : ''">
+	            [[${group.rootMenuNm}]]
+	            <span>(<em class="color_02" th:text="${group.pageInfo?.total ?: 0}">0</em>건)</span>
+	        </h4>
+	
+	        <div class="search_result_list">
+	            <ul>
+	                <li th:if="${#lists.isEmpty(group.pageInfo?.list)}" style="text-align: center; padding: 50px 0; border-bottom: none;">
+	                    <p>검색 결과가 없습니다.</p>
+	                </li>
+	
+					<li th:each="item : ${group.pageInfo?.list}" 
+					    th:attr="data-id=|${item.menuCd}_${item.postId}|">
+					    <a th:href="@{${item.viewUrl ?: '#'}}">
+					        <strong th:text="${item.title}">게시물 제목</strong>
+					        <p th:text="${item.content}">게시물 내용 요약</p>
+					    </a>
+					    <span th:text="${item.regDate != null ? #temporals.format(item.regDate, 'yyyy-MM-dd') : '-'}"></span>
+					    <div class="category_box">
+					        <a href="javascript:;" th:text="${group.rootMenuNm}">대분류</a>
+					        <a href="javascript:;" th:text="${item.menuNm}">소메뉴명</a>
+					    </div>
+					</li>
+	            </ul>
+	        </div>
+	
+	        <div class="btn_wrap mt30" th:if="${group.pageInfo?.total > #lists.size(group.pageInfo?.list)}">
+	            <a href="javascript:void(0);" 
+	               th:onclick="portalSearch.loadMore([[${group.rootMenuNo}]], this)" 
+	               class="btn_basic">더보기</a>
+	        </div>
+	    </div>
+	</div>
+</div>
+
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portalSearch = {
+        state: {
+            keyword: '',
+            searchList: /*[[${searchList}]]*/ [],
+		    pageMap: {} // 각 대메뉴별 현재 페이지 번호를 저장 (기본 1페이지)
+    		
+        },
+
+        init: function () {
+            this.state.keyword = $('#searchInput').val();
+            
+            this.initEvent();
+         	// 초기 로드 시 각 메뉴의 페이지 개수를 3으로 세팅
+            if(this.state.searchList && this.state.searchList.menuGroups) {
+                this.state.searchList.menuGroups.forEach(g => {
+                    this.state.pageMap[g.rootMenuNo] = 3;
+                });
+            }
+        },
+
+        initEvent: function () {
+            const _this = this;
+            
+            // 검색 버튼 (페이지 재이동)
+            $('#btnSearch').on('click', function() {
+                const keyword = $('#searchInput').val().trim();
+                
+                if(keyword.length < 2){
+                	uiCommon.fnShowAlertModal('검색어는 2글자 이상 입력해 주세요.');
+                    return;
+                }
+                
+                // POST 방식으로 페이지 재이동
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/api/common/search';
+
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'keyword';
+                input.value = keyword;
+
+                form.appendChild(input);
+                document.body.appendChild(form);
+
+                form.submit();
+            });
+            
+            $('#searchInput').on('keypress', function(e) {
+                if(e.keyCode === 13) {
+                    $('#btnSearch').click();
+                }
+            });
+
+        },
+
+        getSearchList: function(keyword, rootMenuNo, element) {
+            // 탭 활성화
+            $('.tab-item').removeClass('on');
+            if (element) {
+                $(element).closest('li').addClass('on');
+            } else {
+                $('.tab-item').first().addClass('on'); // element가 없으면 '전체' 탭 활성화
+            }
+
+            // 탭 접근성 속성 업데이트
+            uiCommon.updateTabAccessibility('.sub_tab_menu');
+            
+         	// 페이징 상태 리셋 로직
+            if (rootMenuNo === null || rootMenuNo === '') {
+                // '전체' 탭 클릭 시 모든 메뉴의 페이지 개수를 3으로 리셋
+                Object.keys(this.state.pageMap).forEach(key => {
+                    this.state.pageMap[key] = 3;
+                });
+            } else {
+                // 특정 탭 클릭 시 해당 메뉴의 페이지 개수를 3으로 리셋
+                this.state.pageMap[rootMenuNo] = 3;
+            }
+
+            // searchList에서 필터링
+            let displayGroups = [];
+            const allGroups = this.state.searchList.menuGroups || [];
+
+            if (rootMenuNo === null || rootMenuNo === '') {
+                // 전체 탭 클릭 시
+                displayGroups = allGroups;
+            } else {
+                // 특정 탭 클릭 시 해당 그룹 필터링
+                displayGroups = allGroups.filter(group => group.rootMenuNo == rootMenuNo);
+            }
+
+            // 화면 렌더링 호출
+            this.renderResults(displayGroups);
+        },
+
+        renderResults: function(groups) {
+            const container = $('#result_card_container');
+            container.empty();
+
+            // 특정 탭을 눌렀는데 필터링된 그룹 데이터가 아예 없는 경우 (0건인 카테고리 클릭 시)
+            if (!groups || groups.length === 0) {
+                const activeTab = $('.tab-item.on a');
+                let activeTabNm = activeTab.find('span').text().trim();
+                
+                if (!activeTabNm) {
+                    activeTabNm = '검색결과';
+                }
+                
+                let html = `
+                    <h4 class="search_tit pt0">
+                        ${activeTabNm} <span>(<em class="color_02">0</em>건)</span>
+                    </h4>
+                    <div class="search_result_list">
+                        <ul>
+                            <li style="text-align: center; padding: 60px 0; border-bottom: none;">
+                                <p>검색 결과가 없습니다.</p>
+                            </li>
+                        </ul>
+                    </div>
+                `;
+                container.append(html);
+                return;
+            }
+
+            // 그룹 데이터가 있는 경우 루프 실행
+            groups.forEach((group, index) => {
+                const isFirst = (index === 0) ? 'pt0' : '';
+                const totalCount = group.pageInfo ? group.pageInfo.total : 0;
+                
+                let html = `<h4 class="search_tit ${isFirst}">${group.rootMenuNm} <span>(<em class="color_02">${totalCount}</em>건)</span></h4>`;
+                html += `<div class="search_result_list"><ul>`;
+
+                if (totalCount === 0 || !group.pageInfo.list || group.pageInfo.list.length === 0) {
+                    html += `<li style="text-align: center; padding: 60px 0; border-bottom: none;"><p>검색 결과가 없습니다.</p></li>`;
+                } else {
+                    // 초기화면은 무조건 상위 3개만 표시
+                    const itemsToShow = group.pageInfo.list.slice(0, 3);
+                    itemsToShow.forEach(item => {
+                        html += this.createItemHtml(item, group.rootMenuNm);
+                    });
+                }
+
+                html += `</ul></div>`;
+
+                if (totalCount > 3) {
+                    html += `
+                        <div class="btn_wrap mt30">
+                            <a href="javascript:void(0);" onclick="portalSearch.loadMore('${group.rootMenuNo}', this)" class="btn_basic">더보기</a>
+                        </div>`;
+                }
+                container.append(html);
+            });
+        },
+        
+        loadMore: async function(rootMenuNo, btn) {
+            const _this = this;
+            const $ul = $(btn).closest('.btn_wrap').prev('.search_result_list').find('ul');
+            
+            const currentCount = $ul.find('li').length;
+            
+            const existingIds = $ul.find('li').map(function() {
+                return $(this).attr('data-id');
+            }).get();
+            
+            const requestData = {
+                keyword: _this.state.keyword,
+                rootMenuNo: rootMenuNo,
+                pageNum: currentCount, 
+                pageCnt: 6,           // 가져올 개수
+                sort: 'accuracy'
+            };
+
+            try {
+                const response = await API.post('/api/common/search/integrate', requestData);
+                const resData = response.data || response;
+                const pageInfo = resData.pageInfo;
+
+                if (pageInfo && pageInfo.list) {
+                    const list = pageInfo.list;
+                    const rootNm = list.length > 0 ? (list[0].rootMenuNm || '') : '';
+
+                    list.forEach(item => {
+                        // 메뉴코드+게시물번호 조합으로 유니크 ID 생성
+                        const uniqueId = `${item.menuCd}_${item.postId}`;
+                        
+                        // 화면에 없는 것만 추가
+                        if (!existingIds.includes(uniqueId)) {
+                            $ul.append(_this.createItemHtml(item, rootNm));
+                        }
+                    });
+
+                    const totalOnScreen = $ul.find('li').length;
+                    if (totalOnScreen >= pageInfo.total) {
+                        $(btn).closest('.btn_wrap').hide();
+                    }
+                }
+            } catch (error) {
+                console.error("데이터 로드 실패:", error);
+            }
+        },
+
+        /**
+         * 리스트 아이템 HTML 생성
+         */
+        createItemHtml: function(item, rootMenuNm) {
+            const regDate = item.regDate ? item.regDate.substring(0, 10) : '-';
+            const finalUrl = item.viewUrl || '#';
+            const uniqueId = `${item.menuCd}_${item.postId}`; 
+            
+            return `
+                <li data-id="${uniqueId}">
+                    <a href="${finalUrl}">
+                        <strong>${item.title}</strong>
+                        <p>${item.content || ''}</p>
+                    </a>
+                    <span>${regDate}</span>
+                    <div class="category_box">
+                        <a href="javascript:;">${rootMenuNm}</a>
+                        <a href="javascript:;">${item.menuNm}</a>
+                    </div>
+                </li>
+            `;
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        portalSearch.init();
+    });
+</script>
+</body>
+</html>

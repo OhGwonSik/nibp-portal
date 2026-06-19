@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <title>카드뉴스 상세</title>
+	<th:block th:if="${CardNewsPost?.openYn == 'N'}">
+	    <meta name="robots" content="noindex, nofollow">
+	</th:block>
+	<th:block th:unless="${CardNewsPost?.openYn == 'N'}">
+		<meta name="title" 
+	          th:if="${CardNewsPost?.cardNewsNm != null}" 
+	          th:content="${CardNewsPost.cardNewsNm}">    
+		<meta name="description" 
+		      th:if="${CardNewsPost?.smry != null}" 
+		      th:content="${#strings.abbreviate(
+		          T(egovframework.common.util.HtmlUtil).stripHtml(
+		              T(egovframework.common.util.HtmlUtil).htmlDecode(CardNewsPost.smry)
+		          ), 160)}">
+	</th:block>     
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">카드뉴스</h3>
+    <div class="board_wrap">
+        <div class="board_view">
+            <div class="board_view_header">
+                <h4 class="title" th:text="${CardNewsPost.cardNewsNm}"></h4>
+                <em class="board_date">등록일 <em th:text="${#temporals.format(CardNewsPost.regDt, 'yyyy-MM-dd')}"></em></em>
+            </div>
+            <div class="board_content tac">
+                <p class="mb10 text-content" th:if="${CardNewsPost.smry}" th:text="${CardNewsPost.smry}"></p>
+                <th:block th:if="${CardNewsPost.attachments != null and !CardNewsPost.attachments.isEmpty()}">
+                    <div class="slider_wrapper">
+                        <button class="slider_prev" aria-label="이전 슬라이드"></button>
+                        <div class="border_zone">
+                            <div th:each="file : ${CardNewsPost.attachments}" th:if="${file.thmbYn == 'N'}">
+                                <img th:src="@{|${basicFilePath}${file.strgFilePath}/${file.strgMdFileNm}|}"
+                                     th:alt="${file.imgSbstTxtCn != null and !#strings.isEmpty(file.imgSbstTxtCn) ? file.imgSbstTxtCn : CardNewsPost.cardNewsNm}">
+                            </div>
+                        </div>
+                        <button class="slider_next" aria-label="다음 슬라이드"></button>
+                    </div>
+                    <div class="border_controller">
+                        <div class="border_PagingInfo"></div>
+                        <button class="borderPause"></button>
+                    </div>
+                </th:block>
+            </div>
+            <div class="btn_wrap mt20">
+                <a th:href="@{/board/cardnews}" class="btn_basic">목록</a>
+            </div>
+        </div>
+        <div class="pagination">
+            <p class="prev">
+                <span class="name">이전글</span>
+                <span class="text">
+                    <a class="link" th:if="${CardNewsPost.prevCardnews != null}"
+                       th:href="@{/board/cardnews/post(cardNewsOid=${CardNewsPost.prevCardnews.cardNewsOid})}"
+                       th:text="${CardNewsPost.prevCardnews.cardNewsNm}"></a>
+                    <em th:unless="${CardNewsPost.prevCardnews != null}">현재 페이지가 첫번째 페이지입니다.</em>
+                </span>
+            </p>
+            <p class="next">
+                <span class="name">다음글</span>
+                <span class="text">
+                    <a class="link" th:if="${CardNewsPost.nextCardnews != null}"
+                       th:href="@{/board/cardnews/post(cardNewsOid=${CardNewsPost.nextCardnews.cardNewsOid})}"
+                       th:text="${CardNewsPost.nextCardnews.cardNewsNm}"></a>
+                    <em th:unless="${CardNewsPost.nextCardnews != null}">현재 페이지가 마지막 페이지입니다.</em>
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    $(function () {
+        const data = /*[[${CardNewsPost}]]*/ ''
+
+
+        var $slider = $('.border_zone');
+        var $pagingWrap = $('.border_PagingInfo');
+        var $pauseBtn = $('.borderPause');
+
+        var autoplaySpeed = 4000;      // 4초
+        var autoplayTimer = null;
+        var isPaused = false;
+
+        // 슬라이드 aria 갱신 (현재 슬라이드 표시용)
+        function updateAria(slick, currentIndex) {
+            var $slides = $(slick.$slides);
+
+            $slides.each(function (i) {
+                var $slide = $(this);
+
+                if (i === currentIndex) {
+                    $slide
+                            .attr({
+                                'aria-hidden': 'false',
+                                'role': 'group'
+                            });
+                } else {
+                    $slide
+                            .attr({
+                                'aria-hidden': 'true',
+                                'role': 'group'
+                            });
+                }
+            });
+        }
+
+        // 자동재생 시작
+        function startAutoplay() {
+            if (autoplayTimer) clearInterval(autoplayTimer);
+
+            autoplayTimer = setInterval(function () {
+                var slick = $slider.slick('getSlick');
+                var current = slick.currentSlide;
+                var last = slick.slideCount - 1;
+                var next = (current >= last) ? 0 : current + 1;
+
+                $slider.slick('slickGoTo', next);
+            }, autoplaySpeed);
+        }
+
+        // 자동재생 정지
+        function stopAutoplay() {
+            if (autoplayTimer) {
+                clearInterval(autoplayTimer);
+                autoplayTimer = null;
+            }
+        }
+
+        // slick 초기화 이벤트
+        $slider.on('init', function (event, slick) {
+            // dots 버튼에 클래스/레이블 부여
+            $pagingWrap.find('button').each(function (i) {
+                $(this)
+                        .addClass('pzone-dot')
+                        .attr('aria-label', (i + 1) + '번 슬라이드 보기');
+            });
+
+            updateAria(slick, slick.currentSlide || 0);
+            startAutoplay(); // 초기 자동 재생 시작
+        });
+
+        // 슬라이드 변경 시 aria 갱신
+        $slider.on('afterChange', function (event, slick, currentSlide) {
+            updateAria(slick, currentSlide);
+        });
+
+        // slick 실행
+        $slider.slick({
+            slidesToShow: 1,
+            slidesToScroll: 1,
+
+            // ★ 클론 생성 방지 → 원본 4개만 사용
+            infinite: false,
+
+            arrows: false,
+
+            dots: true,
+            appendDots: $pagingWrap,
+            customPaging: function (slider, i) {
+                // 1,2,3,4 번호 버튼
+                return '<button type="button">' + (i + 1) + '</button>';
+            },
+
+            // slick 기본 a11y 포커스는 끄고, 링크는 그대로 둠
+            accessibility: false,
+            pauseOnHover: false,
+            pauseOnFocus: false,
+            autoplay: false
+        });
+
+        // 번호 버튼 클릭 시 : 해당 슬라이드로 이동 + 자동재생 정지
+        $pagingWrap.on('click', '.pzone-dot', function () {
+            var idx = parseInt($(this).text(), 10) - 1; // 1,2,3,4 → 0,1,2,3
+
+            stopAutoplay();
+            isPaused = true;
+
+            $pauseBtn
+                    .addClass('is-paused')
+                    .attr({
+                        'aria-label': '재생 재개',
+                        'aria-pressed': 'true'
+                    });
+
+            $slider.slick('slickGoTo', idx);
+        });
+
+        // ★ 이전 슬라이드 버튼
+        $('.slider_prev').on('click', function () {
+            stopAutoplay();
+            isPaused = true;
+
+            $pauseBtn
+                    .addClass('is-paused')
+                    .attr({
+                        'aria-label': '재생 재개',
+                        'aria-pressed': 'true'
+                    });
+
+            $slider.slick('slickPrev');
+        });
+
+        // ★ 다음 슬라이드 버튼
+        $('.slider_next').on('click', function () {
+            stopAutoplay();
+            isPaused = true;
+
+            $pauseBtn
+                    .addClass('is-paused')
+                    .attr({
+                        'aria-label': '재생 재개',
+                        'aria-pressed': 'true'
+                    });
+
+            $slider.slick('slickNext');
+        });
+
+        // ★ borderPause 버튼: 정지 / 재생 토글
+        $pauseBtn.on('click', function () {
+            if (isPaused) {
+                // 현재 정지 상태 → 재생 시작
+                isPaused = false;
+                startAutoplay();
+                $(this)
+                        .removeClass('is-paused')
+                        .attr({
+                            'aria-pressed': 'false'
+                        });
+            } else {
+                // 현재 재생 상태 → 정지
+                isPaused = true;
+                stopAutoplay();
+                $(this)
+                        .addClass('is-paused')
+                        .attr({
+                            'aria-label': '재생 재개',
+                            'aria-pressed': 'true'
+                        });
+            }
+        });
+
+        // 포커스가 슬라이드/번호 영역 안에 들어오면 자동재생 잠시 멈추고,
+        // 완전히 빠져나가면(다른 영역으로 포커스 이동) 다시 재생 (정지 상태가 아닐 때)
+        $slider.add($pagingWrap).on('focusin', function () {
+            if (!isPaused) {
+                stopAutoplay();
+            }
+        }).on('focusout', function (e) {
+            if (!isPaused) {
+                var related = e.relatedTarget;
+                if (
+                        !related ||
+                        (!$.contains($slider[0], related) && !$.contains($pagingWrap[0], related))
+                ) {
+                    startAutoplay();
+                }
+            }
+        });
+
+    });
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_board_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 동적 게시판 > 게시판 상세보기 > 썸네일/포토갤러리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style layout:fragment="style">
+        .search_wrap {display: none;}
+
+        /* 댓글 스타일 (detail1 참고) */
+        .comment_wrap { border-top: 1px solid #ddd; padding-top: 20px; }
+        .comment_list ul li { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+        .comment_list .info { margin-bottom: 5px; font-weight: bold; font-size: 0.95em; }
+        .comment_list .date { color: #888; font-size: 0.85em; margin-left: 10px; font-weight: normal;}
+        .comment_list .txt { white-space: pre-wrap; line-height: 1.4; color: #333; }
+        .comment_list .btn_del { margin-left: 10px; cursor: pointer; color: #dc3545; font-size: 0.9em; }
+        .comment_write { background: #f9f9f9; padding: 15px; margin-bottom: 20px; border: 1px solid #eee; }
+        .comment_write textarea { width: 100%; height: 80px; border: 1px solid #ddd; padding: 10px; resize: none; margin-top: 5px; }
+        .comment_write .top_area { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .comment_write input { height: 32px; padding: 0 10px; border: 1px solid #ddd; width: 200px; }
+
+        /* 이미지 미리보기 스타일 */
+        .img_preview_wrap { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 0; }
+        .img_preview_wrap img { max-width: 200px; max-height: 150px; border: 1px solid #ddd; object-fit: cover; }
+    </style>
+</head>
+<body>
+<div layout:fragment="admin_board_content" class="sub_cont_wrap">
+
+    <div class="table_layout02 mb10 has_editor">
+        <table>
+            <caption>게시글 상세</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row">제목</th>
+                <td colspan="3" th:text="${post.bbsPstTtl}"></td>
+            </tr>
+            <tr>
+                <th scope="row">분류</th>
+                <td th:text="${post.ctgry != null ? post.ctgry : '-'}"></td>
+                <th scope="row">공개여부</th>
+                <td>
+                    <span th:if="${post.prvtPstYn == 'Y'}">비공개</span>
+                    <span th:unless="${post.prvtPstYn == 'Y'}">공개</span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">작성자</th>
+                <td th:text="${post.wrtrNm}"></td>
+                <th scope="row">등록일시</th>
+                <td th:text="${#temporals.format(post.regDt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            </tr>
+            <tr>
+                <th scope="row">조회수</th>
+                <td th:text="${post.inqCnt}"></td>
+                <th scope="row">상단고정 기간</th>
+                <td>
+                    <span th:if="${post.bgngDt != null}"
+                          th:text="${#temporals.format(post.bgngDt, 'yyyy-MM-dd')}"></span>
+                    <span th:if="${post.bgngDt != null and post.endDt != null}"> ~ </span>
+                    <span th:if="${post.endDt != null}"
+                          th:text="${#temporals.format(post.endDt, 'yyyy-MM-dd')}"></span>
+                    <span th:if="${post.bgngDt == null and post.endDt == null}">-</span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">내용</th>
+                <td colspan="3">
+                    <div style="min-height: 100px;" th:utext="${post.bbsPstCn}" class="post-content"></div>
+                </td>
+            </tr>
+
+            <tr th:if="${fileList != null and !fileList.isEmpty()}">
+                <th scope="row">이미지 미리보기</th>
+                <td colspan="3">
+                    <div class="img_preview_wrap">
+                        <th:block th:each="file : ${fileList}">
+                            <img th:src="@{|${basicFilePath}${file.strgSmlFilePath}/${file.strgSmlFileNm}|}"
+                                 th:alt="${file.orgnlFileNm}"
+                                 onerror="this.style.display='none'">
+                        </th:block>
+                    </div>
+                </td>
+            </tr>
+
+            <tr th:if="${fileList != null and !fileList.isEmpty()}">
+                <th scope="row">첨부파일</th>
+                <td colspan="3">
+                    <div class="table_layout">
+                        <table>
+                            <caption>첨부파일 목록</caption>
+                            <colgroup>
+                                <col style="width: auto;">
+                                <col style="width: 15%;">
+                                <col style="width: 20%;">
+                                <col style="width: 15%;">
+                            </colgroup>
+                            <thead>
+                            <tr>
+                                <th scope="col">파일명</th>
+                                <th scope="col">파일사이즈</th>
+                                <th scope="col">업로드일자</th>
+                                <th scope="col">다운로드</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="file : ${fileList}">
+                                <td>
+                                    <div class="tal">
+                                        <span th:if="${file.thmbYn == 'Y'}" style="color:red; font-size:0.8em; margin-right:5px;">[썸네일]</span>
+                                        <span th:text="${file.orgnlFileNm}"></span>
+                                    </div>
+                                </td>
+                                <td th:text="${file.strgFileCpct / 1024 + ' KB'}"></td>
+                                <td th:text="${#temporals.format(file.regDt, 'yyyy-MM-dd')}"></td>
+                                <td>
+                                    <a th:href="@{|${basicFilePath}${file.strgFilePath}/${file.strgFileNm}|}" class="a_link" th:download="${file.orgnlFileNm}">다운로드</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:if="${boardInfo.cmntPsbltyYn != 'N'}" class="comment_wrap mt30">
+        <h4>댓글 <span th:text="${commentList != null ? commentList.size() : 0}" style="color:#e60000; font-size:0.8em;"></span></h4>
+
+        <div class="comment_write">
+            <div class="top_area">
+                <input type="text" id="cmt_writer" placeholder="작성자 (관리자)" maxlength="20" value="관리자">
+                <button type="button" class="btn_basic_s bg_blue" onclick="admin807_detail3.fnRegistComment()">등록</button>
+            </div>
+            <textarea id="comment_content" placeholder="댓글 내용을 입력해주세요."></textarea>
+        </div>
+
+        <div class="comment_list">
+            <div th:if="${commentList == null or commentList.isEmpty()}" class="tac p20" style="color:#999;">
+                등록된 댓글이 없습니다.
+            </div>
+
+            <ul th:if="${commentList != null and !commentList.isEmpty()}">
+                <li th:each="cmt : ${commentList}">
+                    <div style="width: 100%;">
+                        <div class="info">
+                            <strong th:text="${cmt.wrtrNm}">작성자</strong>
+                            <span class="date" th:text="${#temporals.format(cmt.regDt, 'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+                        <div class="txt post-content" th:text="${cmt.commentContent}"></div>
+                    </div>
+                    <div>
+                        <a href="javascript:;" th:onclick="|admin807_detail3.fnDeleteComment(${cmt.bbsCmntOid})|" class="btn_del">❌ 삭제</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="btn_wrap">
+        <a href="javascript:;" id="admin807_list_btn" class="btn_basic bg_type01">목록</a>
+        <a href="javascript:;" id="btnUpdate" class="btn_basic bg_type02">수정</a>
+    </div>
+
+</div>
+
+<script layout:fragment="board_scripts" th:inline="javascript" type="text/javascript">
+    const admin807_detail3 = {
+        state: {
+            post: /*[[${post}]]*/ {},
+            boardInfo: /*[[${boardInfo}]]*/ {},
+            menuCd: ''
+        },
+
+        init: function() {
+           	const params = new URLSearchParams(window.location.search);
+        	const menuCd = params.get("menuCd");
+        	this.state.menuCd = menuCd;
+        	
+            this.initEvent();
+        },
+
+        initEvent: function() {
+            const _this = this;
+
+            // 수정 버튼
+            document.getElementById('btnUpdate').addEventListener('click', function() {
+                _this.fnGoUpdatePage();
+            });
+
+            // 목록 버튼 클릭
+            document.querySelector('#admin807_list_btn').addEventListener('click', function(){
+                _this.fnGoListPage();
+            });
+        },
+
+        fnGoListPage: function(){
+            const menuCd = this.state.menuCd;
+            const targetTemplate = 'admin807-list1';
+            location.href = `${contextPath}/admin/board/${targetTemplate}?menuCd=${menuCd}&bbsOid=${this.state.boardInfo.bbsOid}`;
+
+        },
+
+        // 페이지 이동수정 페이지 (이미지/갤러리형 Write)
+        fnGoUpdatePage: function() {
+            const menuCd = this.state.menuCd;
+            location.href = `${contextPath}/admin/board/write/admin807-write_images?menuCd=${menuCd}&bbsOid=${this.state.boardInfo.bbsOid}&bbsPstOid=${this.state.post.bbsPstOid}`;
+        },
+
+        // 댓글 등록
+        fnRegistComment: function() {
+            const _this = this;
+            const writerEl = document.getElementById('cmt_writer');
+            const contentEl = document.getElementById('comment_content');
+
+            if (!writerEl || !writerEl.value.trim()) {
+                return uiCommon.fnShowAlertModal('작성자를 입력해주세요.', () => writerEl.focus());
+            }
+            if (!contentEl || !contentEl.value.trim()) {
+                return uiCommon.fnShowAlertModal('내용을 입력해주세요.', () => contentEl.focus());
+            }
+
+            const params = {
+                bbsOid: _this.state.boardInfo.bbsOid,
+                bbsPstOid: _this.state.post.bbsPstOid,
+                wrtrNm: writerEl.value.trim(),
+                commentContent: contentEl.value.trim(),
+                menuCd: _this.state.menuCd
+            };
+
+            uiCommon.fnShowConfirmModal('댓글을 등록하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    await API.put('/api/common/board/comment/insert', params);
+                    uiCommon.fnShowAlertModal('등록되었습니다.', function(){
+                        location.reload();
+                    });
+                } catch (error) {
+                    console.error('댓글 등록 실패:', error);
+                    uiCommon.fnShowAlertModal('등록 중 오류가 발생했습니다.', error);
+                }
+            });
+        },
+
+        // 댓글 삭제
+        fnDeleteComment: function(bbsCmntOid) {
+            if (!bbsCmntOid) return;
+            const _this = this;
+
+            uiCommon.fnShowConfirmModal('댓글을 삭제하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    const param = {
+                        bbsCmntOid : bbsCmntOid,
+                        menuCd: _this.state.menuCd
+                    }
+
+                    await API.patch(`/api/common/board/comment/delete`, param);
+                    uiCommon.fnShowAlertModal('삭제되었습니다.', function(){
+                        location.reload();
+                    });
+                } catch (error) {
+                    console.error('댓글 삭제 실패:', error);
+                    uiCommon.fnShowAlertModal('삭제 중 오류가 발생했습니다.');
+                }
+            });
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        admin807_detail3.init();
+    });
+</script>
+</body>
+</html>

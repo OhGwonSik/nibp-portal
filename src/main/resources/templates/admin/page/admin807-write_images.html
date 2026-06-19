@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_board_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${boardInfo.bbsNm} + ' 등록'">게시글 관리</title>
+</head>
+<body>
+<div layout:fragment="admin_board_content" class="sub_cont_wrap">
+
+    <div class="board_tit mb20">
+        <h3 class="sub_tit" th:text="${boardInfo.bbsNm} + ' ' + (${post != null and post.bbsPstOid != null} ? '수정' : '등록')">게시글 등록</h3>
+    </div>
+
+    <div class="table_layout02 mb10">
+        <table>
+            <caption>게시글 등록</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr th:if="${boardInfo.ctgryYn == 'Y' and boardInfo.ctgryList != null}">
+                <th scope="row">분류 <span class="chk_txt">*</span></th>
+                <td>
+                    <select id="category" class="w200">
+                        <option value="">선택하세요</option>
+                        <option th:each="cat : ${#strings.arraySplit(boardInfo.ctgryList, ',')}"
+                                th:value="${#strings.trim(cat)}"
+                                th:text="${#strings.trim(cat)}">
+                        </option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><label for="startDt">상단고정 기간</label></th>
+                <td>
+                    <div class="flex_col">
+                        <span class="datepicker">
+                            <input type="text" id="startDt" class="datepick">
+                            <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                        </span>
+                        ~
+                        <span class="datepicker">
+                            <input type="text" id="endDt" class="datepick">
+                            <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                        </span>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><label for="postTitle">제목 <span class="chk_txt">*</span></label></th>
+                <td>
+                    <input type="text" id="postTitle" class="w100" placeholder="제목을 입력하세요">
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><label for="boardEditor">내용</label></th>
+                <td>
+                        <textarea class="bor1ddd" name="boardEditor" id="boardEditor" rows="10"
+                                  placeholder="내용을 입력하세요"></textarea>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">썸네일 <span class="chk_txt">*</span></th>
+                <td>
+                    <div id="thumbnail_file_list" class="flex_col file_list"></div>
+
+                    <div class="file_upload">
+                        <label for="thumbnailFile"><span>파일찾기</span></label>
+                        <input type="file" id="thumbnailFile" accept="image/*" th:attr="data-allowed-ext=${allowedExtensions}">
+                        <span id="thumbnail_txt" class="file_txt">
+                            이미지를 첨부해주세요 (jpg, png, gif)
+                        </span>
+                    </div>
+                </td>
+            </tr>
+
+            <tr th:if="${boardInfo.fileUldCnt > 0}">
+                <th scope="row">첨부파일</th>
+                <td>
+                    <div id="file_list" class="flex_col file_list"></div>
+
+                    <div class="file_upload" id="attach_file_upload_box">
+                        <label for="attachFile"><span>파일찾기</span></label>
+                        <input type="file" id="attachFile" multiple th:accept="${#strings.substringBefore(allowedExtensions, ',') == allowedExtensions ? '.' + allowedExtensions : '.' + #strings.replace(allowedExtensions, ',', ',.')}">
+                        <span id="file_txt" class="file_txt">
+                            파일을 첨부해주세요 (최대 <span th:text="${boardInfo.fileUldCnt}"></span>개)
+                        </span>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_wrap mt20">
+        <a id="btnSave" href="javascript:;" class="btn_basic bg_type01">저장</a>
+        <a id="btnCancel" href="javascript:;" class="btn_basic line_type02">취소</a>
+    </div>
+</div>
+
+<script layout:fragment="board_scripts" th:inline="javascript" type="text/javascript">
+    const admin807_write_images = {
+        state: {
+            // [기본 정보]
+            boardInfo: /*[[${boardInfo}]]*/ {},
+            postList: /*[[${post}]]*/ {},
+            fileList: /*[[${fileList}]]*/ [],
+            isEdit: false,
+            menuCd: '',
+
+            // [썸네일 상태 - Raw File]
+            thumbnailFile: null,
+            hasThumbnail: false,
+
+            // [Chunk Upload 공통 설정 (admin807-write_common 기반)]
+            uploaderStorageKey: 'tempUploadKey_admin807_img',
+            uploadTargetId: null,
+            chunkSize: 2 * 1024 * 1024, // 2MB 단위 분할
+            uploadUrl: '/api/common/file/chunk',
+            tempDeleteUrl: '/api/common/file/chunk/temp-file',
+            rfrncSeCd: 'BOARD',
+            isUploading: false,
+
+            // [일반 첨부파일 상태]
+            existingFiles: [],      // (수정 시) DB에 저장된 파일
+            newFiles: [],           // 새로 Chunk 업로드 완료된 파일 메타데이터
+            deletedAttachNos: [],   // 삭제된 기존 파일 번호들
+
+            // [에디터 이미지 상태]
+            editorFiles: [],            // 에디터에 새로 추가된 이미지 메타데이터
+            existingEditorFileKeys: [], // (수정 시) 에디터에 있던 기존 이미지 키
+            deleteEditorAttachNos: []   // 에디터에서 삭제된 이미지 번호들
+        },
+
+        init: async function () {
+           	const params = new URLSearchParams(window.location.search);
+        	const menuCd = params.get("menuCd");
+        	this.state.menuCd = menuCd;
+        	
+            // 1. 수정/등록 모드 판단 및 ID 설정
+            if (this.state.postList && this.state.postList.bbsPstOid) {
+                this.state.isEdit = true;
+                this.state.uploadTargetId = this.state.postList.bbsPstOid;
+            } else {
+                this.initUploaderTarget(); // 등록 시 임시 ID 생성
+            }
+
+            this.initEvent();
+            await this.initEditor();
+            this.loadData(); // 초기 데이터 로드 (수정 시)
+        },
+
+        // 임시 업로드 타겟 ID 생성 (Common 로직 동일)
+        initUploaderTarget: function () {
+            const storageKey = this.state.uploaderStorageKey;
+            let tempId = sessionStorage.getItem(storageKey);
+            if (!tempId) {
+                tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+                sessionStorage.setItem(storageKey, tempId);
+            }
+            this.state.uploadTargetId = tempId;
+        },
+
+        // CKEditor 초기화 (Chunk Upload 옵션 활성화)
+        initEditor: function() {
+            const _this = this;
+            if(typeof CommonCKEditor !== 'undefined') {
+                CommonCKEditor.destroy('boardEditor');
+                return CommonCKEditor.init({
+                    editorId: 'boardEditor',
+                    removePlugins: 'uploadimage,uploadfile,filebrowser',
+                    chunkUpload: {
+                        enabled: true,
+                        chunkUrl: '/api/common/file/tmp/ck-image/chunk', // 에디터용 청크 URL
+                        chunkSize: this.state.chunkSize,
+                        thresholdBytes: 5 * 1024 * 1024,
+                        // 에디터 내 이미지 업로드 완료 시 메타데이터 저장
+                        onUploadComplete: (payload) => {
+                            _this.handleEditorUploadComplete(payload);
+                        }
+                    }
+                });
+            }
+        },
+
+        initEvent: function () {
+            const _this = this;
+
+            // [저장 버튼]
+            document.getElementById("btnSave").addEventListener("click", (e) => {
+                e.preventDefault();
+                _this.fnSave();
+            });
+
+            // [취소 버튼]
+            document.getElementById("btnCancel").addEventListener("click", (e) => {
+                e.preventDefault();
+                uiCommon.fnShowConfirmModal('목록으로 이동하시겠습니까?', async () => {
+                    await _this.cleanupTempFiles(); // 임시 파일 정리 (Common 로직)
+                    uiCommon.fnHideConfirmModal();
+                    _this.fnGoList();
+                });
+            });
+
+            // [썸네일 선택] - Raw File 방식
+            document.getElementById("thumbnailFile").addEventListener("change", (e) => {
+                _this.fnHandleThumbnail(e);
+            });
+
+            // [일반 첨부파일 선택] - Chunk Upload 방식 (Common 로직)
+            const attachFile = document.getElementById("attachFile");
+            if(attachFile) {
+                attachFile.addEventListener("change", (e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (!files.length) return;
+                    _this.handleFileSelection(files);
+                    e.target.value = ''; // 초기화
+                });
+            }
+        },
+
+        // 데이터 로드 (수정 모드 시 화면 세팅)
+        loadData: function() {
+            const post = this.state.postList || {};
+            const allFiles = (this.state.fileList && this.state.fileList.length > 0) 
+				            ? this.state.fileList 
+				            : (post.attachments || []);
+
+            // 기본 필드 세팅 (기존과 동일)
+            if(this.state.isEdit) {
+                document.getElementById("postTitle").value = post.bbsPstTtl || '';
+
+                const categoryEl = document.getElementById("category");
+                if (categoryEl && post.ctgry) categoryEl.value = post.ctgry;
+
+                // 상단고정 기간
+                const startDtEl = document.getElementById("startDt");
+                const endDtEl = document.getElementById("endDt");
+                if (startDtEl && post.bgngDt) startDtEl.value = this.formatDate(post.bgngDt);
+                if (endDtEl && post.endDt) endDtEl.value = this.formatDate(post.endDt);
+
+                // 에디터 내용 세팅
+                if (post.bbsPstCn) {
+                    if(typeof CommonCKEditor !== 'undefined') {
+                        CommonCKEditor.setContent('boardEditor', post.bbsPstCn);
+                    } else {
+                        document.getElementById("boardEditor").value = post.bbsPstCn;
+                    }
+                }
+            }
+
+            // 파일 분류 로직 개선
+            // fileType이 'THUMBNAIL'이거나, 혹은 thmbYn이 'Y'인 파일을 썸네일로 인식
+            const thumbnail = allFiles.find(f => f.fileType === 'THUMBNAIL' || f.thmbYn === 'Y');
+
+            // 썸네일로 식별된 파일은 제외하고 나머지(일반/에디터)만 추림
+            const thumbnailNo = thumbnail ? thumbnail.fileOid : -1;
+
+            // 일반 파일: 썸네일이 아니면서, 에디터 타입도 아닌 것
+            const attachments = allFiles.filter(f => f.fileOid !== thumbnailNo && f.fileType !== 'EDITOR');
+
+            // 에디터 파일: 에디터 타입인 것
+            const editorAttachments = allFiles.filter(f => f.fileType === 'EDITOR');
+
+            // 썸네일 렌더링
+            if (thumbnail) {
+                this.state.hasThumbnail = true;
+                this.renderExistingThumbnail(thumbnail);
+            }
+
+            // 일반 첨부파일 렌더링
+            this.state.existingFiles = attachments;
+            this.renderFileList();
+
+            // 에디터 기존 이미지 동기화
+            if(this.state.isEdit) {
+                this.syncExistingEditorImages(post.bbsPstCn, editorAttachments);
+            }
+        },
+
+        formatDate: function(date) {
+            if (!date) return '';
+            if (typeof date === 'string') {
+                return date.substring(0, 10);
+            }
+            return date;
+        },
+
+        // 일반 첨부파일 (Chunk Upload)
+        handleFileSelection: async function (files) {
+            const _this = this;
+            if (this.state.isUploading) {
+                uiCommon.fnShowAlertModal('현재 파일 업로드 중입니다.');
+                return;
+            }
+
+            const maxCnt = this.state.boardInfo.fileUldCnt || 0;
+            const maxSizeMB = this.state.boardInfo.fileUldSize || 5120;
+            const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+            const rawExts = /*[[${allowedExtensions}]]*/ '';
+            const allowedExts = rawExts.toLowerCase().split(',').map(ext => ext.trim());
+
+            const validFiles = [];
+            const rejectedFiles = [];
+
+            // 유효성 검사 루프
+            files.forEach(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                let reason = "";
+
+                if (rawExts && !allowedExts.includes(ext)) {
+                    reason = "허용되지 않는 확장자입니다.";
+                } else if (file.size > maxSizeBytes) {
+                    reason = `최대 ${maxSizeMB}MB까지만 업로드 가능합니다.`;
+                }
+
+                if (reason) {
+                    rejectedFiles.push(`- ${file.name} : ${reason}`);
+                } else {
+                    validFiles.push(file);
+                }
+            });
+
+            // 개수 체크
+            const currentCount = document.getElementById("file_list").childElementCount;
+            if (currentCount + validFiles.length > maxCnt) {
+                uiCommon.fnShowAlertModal(`첨부파일은 최대 ${maxCnt}개까지만 등록 가능합니다.`);
+                return;
+            }
+
+            // 알림창 후 유효 파일만 업로드
+            if (rejectedFiles.length > 0) {
+                const errorMsg = rejectedFiles.join('\n');
+                uiCommon.fnShowAlertModal(errorMsg, function() {
+                    if (validFiles.length > 0) {
+                        _this.fnStartUploadProcess(validFiles);
+                    }
+                });
+            } else if (validFiles.length > 0) {
+                this.fnStartUploadProcess(validFiles);
+            }
+        },
+
+        /**
+         * 업로드 실행
+         */
+        fnStartUploadProcess: async function (validFiles) {
+            this.setUploading(true, '업로드 진행 중...');
+            for (const file of validFiles) {
+                try {
+                    const uploadedInfo = await this.uploadChunkedFile(file);
+                    if (uploadedInfo) {
+                        if (!uploadedInfo.originalStrgFileNm) {
+                            uploadedInfo.originalStrgFileNm = uploadedInfo.fileName;
+                        }
+                        this.state.newFiles.push(uploadedInfo);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    this.setUploading(false);
+                    uiCommon.fnShowAlertModal('업로드 중 오류가 발생했습니다.');
+                    return;
+                }
+            }
+            this.setUploading(false, '');
+            this.renderFileList();
+        },
+
+        uploadChunkedFile: async function (file) {
+            if (!file || file.size === 0) throw new Error('Empty file');
+
+            const chunkSize = this.state.chunkSize;
+            const totalChunks = Math.max(Math.ceil(file.size / chunkSize), 1);
+            const identifier = `${this.state.uploadTargetId}-${file.name}-${file.size}-${file.lastModified}`;
+            let uploadedInfo = null;
+
+            for (let chunkNumber = 1; chunkNumber <= totalChunks; chunkNumber++) {
+                const start = (chunkNumber - 1) * chunkSize;
+                const end = Math.min(file.size, start + chunkSize);
+                const chunk = file.slice(start, end);
+
+                const formData = new FormData();
+                formData.append('file', chunk, file.name);
+                formData.append('resumableChunkNumber', chunkNumber);
+                formData.append('resumableTotalChunks', totalChunks);
+                formData.append('resumableIdentifier', identifier);
+                formData.append('resumableFilename', file.name);
+                formData.append('strgFileCpct', file.size);
+                formData.append('targetId', this.state.uploadTargetId);
+                formData.append('rfrncSeCd', this.state.rfrncSeCd);
+
+                const response = await API.upload(this.state.uploadUrl, formData);
+
+                if (chunkNumber === totalChunks) uploadedInfo = response;
+
+                const percent = Math.floor((chunkNumber / totalChunks) * 100);
+                this.updateUploadGuide(`${file.name} 업로드... ${percent}%`);
+            }
+            return uploadedInfo;
+        },
+
+        setUploading: function (uploading, message) {
+            this.state.isUploading = uploading;
+            this.updateUploadGuide(message);
+            const input = document.getElementById('attachFile');
+            if(input) input.disabled = uploading;
+        },
+
+        updateUploadGuide: function (message, isError) {
+            const guideEl = document.getElementById('file_txt');
+            if (guideEl) {
+                guideEl.innerText = message || '';
+                guideEl.style.color = isError ? 'red' : '';
+            }
+        },
+
+        // 에디터 이미지 (Chunk Upload & Sync)
+        handleEditorUploadComplete: function (payload) {
+            if (!payload || !payload.filePath) return;
+            const meta = {
+                originalStrgFileNm: payload.originalStrgFileNm || payload.strgFileNm,
+                storedStrgFileNm: payload.strgFileNm,
+                strgFilePath: payload.strgFilePath,
+                strgFileCpct: payload.strgFileCpct || null,
+                fileTypeNm: payload.fileTypeNm || ''
+            };
+            // 중복 방지
+            const key = `${meta.filePath}__${meta.storedStrgFileNm}`;
+            const idx = this.state.editorFiles.findIndex(item => `${item.filePath}__${item.storedStrgFileNm}` === key);
+            if (idx > -1) this.state.editorFiles[idx] = meta;
+            else this.state.editorFiles.push(meta);
+        },
+
+        // 본문 파싱하여 삭제된 이미지 감지
+        prepareEditorDeletionPayload: function (currentContent) {
+            const currentKeys = this.extractImageKeysFromHtml(currentContent);
+            const keySet = currentKeys.reduce((acc, item) => { acc[item.key] = true; return acc; }, {});
+
+            const removed = this.state.existingEditorFileKeys
+                    .filter(item => item && item.fileOid && !keySet[item.key])
+                    .map(item => item.fileOid);
+
+            this.state.deleteEditorAttachNos = removed;
+        },
+
+        extractImageKeysFromHtml: function (html) {
+            if (!html) return [];
+            const container = document.createElement('div');
+            container.innerHTML = html;
+            const uniqueKeys = {};
+            const results = [];
+
+            Array.from(container.querySelectorAll('img[src]')).forEach(img => {
+                const parsed = this.normalizeImageSrc(img.getAttribute('src'));
+                if (!parsed || uniqueKeys[parsed.key]) return;
+                uniqueKeys[parsed.key] = true;
+                results.push(parsed);
+            });
+            return results;
+        },
+
+        normalizeImageSrc: function (src) {
+            if (!src) return null;
+            let cleaned = src.trim().split('?')[0].split('#')[0];
+            const origin = window.location.origin;
+            if (cleaned.startsWith(origin)) cleaned = cleaned.substring(origin.length);
+
+            const uploadsIdx = cleaned.indexOf('/files/');
+            if (uploadsIdx === -1) return null;
+
+            const relative = cleaned.substring(uploadsIdx + '/files/'.length);
+            const lastSlash = relative.lastIndexOf('/');
+            if (lastSlash === -1) return null;
+
+            const filePath = relative.substring(0, lastSlash);
+            const fileName = relative.substring(lastSlash + 1);
+
+            return {
+                filePath: filePath.replace(/^\/+/, '').replace(/\\/g, '/'),
+                storedStrgFileNm: fileName,
+                key: `${filePath.replace(/^\/+/, '').replace(/\\/g, '/')}__${fileName}`
+            };
+        },
+
+        syncExistingEditorImages: function (content, attachments) {
+            this.state.existingEditorFileKeys = [];
+            if (!attachments || !attachments.length || !content) return;
+
+            const attachMap = {};
+            attachments.forEach(file => {
+                const key = `${file.filePath.replace(/^\/+/, '').replace(/\\/g, '/')}__${file.fileName}`;
+                attachMap[key] = file.fileOid;
+            });
+
+            const keys = this.extractImageKeysFromHtml(content);
+            keys.forEach(item => {
+                const attachNo = attachMap[item.key];
+                if (attachNo) {
+                    this.state.existingEditorFileKeys.push({ key: item.key, fileOid: attachNo });
+                }
+            });
+        },
+
+        // 썸네일(Raw File) 및 파일 리스트 렌더링
+        fnHandleThumbnail: function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            // common 방식과 동일하게 boardInfo에서 용량 참조
+            const maxSizeMB = this.state.boardInfo.fileUldSize || 5120;
+            const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+            // 이미지 확장자 및 서버 허용 확장자 체크
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+            const rawExts = /*[[${allowedExtensions}]]*/ '';
+            const allowedExts = rawExts.toLowerCase().split(',').map(ext => ext.trim());
+            const finalAllowed = imgExts.filter(ext => allowedExts.includes(ext));
+
+            let reason = "";
+            if (!finalAllowed.includes(fileExt)) {
+                reason = "이미지 파일이 아닙니다.";
+            } else if (file.size > maxSizeBytes) {
+                reason = `최대 ${maxSizeMB}MB까지만 업로드 가능합니다.`;
+            }
+
+            if (reason) {
+                uiCommon.fnShowAlertModal(`${reason}`);
+                e.target.value = '';
+                return;
+            }
+
+            this.state.thumbnailFile = file;
+            this.state.hasThumbnail = true;
+
+            const container = document.getElementById("thumbnail_file_list");
+            container.innerHTML = '';
+            const p = document.createElement('p');
+            p.innerHTML = `${file.name} <a class="icon_del" href="javascript:;" onclick="admin807_write_images.deleteThumbnail()">삭제</a>`;
+            container.appendChild(p);
+
+            e.target.value = '';
+        },
+
+        deleteThumbnail: function() {
+            this.state.thumbnailFile = null;
+            this.state.hasThumbnail = false;
+            document.getElementById("thumbnail_file_list").innerHTML = '';
+        },
+
+        renderExistingThumbnail: function(file) {
+            const container = document.getElementById("thumbnail_file_list");
+            container.innerHTML = '';
+            const p = document.createElement('p');
+            // 썸네일은 삭제 시에도 일반 파일과 동일한 테이블(FILE)을 쓴다면 ID를 수집해야 함
+            p.innerHTML = `${file.orgnlFileNm} <a class="icon_del" href="javascript:;" onclick="admin807_write_images.deleteFile('THUMBNAIL_EXISTING', ${file.fileOid}, this)">삭제</a>`;
+            container.appendChild(p);
+        },
+
+        renderFileList: function() {
+            const container = document.getElementById("file_list");
+            if (!container) {
+                return;
+            }
+            
+            container.innerHTML = '';
+
+            // 기존 파일
+            this.state.existingFiles.forEach(file => {
+                const p = document.createElement('p');
+                p.innerHTML = `${file.orgnlFileNm} <a class="icon_del" href="javascript:;" onclick="admin807_write_images.deleteFile('EXISTING', ${file.fileOid}, this)">삭제</a>`;
+                container.appendChild(p);
+            });
+
+            // 신규 파일 ( Chunk Upload 완료된 것 )
+            this.state.newFiles.forEach((file, idx) => {
+                const p = document.createElement('p');
+                p.innerHTML = `${file.originalStrgFileNm} <span style='color:blue'>(업로드됨)</span> <a class="icon_del" href="javascript:;" onclick="admin807_write_images.deleteFile('NEW', ${idx}, this)">삭제</a>`;
+                container.appendChild(p);
+            });
+        },
+
+        deleteFile: function(type, id, btnElement) {
+            if(type === 'THUMBNAIL_EXISTING') {
+                this.state.deletedAttachNos.push(id);
+                this.state.hasThumbnail = false;
+                this.state.thumbnailFile = null;
+                document.getElementById("thumbnail_file_list").innerHTML = '';
+            }
+            else if (type === 'EXISTING') {
+                this.state.deletedAttachNos.push(id);
+                this.state.existingFiles = this.state.existingFiles.filter(f => f.fileOid !== id);
+                this.renderFileList();
+            }
+            else if (type === 'NEW') {
+                const fileInfo = this.state.newFiles[id];
+                this.deleteTempUploadedFile(fileInfo).then(() => {
+                    this.state.newFiles.splice(id, 1);
+                    this.renderFileList();
+                });
+            }
+        },
+
+        deleteTempUploadedFile: function (fileInfo) {
+            if (!fileInfo) return Promise.resolve();
+            return fetch(this.state.tempDeleteUrl, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filePath: fileInfo.filePath,
+                    storedStrgFileNm: fileInfo.storedStrgFileNm
+                })
+            });
+        },
+
+        cleanupTempFiles: function () {
+            if (!this.state.newFiles.length) return Promise.resolve();
+            const deletions = this.state.newFiles.map(fileInfo => this.deleteTempUploadedFile(fileInfo));
+            this.state.newFiles = [];
+            return Promise.allSettled(deletions);
+        },
+
+        // 저장 (Save) - Hybrid 방식
+        fnSave: async function() {
+            const _this = this;
+            // 1. 유효성 검사
+            if (_this.state.boardInfo.ctgryYn === 'Y') {
+                const categoryEl = document.getElementById("category");
+                if (categoryEl && !categoryEl.value) return uiCommon.fnShowAlertModal("분류를 선택해주세요.");
+            }
+            const title = document.getElementById("postTitle").value;
+            if(!title.trim()) return uiCommon.fnShowAlertModal("제목을 입력해주세요.");
+
+            // 썸네일 필수 체크
+            if(!this.state.hasThumbnail) return uiCommon.fnShowAlertModal("썸네일 이미지는 필수입니다.");
+
+            const content = typeof CommonCKEditor !== 'undefined'
+                    ? CommonCKEditor.getContent('boardEditor')
+                    : document.getElementById("boardEditor").value;
+
+            // 2. 에디터 이미지 삭제 대상 계산
+            this.prepareEditorDeletionPayload(content);
+
+            // 상단고정 기간
+            const startDt = document.getElementById("startDt") ? document.getElementById("startDt").value : null;
+            const endDt = document.getElementById("endDt") ? document.getElementById("endDt").value : null;
+
+            // 3. JSON Payload 생성
+            const payload = {
+                bbsOid: _this.state.boardInfo.bbsOid,
+                bbsPstTtl: title,
+                bbsPstCn: content,
+                ctgry: document.getElementById("category") ? document.getElementById("category").value : null,
+                bgngDt: startDt,
+                endDt: endDt,
+                prvtPstYn: 'N', // 썸네일 게시판은 보통 비밀글 없음
+                menuCd: _this.state.menuCd,
+
+                // Chunk Upload된 일반 파일 정보 (메타데이터만)
+                attachedFiles: _this.state.newFiles,
+                // 에디터 삽입 이미지 정보
+                editorFiles: _this.state.editorFiles,
+
+                // 삭제할 기존 파일(썸네일 포함) 번호 리스트
+                deleteAttachNos: _this.state.deletedAttachNos,
+                deleteEditorAttachNos: _this.state.deleteEditorAttachNos
+            };
+
+            if (_this.state.isEdit) {
+                payload.bbsPstOid = _this.state.postList.bbsPstOid;
+            }
+
+            // 4. FormData 생성 (JSON + 썸네일 Raw File)
+            const formData = new FormData();
+
+            // JSON은 Blob으로 변환하여 'data' 필드에 추가 (백엔드 @RequestPart("data") 대응)
+            formData.append("data", new Blob([JSON.stringify(payload)], {type: "application/json"}));
+
+            // 썸네일 파일은 물리 파일 그대로 'thumbnailFile' 필드에 추가 (백엔드 @RequestPart("thumbnailFile") 대응)
+            if(this.state.thumbnailFile) {
+                formData.append("thumbnailFile", _this.state.thumbnailFile);
+            }
+
+            const url = _this.state.isEdit
+                    ? '/api/common/board/post/update'
+                    : '/api/common/board/post/insert';
+
+            try {
+                // API.upload 사용 (contentType: false 자동 처리됨)
+                await API.upload(url, formData);
+
+                const msg = _this.state.isEdit ? "수정되었습니다." : "등록되었습니다.";
+                uiCommon.fnShowAlertModal(msg, () => {
+                    uiCommon.fnHideAlertModal();
+                    _this.fnGoList();
+                });
+            } catch(error) {
+                console.error('저장 실패:', error);
+                let errorMessage = '저장에 실패했습니다.';
+                if (error instanceof APIError) {
+                    if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        fnGoList: function() {
+            const menuCd = this.state.menuCd;
+            location.href = `${contextPath}/admin/board/admin807-list1?menuCd=${menuCd}&bbsOid=${this.state.boardInfo.bbsOid}`;
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        admin807_write_images.init();
+    });
+
+    // 새로고침/닫기 시 임시파일 정리
+    window.addEventListener('beforeunload', function () {
+        admin807_write_images.cleanupTempFiles();
+    });
+</script>
+</body>
+</html>

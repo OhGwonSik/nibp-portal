@@ -1,0 +1,252 @@
+<th:block th:fragment="register_code" xmlns:th="http://www.thymeleaf.org">
+    <div id="register_code" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap wp700">
+                <h1 class="p_tit">코드 신규</h1>
+                <div class="popup_inner">
+                    <div class="table_desc">
+                        <h4 id="register_code_group_cd_val">그룹코드 : </h4>
+                        <h4 id="register_code_group_cd_nm_val">그룹코드명 : </h4>
+                    </div>
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <div class="table_layout02 mb10">
+                                <table>
+                                    <caption>코드 신규</caption>
+                                    <colgroup>
+                                        <col style="width: 120px;">
+                                        <col style="width: auto;">
+                                    </colgroup>
+                                    <tbody>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="register_code_cd">코드값</label></th>
+                                        <td>
+                                            <input type="text" id="register_code_cd" placeholder="코드값을 입력해주세요." title="코드값 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="register_code_cd_nm">코드명</label></th>
+                                        <td>
+                                            <input type="text" id="register_code_cd_nm" placeholder="코드명을 입력해주세요." title="코드명 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="register_code_sub_cd_nm">서브코드명</label></th>
+                                        <td>
+                                            <input type="text" id="register_code_sub_cd_nm" placeholder="서브코드명을 입력해주세요." title="서브코드명 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="register_code_cd_desc">코드설명</label></th>
+                                        <td>
+                                            <input type="text" id="register_code_cd_desc" placeholder="코드설명을 입력해주세요." title="코드설명 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="register_code_sort_ordr">순번</label></th>
+                                        <td>
+                                            <input type="text" id="register_code_sort_ordr" placeholder="순번을 입력해주세요." title="순번 입력" value="0">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="register_code_use_yn">사용여부</label></th>
+                                        <td>
+                                            <select id="register_code_use_yn" title="사용여부 선택" class="w100">
+                                                <option value="Y" selected>사용</option>
+                                                <option value="N">미사용</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn_wrap mt30">
+                        <a href="javascript:;" id="register_code_btn_save" class="btn_basic bg_type01">저장</a>
+                        <a href="javascript:;" id="register_code_btn_cancel" class="btn_basic bg_type02 btn_close_code">취소</a>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close btn_close_code">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        let register_code = {
+
+            /**
+             * 상태
+             */
+            state: {
+                mode: 'create',     // create or update
+                data: null          // 수정할 데이터
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function (mode, data) {
+                this.state.mode = mode || 'create';
+                this.state.data = data || null;
+
+                uiCommon.fnShowModal('register_code');
+                this.init();
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function () {
+                // 이벤트 바인딩
+                this.initEvent();
+
+                // 그룹코드 정보 표시
+                this.displayGroupCodeInfo();
+
+                // 폼 값 초기화 또는 데이터 바인딩
+                if (this.state.mode === 'create') {
+                    this.initFormData();
+                } else {
+                    this.bindFormData();
+                }
+
+                // 제목 변경
+                this.updateTitle();
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function () {
+                const _this = this;
+
+                // 저장 버튼 클릭
+                $("#register_code_btn_save").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    _this.fnSave();
+                });
+
+                // 닫기/취소 버튼 클릭
+                $(".btn_close_code").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    uiCommon.fnHideModal('register_code');
+                });
+            },
+
+            /**
+             * 그룹코드 정보 표시
+             */
+            displayGroupCodeInfo: function () {
+                const grpCd = this.state.data?.grpCdOid || '';
+                const grpCdNm = this.state.data?.grpCdNm || '';
+                $('#register_code_group_cd_val').text('그룹코드 : ' + grpCd);
+                $('#register_code_group_cd_nm_val').text('그룹코드명 : ' + grpCdNm);
+            },
+
+            /**
+             * 폼 입력값 초기화
+             */
+            initFormData: function () {
+                $('#register_code_cd').val('').prop('readonly', false);
+                $('#register_code_cd_nm').val('');
+                $('#register_code_sub_cd_nm').val('');
+                $('#register_code_cd_desc').val('');
+                $('#register_code_sort_ordr').val('0');
+                $('#register_code_use_yn').val('Y');
+            },
+
+            /**
+             * 폼 데이터 바인딩
+             */
+            bindFormData: function () {
+                if (!this.state.data) {
+                    return;
+                }
+
+                const data = this.state.data;
+                $('#register_code_cd').val(data.cdVal || '').prop('readonly', true);
+                $('#register_code_cd_nm').val(data.cdNm || '');
+                $('#register_code_sub_cd_nm').val(data.subCdNm || '');
+                $('#register_code_cd_desc').val(data.cdExpln || '');
+                $('#register_code_sort_ordr').val(data.cdSeq || '0');
+                $('#register_code_use_yn').val(data.useYn || 'Y');
+            },
+
+            /**
+             * 제목 업데이트
+             */
+            updateTitle: function () {
+                const title = this.state.mode === 'create' ? '코드 등록' : '코드 수정';
+                $('#register_code .p_tit').text(title);
+            },
+
+            /**
+             * 저장, 수정
+             */
+            fnSave: async function () {
+                const _this = this;
+
+                try {
+                    // 값 할당
+                    const codeNo = _this.state.data?.cdOid;
+                    const groupCodeNo = _this.state.data?.grpCdOid;
+                    const cdVal = $('#register_code_cd').val().trim();
+                    const cdNm = $('#register_code_cd_nm').val().trim();
+                    const subCdNm = $('#register_code_sub_cd_nm').val().trim() || null;
+                    const cdDesc = $('#register_code_cd_desc').val().trim() || null;
+                    const cdSeq = $('#register_code_sort_ordr').val() || 0;
+                    const useYn = $('#register_code_use_yn').val();
+
+                    // 파라미터 구성
+                    const param = _this.state.mode === 'create' ? {
+                        grpCdOid: groupCodeNo,
+                        cdVal: cdVal,
+                        cdNm: cdNm,
+                        subCdNm: subCdNm,
+                        cdExpln: cdDesc,
+                        cdSeq: cdSeq,
+                        useYn: useYn
+                    } : {
+                        cdOid: codeNo,
+                        grpCdOid: groupCodeNo,
+                        cdVal: cdVal,
+                        cdNm: cdNm,
+                        subCdNm: subCdNm,
+                        cdExpln: cdDesc,
+                        cdSeq: cdSeq,
+                        useYn: useYn
+                    }
+
+                    // API 호출
+                    const result = _this.state.mode === 'create'
+                        ? await API.put('/api/admin/admin802/code/insert', param)
+                        : await API.patch('/api/admin/admin802/code/update', param);
+
+                    if (result >= 0) {
+                        const message = _this.state.mode === 'create'
+                            ? '코드가 등록되었습니다.'
+                            : '코드가 수정되었습니다.';
+                        uiCommon.fnShowAlertModal(message, () => _this.fnCloseModal());
+                    }
+                } catch (error) {
+                    let errorMessage = this.state.mode === 'update' ? '수정에 실패했습니다.' : '등록에 실패했습니다.';
+                    // 빈 값
+                    if (error instanceof APIError && error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                    uiCommon.fnShowAlertModal(error.details || errorMessage);
+                }
+            },
+
+            /**
+             * 모달 hide, 부모 페이지 리로드
+             */
+            fnCloseModal: function () {
+                uiCommon.fnHideModal('register_code');
+                uiCommon.fnHideAlertModal();
+                admin802.init();
+            }
+        };
+    </script>
+</th:block>

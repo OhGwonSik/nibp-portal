@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin600.mapper.Admin601Mapper">
+
+	<!-- admin601 : 공지사항 -->
+	<select id="selectNoticeList" parameterType="EgovMap" resultType="egovframework.admin.admin600.domain.Admin601VO">
+		SELECT
+		    ntc_oid,
+		    ntc_nm,
+		    ntc_cn,
+            ntc_cn_txt,
+		    bgng_dt,
+		    end_dt,
+		    open_yn,
+		    use_yn,
+		    inq_cnt,
+		    reg_id,
+		    reg_dt,
+		    mdfcn_id,
+		    mdfcn_dt,
+		    IF(
+                CURDATE() >= DATE(bgng_dt)
+                AND (
+                    end_dt IS NULL
+                    OR end_dt = '0000-00-00 00:00:00'
+                    OR end_dt = '0000-00-00'
+                    OR DATE(end_dt) >= CURDATE()
+                ),
+                'Y', 'N'
+            ) AS upend_fix_yn
+		FROM ${schema}.ntc
+		<where>
+			<if test='ntcOid != null and ntcOid != ""'>
+				AND ntc_oid = #{ntcOid}
+			</if>
+			<if test='keyword != null and keyword != ""'>
+				AND ntc_nm LIKE CONCAT('%', #{keyword}, '%')
+			</if>
+			<if test='regDtFrom != null and regDtTo != ""'>
+				<![CDATA[
+                AND reg_dt >= #{regDtFrom}
+                AND reg_dt < DATE_ADD(#{regDtTo}, INTERVAL 1 DAY)
+                ]]>
+			</if>
+			<if test='openYn != null and openYn != ""'>
+				AND open_yn = #{openYn}
+			</if>
+		</where>
+		ORDER BY
+		ntc_oid DESC
+	</select>
+
+	<select id="selectNotice" parameterType="EgovMap" resultType="egovframework.admin.admin600.domain.Admin601VO">
+		SELECT
+			ntc_oid,
+			ntc_nm,
+			ntc_cn,
+            ntc_cn_txt,
+			bgng_dt,
+			end_dt,
+			upend_fix_yn,
+			open_yn,
+			use_yn,
+			inq_cnt,
+			reg_id,
+			reg_dt,
+			mdfcn_id,
+			mdfcn_dt
+		FROM
+			${schema}.ntc
+		WHERE
+			ntc_oid = #{ntc_oid}
+	</select>
+
+	<insert id="insertNotice" parameterType="EgovMap">
+		INSERT INTO ${schema}.ntc(
+		ntc_nm, ntc_cn, ntc_cn_txt, bgng_dt,
+		<if test="endDt != null and endDt != ''">
+			end_dt,
+		</if>
+		upend_fix_yn, open_yn, use_yn, inq_cnt,
+		reg_id, mdfcn_id
+		)
+		VALUES (
+		#{ntcNm}, #{ntcCn}, #{ntcCnTxt}, #{bgngDt},
+		<if test="endDt != null and endDt != ''">
+			#{endDt},
+		</if>
+		'Y', #{openYn}, 'Y', 0,
+		#{regId}, #{mdfcnId}
+		)
+		<selectKey keyProperty="ntcOid" resultType="long" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+	<update id="updateNotice" parameterType="EgovMap">
+		UPDATE ${schema}.ntc
+		<set>
+			<if test="ntcNm != null and ntcNm != ''">ntc_nm = #{ntcNm},</if>
+			<if test="ntcCn != null and ntcCn != ''">ntc_cn = #{ntcCn},</if>
+			<if test="ntcCnTxt != null and ntcCnTxt != ''">ntc_cn_txt = #{ntcCnTxt},</if>
+			<if test="bgngDt != null and bgngDt != ''">bgng_dt = #{bgngDt},</if>
+			<if test="endDt != null and endDt != ''">end_dt = #{endDt},</if>
+			<if test="upendFixYn != null and upendFixYn != ''">upend_fix_yn = #{upendFixYn},</if>
+			<if test="openYn != null and openYn != ''">open_yn = #{openYn},</if>
+			mdfcn_id = #{mdfcnId},
+            use_yn = 'Y'
+		</set>
+		WHERE
+			ntc_oid = #{ntcOid}
+	</update>
+
+	<update id="updateNoticeInqCnt" parameterType="long">
+		UPDATE ${schema}.ntc
+		SET inq_cnt = inq_cnt + 1
+		WHERE ntc_oid = #{ntcOid}
+	</update>
+
+	<delete id="deleteNotice" parameterType="EgovMap">
+		UPDATE ${schema}.ntc
+		SET use_yn = 'N',
+			mdfcn_id = #{mdfcnId}
+		WHERE ntc_oid = #{ntcOid}
+	</delete>
+</mapper>

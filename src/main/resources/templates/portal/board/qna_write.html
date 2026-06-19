@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소통·참여 > Q&A > Q&A 문의하기</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">Q&amp;A</h3>
+    <div class="human_intro_wrap">
+        <strong> 질의하시고자 하는 정확한 항목에 질의사항 입력 부탁드립니다.</strong>
+    </div>
+    <p class="btn_wrap_right mb10"><em class="point"></em>표시는 필수 입력 항목입니다.</p>
+    <div class="table_layout t_tal">
+        <table>
+            <caption>Q&amp;A_문의하기 테이블</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_writer_nm">작성자명</label></th>
+                <td><input type="text" id="qna_writer_nm" title="작성자명 입력" placeholder="작성자명을 입력해 주세요" class="wp200"></td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_title">제목</label></th>
+                <td><input type="text" id="qna_title" title="제목 입력해" placeholder="제목을 입력해 주세요"></td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_category">분류</label></th>
+                <td>
+                    <select title="분류선택" class="wp200" id="qna_category" disabled>
+                        <option value="">선택</option>
+
+                        <option th:each="category : ${QnaCategoryList}"
+                                th:value="${ctgry.cdVal}"
+                                th:text="${ctgry.cdNm}">
+                        </option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label>공개여부</label></th>
+                <td>
+                    <div class="radio-box">
+                        <span><input type="radio" id="qna_secret_n" name="qna_secret" value="N" checked><label for="qna_secret_n">공개</label></span>
+                        <span><input type="radio" id="qna_secret_y" name="qna_secret" value="Y"><label for="qna_secret_y">비공개</label></span>
+                    </div>
+                </td>
+            </tr>
+            <tr id="qna_pwd_row" th:if="${QnaPost.qnaOid == null}">
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_pwd">비밀번호</label></th>
+                <td>
+                    <div class="flex_col">
+                        <input type="password" id="qna_pwd" title="비밀번호 입력" placeholder="비밀번호를 입력해 주세요." class="wp200" maxlength="14">
+                        <p>* 영문, 숫자, 특수문자 포함 (공백, &amp; 제외 / 9~14자)</p>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_editor">내용</label></th>
+                <td>
+                    <textarea name="qna_editor" id="qna_editor" rows="30"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="qna_file">첨부파일</label></th>
+                <td>
+                    <div id="qna_file_list" class="flex_col file_list mt10"></div>
+                    <div class="file_upload">
+                        <label for="qna_file"><span>파일찾기</span></label>
+                        <input type="file" id="qna_file" title="파일첨부"
+                               th:attr="data-allowed-ext=${allowedExtensions}">
+                        <span id="qna_file_text" class="file_txt">파일을 첨부해주세요</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="lb_04">자동등록방지</label></th>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+
+                        <img id="captchaImg"
+                             th:src="@{/api/common/captcha/image}"
+                             alt="자동등록방지 문자"
+                             title="자동등록방지 문자"
+                             style="height: 32px; width: 120px; border: 1px solid #ccc; cursor: pointer; display: block;">
+
+                        <button type="button" id="qnaPlayAudio" title="음성듣기" class="btn_basic_s"
+                                style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; justify-content: center; align-items: center; background: #fff; border: 1px solid #ccc; cursor: pointer;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                        </button>
+
+                        <button type="button" id="qnaRefreshCaptcha" title="새로고침" class="btn_basic_s"
+                                style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; justify-content: center; align-items: center; background: #fff; border: 1px solid #ccc; cursor: pointer;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                        </button>
+
+                        <input type="text" id="qna_captcha" title="자동등록방지 숫자 입력"
+                               class="wp150" placeholder="" maxlength="5"
+                               style="height: 32px; line-height: 32px; margin: 0; box-sizing: border-box;">
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+    <div class="btn_wrap mt20">
+        <a href="javascript:;" id="btn_qna_submit" class="btn_basic">확인</a>
+        <a href="javascript:;" id="btn_qna_cancel" class="btn_basic bg_gray">취소</a>
+    </div>
+</div>
+<th:block layout:fragment="main_modal">
+    <th:block th:replace="~{portal/modal/qna_secret :: qna_secret}"></th:block>
+</th:block>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const qna_wirte = {
+
+        /**
+         * 상태
+         */
+        state: {
+        	qnaOid : /*[[${param.qnaOid != null ? param.qnaOid[0] : null}]]*/ null,
+            postData: /*[[${QnaPost}]]*/ null,
+            file: [],
+            deleteAttachNos: [],
+            isLogin: /*[[${#authorization.expression('isAuthenticated()')}]]*/ false,
+            maxFileSize: /*[[${maxFileSize}]]*/ 10,
+            allowedExtensions: /*[[${allowedExtensions}]]*/ '',
+            // CKEditor 업로드 이미지를 임시 보관하는 영역
+            editorFiles: [],
+            existingEditorFileKeys: [],
+            deleteEditorAttachNos: []
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // CKEditor 초기화
+            this.initCkEditor();
+
+            // 이벤트 바인딩
+            this.initEvent();
+            
+            if (this.state.qnaOid && this.state.postData) {
+                this.fnSetModifyData();
+            }else{
+            	// 분류 선택하고 와서 분류 첫 렌더링
+				const params = new URLSearchParams(window.location.search);
+				const category = params.get("category");
+				const selectBox = document.getElementById('qna_category');
+				if (selectBox) {
+				    if (category === 'ALL' || !category) {
+				        selectBox.selectedIndex = 0;
+				    } else {
+				        selectBox.value = category;
+				    }
+				}
+            }
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 확인 버튼 클릭
+            document.getElementById('btn_qna_submit').addEventListener('click', function (e) {
+                e.preventDefault();
+                _this.fnSubmit();
+            });
+
+            // 취소 버튼 클릭
+            document.getElementById('btn_qna_cancel').addEventListener('click', function (e) {
+                e.preventDefault();
+                const params = new URLSearchParams(window.location.search);
+                const category = params.get("category");
+                uiCommon.fnShowConfirmModal('작성을 취소하시겠습니까?', function () {
+                    uiCommon.fnHideConfirmModal();
+                    window.location.href = contextPath + '/board/qna?category=' + category;
+                })
+            });
+
+            // 파일 선택 시
+            document.getElementById('qna_file').addEventListener('change', function (e) {
+                _this.fnHandleFileSelect(e);
+            });
+
+            // 캡차 이미지 클릭 시 새로고침
+            document.getElementById('qnaRefreshCaptcha').addEventListener('click', function () {
+                _this.fnRefreshCaptcha();
+            });
+            
+            // 캡차 사운드 클릭시
+            document.getElementById('qnaPlayAudio').addEventListener('click', function(){
+            	_this.fnPlayAudio();
+            });
+        },
+
+        /**
+         * CK Editor 초기화
+         */
+        initCkEditor: function () {
+        	const _this = this;
+        	
+            CommonCKEditor.destroy('qna_editor');
+
+            document.getElementById('qna_editor').style.display = 'block';
+            document.getElementById('qna_editor').style.visibility = 'visible';
+
+            CommonCKEditor.init({
+                editorId: 'qna_editor',
+                content: _this.state.postData ? _this.state.postData.content : '',
+                chunkUpload: {
+                    enabled: true,
+                    chunkUrl: '/api/common/file/tmp/ck-image/chunk',
+                    chunkSize: this.state.chunkSize,
+                    thresholdBytes: 5 * 1024 * 1024,
+                    onUploadComplete: (payload) => {
+                        // 업로드 방식과 무관하게 응답을 수집해 둔다.
+                        this.handleEditorUploadComplete(payload);
+                    }
+                },
+                config: {
+                    height: 500,
+                    allowedContent: true,
+                    removePlugins: "image",
+                    image2_alignClasses: [ 'image-left', 'image-center', 'image-right' ],
+                    image2_disableResizer: false,
+                    uploadImage_supportedTypes: /(jpeg|jpg|png|gif)$/i,
+                    uploadImage_maxSize: 52428800
+                },
+                onReady: function (editor) {
+                }
+            });
+        },
+        
+        /**
+         * 수정 데이터 화면 바인딩
+         */
+        fnSetModifyData: function () {
+            const post = this.state.postData;
+            if (!post) return;
+
+            // 기본 필드 값 세팅
+            document.getElementById('qna_writer_nm').value = post.wrtrNm || '';
+            document.getElementById('qna_title').value = post.qnaTtl || '';
+            
+            // 분류 세팅 및 활성화
+            const categorySelect = document.getElementById('qna_category');
+            if (categorySelect) {
+                categorySelect.value = post.ctgry || '';
+            }
+
+            // 공개/비공개 라디오 버튼
+            const secretYn = post.prvtPstYn || 'N';
+            const secretRadio = document.querySelector(`input[name="qna_secret"][value="${prvtPstYn}"]`);
+            if (secretRadio) secretRadio.checked = true;
+
+            // 기존 첨부파일 렌더링
+            if (post.attachments && post.attachments.length > 0) {
+                this.fnRenderExistingFiles(post.attachments);
+            }
+        },
+
+        /**
+         * 서버에 저장된 기존 파일 목록 렌더링
+         */
+        fnRenderExistingFiles: function (attachments) {
+            const fileListContainer = document.getElementById('qna_file_list');
+            let html = fileListContainer.innerHTML; // 기존에 새로 추가한 파일이 있다면 유지
+
+            attachments.forEach(file => {
+                html += `
+                    <p id="ex_file_${file.fileOid}" class="existing_file">
+                        ${file.orgnlFileNm} 
+                        <a class="icon_del qna_existing_file_del" href="javascript:;" 
+                           onclick="qna_wirte.fnDeleteExistingFile(${file.fileOid})" 
+                           style="margin-left: 5px;">기존파일삭제</a>
+                    </p>`;
+            });
+
+            fileListContainer.innerHTML = html;
+        },
+
+        /**
+         * 기존 파일 삭제 처리 (화면 제거 + 삭제 리스트 추가)
+         */
+        fnDeleteExistingFile: function (attachNo) {
+            // 화면에서 해당 파일 요소 삭제
+            const fileElem = document.getElementById(`ex_file_${attachNo}`);
+            if (fileElem) fileElem.remove();
+            
+            // 서버 전송 시 삭제할 ID 목록에 추가
+
+            this.state.deleteAttachNos.push(attachNo);
+        },
+
+        fnValidate: function () {
+            // 작성자명 필수값 벨리데이션
+            const writerNm = document.getElementById('qna_writer_nm');
+            if (!writerNm.value.trim()) {
+                uiCommon.fnShowAlertModal('작성자명을 입력해 주세요.', function() {
+                    writerNm.focus();
+                });
+                return false;
+            }
+
+            // 제목 필수값 벨리데이션
+            const title = document.getElementById('qna_title');
+            if (!title.value.trim()) {
+                uiCommon.fnShowAlertModal('제목을 입력해 주세요.', function() {
+                    title.focus();
+                });
+                return false;
+            }
+
+            // 분류 선택 필수값 벨리데이션
+            const category = document.getElementById('qna_category');
+            if (!category.value) {
+                uiCommon.fnShowAlertModal('분류를 선택해 주세요.', function() {
+                    category.focus();
+                });
+                return false;
+            }
+
+            // 비밀번호 검증 필수값이지만 조건이 있음
+            // 비공개(Y) 선택 AND 비로그인(!this.state.isLogin) 상태일 때만 검증
+            const secretYn = document.querySelector('input[name="qna_secret"]:checked').value;
+            
+            if (!this.state.isLogin && !this.state.qnaOid) {
+                const pwdInput = document.getElementById('qna_pwd');
+                const pswd = pwdInput.value.trim();
+
+                if (!pswd) {
+                    uiCommon.fnShowAlertModal('비밀번호를 입력해 주세요.', function() {
+                        pwdInput.focus();
+                    });
+                    return false;
+                }
+
+                // 비밀번호 형식 검증 (영문, 숫자, 특수문자 포함 9~14자)
+                const pwdRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^*+=-])[A-Za-z\d!@#$%^*+=-]{9,14}$/;
+                if (!pwdRegex.test(pswd)) {
+                    uiCommon.fnShowAlertModal('비밀번호는 영문, 숫자, 특수문자를 포함하여 9~14자로 입력해 주세요.\n(공백, & 제외)', function() {
+                        pwdInput.focus();
+                    });
+                    return false;
+                }
+            }
+
+            // 내용 검증 (필수 + HTML 최대 길이)
+            var editorValidation = CommonCKEditor.validate('qna_editor', { required: true, maxHtmlLength: 10000 });
+            if (!editorValidation.valid) {
+                uiCommon.fnShowAlertModal(editorValidation.message);
+                return false;
+            }
+
+            // 자동등록방지 벨리데이션
+            const captcha = document.getElementById('qna_captcha');
+            if (!captcha.value.trim()) {
+                uiCommon.fnShowAlertModal('자동등록방지 문자를 입력해 주세요.', function() {
+                    captcha.focus();
+                });
+                return false;
+            }
+
+            return true;
+        },
+
+        /**
+         * 파라미터 생성
+         */
+        fnBuildParam: function () {
+            const formData = new FormData();
+
+            // 데이터 객체 생성
+            const secretYn = document.querySelector('input[name="qna_secret"]:checked').value;
+            const validFiles = this.state.file.filter(file => file !== null);
+
+            const data = {
+           		qnaOid: this.state.qnaOid || null,
+                wrtrNm: document.getElementById('qna_writer_nm').value.trim(),
+                qnaTtl: document.getElementById('qna_title').value.trim(),
+                ctgry: document.getElementById('qna_category').value,
+                prvtPstYn: secretYn,
+                ntcCn: CommonCKEditor.getContent('qna_editor'),
+                editorFiles: this.state.editorFiles,
+                deleteAttachNos: this.state.deleteAttachNos
+            };
+
+            // 비공개인 경우에만 비밀번호 포함
+            if (!this.state.isLogin && !this.state.qnaOid) {
+                data.pswd = document.getElementById('qna_pwd').value.trim();
+            }
+
+            // JSON 데이터를 Blob으로 변환하여 추가
+            formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
+
+            // 파일 추가
+            if (validFiles && validFiles.length > 0) {
+                validFiles.forEach(file => {
+                    formData.append("files", file);
+                });
+            }
+
+            // 캡차 답변 추가
+            const captchaAnswer = document.getElementById('qna_captcha').value.trim();
+            formData.append('captchaAnswer', new Blob([captchaAnswer], { type: 'text/plain' }));
+
+            return formData;
+        },
+
+        /**
+         * Q&A 문의 등록/수정 실행
+         */
+        fnSubmit: async function () {
+            const _this = this;
+            if (!this.fnValidate()) return;
+
+            const formData = this.fnBuildParam();
+            const isUpdate = !!this.state.qnaOid;
+            const url = isUpdate ? '/api/common/portal/qna/update' : '/api/common/portal/qna/insert';
+            const successMsg = isUpdate ? '수정되었습니다.' : '문의가 등록되었습니다.';
+
+            try {
+                await API.upload(url, formData, {
+                    handleAuthError: false,
+                    showLoading: false
+                });
+                uiCommon.fnShowAlertModal(successMsg, () => {
+                    const currentCategory = document.getElementById('qna_category').value;
+                    window.location.href = contextPath + '/board/qna?category=' + (currentCategory || 'ALL');
+                });
+            } catch (error) {
+                // 수정 시 403(세션만료) 에러 나면 비밀번호 모달 띄우기
+                if (error.stts === 403 && isUpdate) {
+                    qna_secret.initModal(
+                        _this.state.qnaOid, 
+                        null, 
+                        'qna', 
+                        null, 
+                        'upd', 
+                        _this.fnSubmit.bind(_this) // 재시도!
+                    );
+                } else {
+                    _this.fnRefreshCaptcha(); // 실패 시 캡차는 새로고침해주는 게 매너!
+                }
+            }
+        },
+
+        /**
+         * 파일 선택 처리
+         */
+       fnHandleFileSelect: function (e) {
+           const fileInput = e.target;
+           const files = fileInput.files;
+           const fileText = document.getElementById('qna_file_text');
+
+           if (files.length > 0) {
+               const file = files[0];
+
+               // 파일 유효성 검사
+               if (!this.validateFile(file)) {
+                   fileInput.value = '';
+                   fileText.textContent = '파일을 첨부해주세요';
+                   return;
+               }
+
+               this.state.file.push(file);
+               this.fnRenderFileList();
+               fileInput.value = '';
+               // 파일 업로드 시 파일명 표시
+               if (fileText) {
+                   fileText.textContent = file.name;
+               }
+           }
+       },
+
+       /**
+        * 파일 목록 렌더링
+        */
+        fnRenderFileList: function () {
+       	    const container = document.getElementById('qna_file_list');
+       	    
+       	    // 1. 기존에 그려진 "새 파일"들만 골라서 지웁니다 (기존 파일 영역은 유지)
+       	    const newFileElements = container.querySelectorAll('.new_file_item');
+       	    newFileElements.forEach(el => el.remove());
+
+       	    // 2. 현재 state에 있는 새 파일들을 추가합니다.
+       	    this.state.file.forEach((file, index) => {
+       	        const p = document.createElement('p');
+       	        p.className = 'new_file_item'; // 새 파일임을 표시하는 클래스
+       	        p.innerHTML = `${file.name} <a class="icon_del qna_file_del" href="javascript:;" data-index="${index}">파일삭제</a>`;
+       	        
+       	        // 삭제 이벤트 바인딩
+       	        p.querySelector('.qna_file_del').addEventListener('click', (e) => {
+       	            e.preventDefault();
+       	            this.fnDeleteFile(index);
+       	        });
+       	        
+       	        container.appendChild(p); // 기존 HTML 뒤에 붙임 (append)
+       	    });
+
+       	    // 파일명 텍스트 업데이트
+       	    const fileText = document.getElementById('qna_file_text');
+       	    if (this.state.file.length > 0) {
+       	        fileText.textContent = this.state.file[this.state.file.length - 1].name;
+       	    } else {
+       	        fileText.textContent = '파일을 첨부해주세요';
+       	    }
+       	},
+
+        /**
+         * 파일 삭제
+         */
+        fnDeleteFile: function (index) {
+            this.state.file.splice(index, 1);
+            this.fnRenderFileList();
+        },
+
+        /**
+         * 캡차 이미지 새로고침
+         */
+        fnRefreshCaptcha: function () {
+            const captchaImage = document.getElementById('captchaImg');
+            // 캐시 방지를 위해 타임스탬프를 쿼리 파라미터로 추가
+            captchaImage.src = contextPath + '/api/common/captcha/image?t=' + new Date().getTime();
+            // 입력된 캡차 값 초기화
+            document.getElementById('qna_captcha').value = '';
+        },
+        
+        /**
+         * 캡차 음성 듣기 
+         */
+        fnPlayAudio: function () {
+            const soundUrl = contextPath + '/api/common/captcha/audio?t=' + new Date().getTime();
+            const uAgent = navigator.userAgent;
+
+            if (uAgent.indexOf('Trident') > -1 || uAgent.indexOf('MSIE') > -1) {
+                let audioPlayer = document.getElementById('captchaAudioPlayer');
+                if (!audioPlayer) {
+                    audioPlayer = document.createElement('bgsound');
+                    audioPlayer.id = 'captchaAudioPlayer';
+                    document.body.appendChild(audioPlayer);
+                }
+                audioPlayer.src = soundUrl;
+            } else {
+                const audio = new Audio(soundUrl);
+                audio.play();
+            }
+        },
+
+        /**
+         * 파일 유효성 검증
+         */
+        validateFile: function (file) {
+            if (!file) return false;
+
+            // 확장자 체크
+            const fileName = file.name;
+            const fileExt = fileName.split('.').pop().toLowerCase();
+            const allowedStr = this.state.allowedExtensions;
+            const allowedList = allowedStr.split(',').map(s => s.trim().toLowerCase());
+
+            if (!allowedList.includes(fileExt)) {
+                uiCommon.fnShowAlertModal(`허용되지 않는 파일 형식입니다.`);
+                return false;
+            }
+
+            // 용량 체크
+            const maxMb = parseInt(this.state.maxFileSize) || 10;
+            const maxSizeInBytes = maxMb * 1024 * 1024;
+
+            if (file.size > maxSizeInBytes) {
+                uiCommon.fnShowAlertModal(`최대 ${maxMb}MB까지만 업로드 가능합니다.`);
+                return false;
+            }
+
+            return true;
+        },
+
+        // CKEditor 업로드 응답(payload)을 admin 저장용 포맷으로 축약한다.
+        handleEditorUploadComplete: function (payload) {
+            if (!payload || !payload.strgFilePath || !payload.strgFileNm) {
+                return;
+            }
+            const meta = {
+                originalStrgFileNm: payload.originalStrgFileNm || payload.strgFileNm,
+                storedStrgFileNm: payload.strgFileNm,
+                strgFilePath: payload.strgFilePath,
+                strgFileCpct: payload.strgFileCpct || null,
+                fileTypeNm: payload.fileTypeNm || this.extractFileExtension(payload.originalStrgFileNm || payload.strgFileNm)
+            };
+            this.upsertEditorFile(meta);
+        },
+
+        // 동일 경로/파일명은 덮어쓰고 나머지는 push한다.
+        upsertEditorFile: function (fileMeta) {
+            if (!fileMeta || !fileMeta.strgFilePath || !fileMeta.storedStrgFileNm) {
+                return;
+            }
+            const key = `${fileMeta.strgFilePath}__${fileMeta.storedStrgFileNm}`;
+            const idx = this.state.editorFiles.findIndex(item => `${item.strgFilePath}__${item.storedStrgFileNm}` === key);
+            if (idx > -1) {
+                this.state.editorFiles[idx] = fileMeta;
+            } else {
+                this.state.editorFiles.push(fileMeta);
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+    	qna_wirte.init();
+    });
+</script>
+</body>
+</html>

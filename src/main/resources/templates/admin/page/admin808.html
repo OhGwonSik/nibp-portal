@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 메뉴 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="right_wrap">
+        <div class="sub_cont_wrap">
+            <div class="table_top_btn mb10">
+                <a href="javascript:;" id="btn_register_menu" class="btn_basic bg_type01">등록</a>
+                <a href="javascript:;" id="btn_update_menu" class="btn_basic bg_type01">수정</a>
+                <a href="javascript:;" id="btn_delete_menu" class="btn_basic bg_type02">삭제</a>
+                <!--임시 주석-->
+                <!--<a href="javascript:;" id="btn_save_menu" class="btn_basic bg_type01">저장</a>-->
+                <a href="javascript:;" id="btn_exl_down" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+            </div>
+            <div class="table_layout02 list_type mb20">
+                <table>
+                    <caption>메뉴 목록</caption>
+                    <colgroup>
+                        <col style="width: 44px;">
+                        <col style="width: 16%;">
+                        <col style="width: 120px;">
+                        <col style="width: auto;">
+                        <col style="width: 120px;">
+                        <col style="width: 90px;">
+                        <col style="width: 90px;">
+                        <col style="width: 90px;">
+                        <col style="width: 90px;">
+                        <col style="width: 10%;">
+                        <col style="width: 160px;">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">메뉴명</th>
+                        <th scope="col">메뉴코드</th>
+                        <th scope="col">URL</th>
+                        <th scope="col">메뉴권한레벨</th>
+                        <th scope="col">메뉴 순번</th>
+                        <th scope="col">사용여부</th>
+                        <th scope="col">게시판<br>사용여부</th>
+                        <th scope="col">개인정보<br>취급여부</th>
+                        <th scope="col">등록자</th>
+                        <th scope="col">등록일</th>
+                    </tr>
+                    </thead>
+                    <tbody id="manage_menu_tbody"></tbody>
+                </table>
+                <span class="scroll_img">스크롤</span>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="admin_modal">
+    <th:block th:replace="~{admin/modal/handle_menu :: handle_menu}"></th:block>
+</th:block>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin808 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],        // 전체 메뉴 목록
+            pageIndex: 1,
+            pageCnt: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            // 메뉴 데이터
+            this.state.all = await this.fnGetMenuData();
+
+            // 첫 렌더
+            this.renderTable();
+
+            // 이벤트 바인딩
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 등록 버튼 클릭
+            document.getElementById("btn_register_menu").addEventListener("click", function (e) {
+                e.preventDefault();
+
+                _this.fnRegister();
+            });
+
+            // 수정 버튼 클릭
+            document.getElementById("btn_update_menu").addEventListener("click", function (e) {
+                e.preventDefault();
+
+                _this.fnUpdate();
+            });
+
+            // 더블 클릭으로 수정 모달 열기
+            document.addEventListener("dblclick", function (e) {
+                const row = e.target.closest(".double_click");
+                if (row) {
+                    e.preventDefault();
+
+                    // 더블클릭한 행의 menuNo 가져오기
+                    const menuNo = parseInt(row.dataset.id);
+                    const menuData = _this.fnFindMenuByMenuNo(menuNo);
+
+                    if (menuData) {
+                        // 부모 메뉴 정보 추가
+                        if (menuData.upMenuOid) {
+                            const parentMenu = _this.fnFindMenuByMenuNo(menuData.upMenuOid);
+                            menuData.parentMenuNm = parentMenu?.menuNm;
+                        }
+
+                        handle_menu.initModal('update', menuData);
+                    }
+                }
+            });
+
+            // 삭제 버튼 클릭
+            document.getElementById("btn_delete_menu").addEventListener("click", function (e) {
+                e.preventDefault();
+
+                _this.fnDelete();
+            });
+
+            // 엑셀 다운로드 버튼 클릭
+            document.getElementById("btn_exl_down").addEventListener("click", async function (e) {
+                e.preventDefault();
+
+                const reason = await uiCommon.fnShowPromptModal('엑셀 다운로드 받으시겠습니까?', {
+                    title: '엑셀 다운로드 요청',
+                    defaultValue: '',
+                    placeholder: '사유 입력',
+                });
+
+                
+                // 취소 시 조용히 종료
+                if (reason === null) {
+                    return;
+                }
+
+                // 빈 값 체크
+                if (reason.trim() === '') {
+                    uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                    return;
+                }
+
+                // 2자 미만 체크
+                if (reason.trim().length < 2) {
+                    uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                    return;
+                }
+
+                try {
+                    const param = {
+                        pageId: 'admin808', // 페이지명
+                        reason: reason.trim() // 사유
+                        // 검색 조건 없을시 생략 {}
+                    };
+                    await API.excelDownload('/api/admin/admin808/menu/excel/export', param);
+
+                } catch (err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal("[error] : " + err, function () {
+                        uiCommon.fnHideAlertModal();
+                    })
+                }
+            });
+        },
+
+        /**
+         * 테이블 렌더링
+         */
+        renderTable: function () {
+            const tbody = document.getElementById("manage_menu_tbody");
+            tbody.innerHTML = '';
+
+            const list = (this.state.all.length > 0)
+                    ? this.state.all
+                    : [];
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="tac">조회된 결과가 없습니다.</td></tr>';
+                return;
+            }
+
+            // 최상위 메뉴부터 렌더링 시작
+            tbody.innerHTML = this.renderMenuTree(list, null, 1);
+        },
+
+        /**
+         * 메뉴 데이터 조회
+         */
+        fnGetMenuData: async function () {
+            try {
+                return await API.get('/api/admin/admin808/menu/list');
+            } catch (error) {
+                console.error(error);
+                return [];
+            }
+        },
+
+        /**
+         * 메뉴 요소 렌더링 (재귀)
+         */
+        renderMenuTree: function (menuList, parentId = null, level = 1) {
+            let html = '';
+            for (let i = 0; i < menuList.length; i++) {
+                const item = menuList[i];
+
+                // depth 클래스 결정
+                let depthClass = '';
+                if (level === 1) {
+                    depthClass = 'Depth';
+                } else if (level === 2) {
+                    depthClass = 'Depth d_02';
+                } else if (level === 3) {
+                    depthClass = 'Depth d_03';
+                }
+
+                // 행 생성
+                html += `
+                <tr class="${level > 1 ? 't_Depth ' : ''}double_click"
+                    ${level > 1 ? 'style="display: none;"' : ''}
+                    data-id="${item.menuOid}"
+                    ${parentId ? `data-tg="${parentId}"` : ''}>
+                    <td><input type="checkbox"></td>
+                    <td class="tal"><strong class="${depthClass}">${item.menuNm}${item.subMenus && item.subMenus.length > 0 ? `<a href="javascript:;" id="${item.menuOid}">열림</a>` : ''}</strong></td>
+                    <td>${item.menuCd}</td>
+                    <td>${item.menuUrl || ''}</td>
+                    <td>${item.menuAuthLv}</td>
+                    <td>${item.menuSeq}</td>
+                    <td>${common.formatUseYn(item.useYn)}</td>
+                    <td>${common.formatUseYn(item.bbsUseYn)}</td>
+                    <td>${common.formatUseYn(item.prvcUseYn)}</td>
+                    <td>${item.regId}</td>
+                    <td>${common.formatDateTime(item.regDt)}</td>
+                </tr>
+            `;
+
+                // 하위 메뉴가 있으면 재귀 호출
+                if (item.subMenus && item.subMenus.length > 0) {
+                    html += this.renderMenuTree(item.subMenus, item.menuOid, level + 1);
+                }
+            }
+            return html;
+        },
+
+        /**
+         * menuNo로 메뉴 찾기 (재귀 검색)
+         * @param menuNo - 검색할 메뉴의 menuNo
+         */
+        fnFindMenuByMenuNo: function (menuNo) {
+            const search = (menuList) => {
+                for (let i = 0; i < menuList.length; i++) {
+                    const menu = menuList[i];
+
+                    // 현재 메뉴 확인
+                    if (menu.menuOid === menuNo) {
+                        return {
+                            menuOid: menu.menuOid,
+                            menuNm: menu.menuNm,
+                            menuPage: menu.menuPage,
+                            menuCd: menu.menuCd,
+                            menuUrl: menu.menuUrl,
+                            menuAuthLv: menu.menuAuthLv,
+                            upMenuOid: menu.upMenuOid,
+                            menuLv: menu.menuLv,
+                            menuSeq: menu.menuSeq,
+                            bbsOid: menu.bbsOid,
+                            useYn: menu.useYn,
+                            expsrYn: menu.expsrYn,
+                            npagYn: menu.npagYn,
+                            bbsUseYn: menu.bbsUseYn,
+                            prvcUseYn: menu.prvcUseYn,
+                            menuType: menu.menuType,
+                            iconNm: menu.iconNm,
+                            menuExpln: menu.menuExpln,
+                            regId: menu.regId,
+                            regDt: menu.regDt,
+                            mdfcnId: menu.mdfcnId,
+                            mdfcnDt: menu.mdfcnDt
+                        };
+                    }
+
+                    // 하위 메뉴 재귀 검색
+                    if (menu.subMenus && menu.subMenus.length > 0) {
+                        const found = search(menu.subMenus);
+                        if (found) {
+                            return found;
+                        }
+                    }
+                }
+                return null;
+            };
+
+            return search(this.state.all);
+        },
+
+        /**
+         * 메뉴 등록
+         */
+        fnRegister: function () {
+            const _this = this;
+            // 체크된 checkbox 확인
+            const checked = document.querySelectorAll("#manage_menu_tbody input[type='checkbox']:checked");
+            let parentData = null;
+
+            if (checked.length > 1) {
+                uiCommon.fnShowAlertModal('한 개의 메뉴만 선택해주세요.');
+                return;
+            } else if (checked.length === 1) {
+                // 체크된 행의 menuNo로 state에서 찾기
+                const row = checked[0].closest('tr');
+                const menuNo = parseInt(row.dataset.id);
+                parentData = _this.fnFindMenuByMenuNo(menuNo);
+
+                // 3뎁스 이상 메뉴 등록 불가
+                if (parentData && parentData.menuLv >= 3) {
+                    uiCommon.fnShowAlertModal('메뉴 등록은 3뎁스까지만 가능합니다.');
+                    return;
+                }
+            }
+
+            handle_menu.initModal('create', parentData);
+        },
+
+        /**
+         * 메뉴 수정
+         */
+        fnUpdate: function () {
+            const _this = this;
+
+            // 체크된 checkbox 확인
+            const checked = document.querySelectorAll("#manage_menu_tbody input[type='checkbox']:checked");
+
+            if (checked.length === 0) {
+                uiCommon.fnShowAlertModal('수정할 메뉴를 선택해주세요.');
+            } else if (checked.length > 1) {
+                uiCommon.fnShowAlertModal('한 개의 메뉴만 선택해주세요.');
+            } else if (checked.length === 1) {
+                // 체크된 행의 menuNo로 state에서 찾기
+                const row = checked[0].closest('tr');
+                const menuNo = parseInt(row.dataset.id);
+                const menuData = _this.fnFindMenuByMenuNo(menuNo);
+                if (menuData) {
+                    // 부모 메뉴 정보 추가
+                    if (menuData.upMenuOid) {
+                        const parentMenu = _this.fnFindMenuByMenuNo(menuData.upMenuOid);
+                        menuData.parentMenuNm = parentMenu?.menuNm;
+                    }
+
+                    handle_menu.initModal('update', menuData);
+                }
+            }
+        },
+
+        /**
+         * 메뉴 삭제
+         */
+        fnDelete: function () {
+            const _this = this;
+
+            // 체크된 checkbox 확인
+            const checked = document.querySelectorAll("#manage_menu_tbody input[type='checkbox']:checked");
+
+            if (checked.length === 0) {
+                uiCommon.fnShowAlertModal('삭제할 메뉴를 선택해주세요.');
+                return;
+            }
+
+            // 체크된 모든 행의 menuNo 수집
+            const menuNos = [];
+            checked.forEach(function(checkbox) {
+                const row = checkbox.closest('tr');
+                const menuNo = row.dataset.id;
+                if (menuNo) {
+                    menuNos.push(menuNo);
+                }
+            });
+
+            if (menuNos.length === 0) {
+                uiCommon.fnShowAlertModal('삭제할 메뉴가 없습니다.');
+                return;
+            }
+
+            const message = `선택한 ${menuNos.length}개의 메뉴를 삭제하시겠습니까?`;
+
+            uiCommon.fnShowConfirmModal(message, async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    const deleteList = menuNos.map(menuNo => ({
+                        menuOid: menuNo,
+                        useYn: 'N'
+                    }));
+
+                    // API 호출
+                    const result = await API.patch('/api/admin/admin808/menu/delete', deleteList);
+
+                    if (result > 0) {
+                        const message = `${menuNos.length}개의 메뉴가 삭제되었습니다.`;
+                        uiCommon.fnShowAlertModal(message, () => _this.init());
+                    }
+                } catch (error) {
+                    console.error('메뉴 삭제 실패:', error);
+                    uiCommon.fnShowAlertModal('메뉴 삭제 중 오류가 발생했습니다.');
+                }
+            });
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        admin808.init();
+    });
+</script>
+</body>
+</html>

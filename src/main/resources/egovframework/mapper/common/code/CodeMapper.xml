@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="egovframework.common.code.mapper.CodeMapper">
+
+    <resultMap id="CodeResultMap" type="egovframework.common.code.domain.CodeResponseDTO">
+        <id     property="cdOid"      column="cd_oid"/>
+        <result property="grpCdOid" column="grp_cd_oid"/>
+        <result property="cdVal"       column="cd_val"/>
+        <result property="cdNm"        column="cd_nm"/>
+        <result property="upCdVal" column="up_cd_val"/>
+        <result property="cdExpln"      column="cd_expln"/>
+        <result property="cdSeq"   column="cd_seq"/>
+        <result property="useYn"       column="use_yn"/>
+        <result property="atrb1"       column="atrb1"/>
+        <result property="atrb2"       column="atrb2"/>
+        <result property="atrb3"       column="atrb3"/>
+        <result property="atrb4"       column="atrb4"/>
+        <result property="atrb5"       column="atrb5"/>
+    </resultMap>
+
+    <!-- 그룹 코드 번호로 전체 코드 조회 -->
+    <select id="selectCodeListByGrpCdOid"
+            parameterType="int"
+            resultMap="CodeResultMap">
+        SELECT
+            cd_oid,
+            grp_cd_oid,
+            cd_val,
+            cd_nm,
+            up_cd_val,
+            cd_expln,
+            cd_seq,
+            use_yn,
+            atrb1,
+            atrb2,
+            atrb3,
+            atrb4,
+            atrb5
+        FROM ${schema}.cd
+        WHERE grp_cd_oid = #{grpCdOid}
+          AND use_yn = 'Y'
+        ORDER BY cd_seq ASC, cd_oid ASC
+    </select>
+
+    <select id="selectGroupCodeListByGrpCd" resultMap="CodeResultMap">
+        SELECT
+            tc.cd_oid,
+            gc.grp_cd_oid,
+            tc.cd_val,
+            tc.cd_nm,
+            tc.up_cd_val,
+            tc.cd_expln,
+            tc.cd_seq,
+            tc.use_yn,
+            tc.atrb1,
+            tc.atrb2,
+            tc.atrb3,
+            tc.atrb4,
+            tc.atrb5
+        FROM
+            ${schema}.grp_cd AS gc
+        INNER JOIN
+            ${schema}.cd AS tc
+        ON
+            gc.grp_cd_oid = tc.grp_cd_oid
+        WHERE
+            gc.use_yn = 'Y'
+        AND
+            tc.use_yn = 'Y'
+        <if test="grpCd != null and grpCd != ''">
+            AND gc.grp_cd = #{grpCd}
+        </if>
+        ORDER BY
+            tc.cd_seq ASC, tc.cd_oid ASC
+    </select>
+</mapper>

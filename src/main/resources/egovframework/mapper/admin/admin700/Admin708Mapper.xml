@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin700.mapper.Admin708Mapper">
+    <select id="selectQnaSatisfactionStatisticsData">
+        WITH RawData AS (
+        SELECT
+                DATE_FORMAT(tbbp.reg_dt, '%Y-%m') AS month_grp
+                , tbbp.prvt_pst_yn
+                , tbqs.chc AS satisfaction_choice
+        FROM 
+                ${schema}.bbs_pst tbbp
+        LEFT JOIN 
+                ${schema}.qna_dgstfn_evl tbqs 
+                ON tbbp.bbs_pst_oid = tbqs.tbl_oid
+                AND tbqs.tbl_nm = 'bbs_pst'
+                AND tbqs.stts = 'COMPLETED'
+        INNER JOIN 
+                ${schema}.bbs tbb ON tbb.bbs_oid = tbbp.bbs_oid
+        WHERE 
+                tbb.bbs_se_cd = 'QNA' 
+                AND tbbp.up_bbs_pst_oid IS NULL 
+                AND tbbp.del_yn = 'N'
+                AND tbb.use_yn = 'Y'
+                AND tbb.stats_yn = 'Y'
+                <if test="targetYear != null">
+                    AND DATE_FORMAT(tbbp.reg_dt, '%Y') = #{targetYear}
+                </if>
+        ),
+        MonthlyStats AS (
+        SELECT
+                month_grp AS sort_key
+                , month_grp AS `monthGrp`
+                , COUNT(CASE WHEN prvt_pst_yn = 'N' THEN 1 END) AS `publicPost`
+                , COUNT(CASE WHEN prvt_pst_yn = 'Y' THEN 1 END) AS `privatePost`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice= 'LIKE') THEN 1 END) AS `satisfied`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice = 'DISLIKE') THEN 1 END) AS `unSatisfied`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice IS NULL) THEN 1 END) AS `noResponse`
+                , COUNT(*) AS `total`
+        FROM
+                RawData
+        GROUP BY
+                month_grp
+        ),
+        TotalStats AS (
+        -- 전체 누적 집계 (MonthlyStats와 동일한 Alias 부여)
+        SELECT
+                '0000-00' AS sort_key
+                , '(전체누적)' AS `monthGrp`
+                , COUNT(CASE WHEN prvt_pst_yn = 'N' THEN 1 END) AS `publicPost`
+                , COUNT(CASE WHEN prvt_pst_yn = 'Y' THEN 1 END) AS `privatePost`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice= 'LIKE') THEN 1 END) AS `satisfied`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice = 'DISLIKE') THEN 1 END) AS `unSatisfied`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice IS NULL) THEN 1 END) AS `noResponse`
+                , COUNT(*) AS `total`
+        FROM RawData
+        )
+        -- 최종 연산 및 출력
+        SELECT
+        `monthGrp`
+        , `publicPost`
+        , `privatePost`
+        , `satisfied`
+        , `unsatisfied`
+        , `noResponse`
+        , `total`
+        , ROUND((`publicPost` / NULLIF(`total`, 0)) * 100, 1) AS `publicPostRate`
+        , ROUND((`privatePost` / NULLIF(`total`, 0)) * 100, 1) AS `privatePostRate`
+        FROM (
+        SELECT * FROM TotalStats
+        UNION ALL
+        SELECT * FROM MonthlyStats
+        ) AS CombinedResult
+        ORDER BY sort_key ASC;
+    </select>
+
+    <select id="selectQnaSatisfactionStatisticsDataForExcel">
+        WITH RawData AS (
+        SELECT
+                DATE_FORMAT(tbbp.reg_dt, '%Y-%m') AS month_grp
+                , tbbp.prvt_pst_yn
+                , tbqs.chc AS satisfaction_choice
+        FROM
+                ${schema}.bbs_pst tbbp
+        LEFT JOIN
+                ${schema}.qna_dgstfn_evl tbqs
+                ON tbbp.bbs_pst_oid = tbqs.tbl_oid
+                AND tbqs.tbl_nm = 'bbs_pst'
+                AND tbqs.stts = 'COMPLETED'
+        INNER JOIN
+                ${schema}.bbs tbb ON tbb.bbs_oid = tbbp.bbs_oid
+        WHERE
+                tbb.bbs_se_cd = 'QNA'
+                AND tbbp.up_bbs_pst_oid IS NULL
+                AND tbbp.del_yn = 'N'
+                AND tbb.use_yn = 'Y'
+                AND tbb.stats_yn = 'Y'
+                <if test="targetYear != null">
+                    AND DATE_FORMAT(tbbp.reg_dt, '%Y') = #{targetYear}
+                </if>
+        ),
+        MonthlyStats AS (
+        SELECT
+                month_grp AS sort_key
+                , month_grp AS `monthGrp`
+                , COUNT(CASE WHEN prvt_pst_yn = 'N' THEN 1 END) AS `publicPost`
+                , COUNT(CASE WHEN prvt_pst_yn = 'Y' THEN 1 END) AS `privatePost`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice= 'LIKE') THEN 1 END) AS `satisfied`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice = 'DISLIKE') THEN 1 END) AS `unSatisfied`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice IS NULL) THEN 1 END) AS `noResponse`
+                , COUNT(*) AS `total`
+        FROM
+                RawData
+        GROUP BY
+                month_grp
+        ),
+        TotalStats AS (
+        SELECT
+                '0000-00' AS sort_key
+                , '(전체누적)' AS `monthGrp`
+                , COUNT(CASE WHEN prvt_pst_yn = 'N' THEN 1 END) AS `publicPost`
+                , COUNT(CASE WHEN prvt_pst_yn = 'Y' THEN 1 END) AS `privatePost`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice= 'LIKE') THEN 1 END) AS `satisfied`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice = 'DISLIKE') THEN 1 END) AS `unSatisfied`
+                , COUNT(CASE WHEN (prvt_pst_yn = 'Y' and satisfaction_choice IS NULL) THEN 1 END) AS `noResponse`
+                , COUNT(*) AS `total`
+        FROM RawData
+        )
+        SELECT
+        `monthGrp`
+        , `publicPost`
+        , `privatePost`
+        , `satisfied`
+        , `unsatisfied`
+        , `noResponse`
+        , `total`
+        , ROUND((`publicPost` / NULLIF(`total`, 0)) * 100, 1) AS `publicPostRate`
+        , ROUND((`privatePost` / NULLIF(`total`, 0)) * 100, 1) AS `privatePostRate`
+        FROM (
+        SELECT * FROM TotalStats
+        UNION ALL
+        SELECT * FROM MonthlyStats
+        ) AS CombinedResult
+        ORDER BY sort_key ASC;
+    </select>
+</mapper>

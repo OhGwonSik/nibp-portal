@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소통·참여 > 설문조사</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">설문조사</h3>
+    <div class="board_search mb10">
+        <p class="count">총 <strong id="portal602TotalCnt" class="fc1">0</strong> 건</p>
+        <fieldset>
+            <input type="text" id="keyword" name="keyword" value="" title="검색어를 입력해주세요." class="wp200">
+            <button class="btn_basic_ss" id="portal602SearchBtn">검색</button>
+        </fieldset>
+    </div>
+    <div class="table_layout">
+        <table>
+            <caption>설문조사 테이블</caption>
+            <colgroup>
+                <col style="width: 90px">
+                <col style="width: auto">
+                <col style="width: 181px;">
+                <col style="width: 124px;">
+                <col style="width: 90px">
+                <col style="width: 90px">
+            </colgroup>
+            <thead>
+            <tr>
+                <th scope="col">번호</th>
+                <th scope="col">제목</th>
+                <th scope="col">설문기간</th>
+                <th scope="col">문항수</th>
+                <th scope="col">참여/결과</th>
+                <th scope="col">첨부파일</th>
+            </tr>
+            </thead>
+            <tbody id="portal602SurveyListTbody"></tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+    <div id="paging_wrap" class="paging_wrap">
+        <a href="javascript:" class="first page_first">첫 페이지</a>
+        <a href="javascript:" class="previous page_prev">전 페이지</a>
+        <div class="namber pagination_container"></div>
+        <a href="javascript:" class="next page_next">다음 페이지</a>
+        <a href="javascript:" class="last page_last">끝 페이지</a>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal602 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 15,
+            page: 1,
+            pages: 0,
+            total: 0
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+
+            _this.initEvent();
+
+            // 검색조건 복원
+            _this.fnRestoreState();
+
+            _this.getSurveyList();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            document.querySelector('#portal602SearchBtn').addEventListener('click', function(e){
+            	e.preventDefault();
+            	
+	            _this.state.pageSize = 1;
+	            _this.getSurveyList();
+            });
+            
+            // 설문 명 및 참가하기 버튼 클릭
+            const tbody = document.querySelector("#portal602SurveyListTbody");
+            tbody.addEventListener("click", function(e) {
+                const target = e.target;
+
+                const clickable = target.closest(".btn_detail, .btn_participate");
+               
+                if (clickable) {
+                    e.preventDefault();
+               
+                    const status = clickable.dataset.status;
+                    const no = clickable.dataset.no;
+                    const courseNo = clickable.dataset.courseNo;
+                    
+                    // 설문 진행중이 아닌경우
+					if (status === 'WAIT') {
+		                uiCommon.fnShowAlertModal("설문기간이 아닙니다.");
+		                return;
+		            }
+
+		            // 종료 상태 (기간 지남)
+		            if (status === 'END') {
+		                uiCommon.fnShowAlertModal("종료된 설문입니다.");
+		                return;
+		            }
+                    _this.fnCheckAndMove(no, courseNo);
+                }
+            });
+            
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("keyword").addEventListener('keydown', e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    _this.state.pageIndex = 1;
+                    _this.getSurveyList();
+                }
+            });              
+        },
+        
+        
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: _this.state.pages,
+                onPageChange: function(page) {
+                    _this.state.pageIndex = page;
+                    _this.getSurveyList();
+                }
+            });
+        },
+        
+        /**
+         * 화면 렌더링
+         */
+        renderTable: function () {
+            const _this = this;
+            const tbody = document.querySelector("#portal602SurveyListTbody");
+            const totalEl = document.querySelector("#portal602TotalCnt");
+
+            // 총 건수 업데이트
+            if (totalEl) totalEl.innerText = _this.state.total;
+
+            // 테이블 내용 초기화
+            tbody.innerHTML = "";
+
+            // 데이터가 없을 경우
+            if (_this.state.all.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="tac">조회된 설문이 없습니다.</td></tr>`;
+                return;
+            }
+
+            // 리스트 반복문 실행
+            let html = '';
+            _this.state.all.forEach(item => {
+                const startDt = item.srvyBgngDt ? ('' + item.srvyBgngDt).substring(0, 10) : '';
+                const endDt = item.srvyEndDt ? ('' + item.srvyEndDt).substring(0, 10) : '';
+
+                // status ('ING', 'END', 'WAIT') 값에 따라 분기
+                let statusHtml = '';
+
+                if (item.stts === 'ING') {
+                    // 진행 중
+                    statusHtml = `<a href="javascript:;" class="btn_basic btn_participate" data-no="${item.srvyOid}" data-course-no="${item.courseNo}" data-status="${item.stts}">참여하기</a>`;
+                } else if (item.stts === 'END') {
+                    // 마감
+                    statusHtml = `<span style="color:#999;">마감</span>`;
+                } else {
+                    // 대기
+                    statusHtml = `<span>대기</span>`;
+                }
+
+                // fileCnt가 0보다 크면 아이콘 표시
+                const fileHtml = (item.fileCnt > 0) ? `<i class="ico_file img">이미지</i>` : '';
+
+                html += `
+                    <tr>
+                        <td>${item.srvyOid}</td>
+                        <td class="tal">
+                            <a href="javascript:;" class="link btn_detail" data-no="${item.srvyOid}" data-course-no="${item.courseNo}" data-status="${item.stts}">
+                                ${item.srvyTtl}
+                            </a>
+                        </td>
+                        <td>${startDt} ~ ${endDt}</td>
+                        <td>${item.qstCnt || 0}</td>
+                        <td>${statusHtml}</td>
+                        <td>${fileHtml}</td>
+                    </tr>
+                `;
+            });
+            // 테이블에 추가
+            tbody.innerHTML = html;
+        },        
+        
+        /**
+         * 설문 리스트 조회
+         */
+        getSurveyList: async function (params = {}) {
+            const _this = this;
+            SearchState.saveForm('portal602', '.board_search', { pageIndex: _this.state.pageIndex });
+
+            const queryParams = new URLSearchParams({
+            	page: _this.state.pageIndex,
+            	size: _this.state.pageSize,
+                keyword: document.querySelector('#keyword').value || ''
+            }).toString();
+
+            SearchState.updateUrl(queryParams);
+
+            try {
+                const response = await API.get(`/api/common/survey/list/filter?${queryParams}`);
+               
+                // state에 저장
+                _this.state.all = response.list;
+                _this.state.total = response.total;
+                _this.state.pages = response.pages;
+
+                // 화면 그리기 실행
+                _this.renderTable();
+                _this.renderPagination();
+
+            } catch (e) {
+                console.error("목록 조회 중 에러 발생:", e);
+                _this.state.list = []; 
+                _this.renderTable();
+            }
+        },
+        
+        /**
+         * 참여 여부 확인 후 상세 이동
+         */
+        fnCheckAndMove: async function(srvyOid, courseNo) {
+            if (!srvyOid) return;
+
+            try {
+
+                const payload = { 
+                		srvyOid: srvyOid,
+                		courseNo: courseNo
+            	};
+                
+                const res = await API.post('/api/common/survey/check', payload);
+
+                if (res && (res.participatedYn === 'Y' || res === 'Y')) {
+                    uiCommon.fnShowAlertModal("이미 참여하신 설문입니다.");
+                    return;
+                }
+
+                window.location.href = `${contextPath}/page/portal602-1?srvyOid=${srvyOid}`;
+
+            } catch (err) {
+                let msg = "상태 확인 중 오류가 발생했습니다.";
+                if (err && err.message) {
+                    msg = err.message;
+                } else if (err && err.desc) {
+                    msg = err.desc;
+                }
+
+                uiCommon.fnShowAlertModal(msg);
+            }
+        },
+
+        /**
+         * 검색조건 복원
+         */
+        fnRestoreState: function () {
+            const _this = this;
+
+            // 1. URL 파라미터로 복원
+            const _fieldMap = { keyword: 'keyword' };
+            const urlPage = SearchState.restoreFromUrl(_fieldMap, 'pageIndex');
+            if (urlPage !== null) {
+                _this.state.pageIndex = urlPage;
+            } else {
+                // 2. sessionStorage 로 복원
+                const saved = SearchState.restoreForm('portal602', '.board_search');
+                if (saved) {
+                    _this.state.pageIndex = saved._extra.pageIndex || 1;
+                }
+            }
+
+            // 3. 뒤로가기 / 앞으로가기 시
+            SearchState.handlePopState(_fieldMap, 'pageIndex', function(page) {
+                _this.state.pageIndex = page;
+                _this.getSurveyList();
+            });
+        }
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        portal602.init();
+    });
+</script>
+</body>
+</html>

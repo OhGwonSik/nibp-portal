@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <title th:text="${boardInfo.bbsNm} + ' > 상세'">게시판 상세</title>
+	<th:block th:if="${post?.prvtPstYn == 'Y' or post?.openYn == 'N'}">
+	    <meta name="robots" content="noindex, nofollow">
+	</th:block>
+	<th:block th:unless="${post?.prvtPstYn == 'Y' or post?.openYn == 'N'}">
+		<meta name="title" 
+	          th:if="${post?.bbsPstTtl != null}" 
+	          th:content="${post.bbsPstTtl}">    
+		<meta name="description" 
+		      th:if="${post?.bbsPstCnTxt != null}" 
+		      th:content="${#strings.abbreviate(
+		          T(egovframework.common.util.HtmlUtil).stripHtml(
+		              T(egovframework.common.util.HtmlUtil).htmlDecode(post.bbsPstCnTxt)
+		          ), 160)}">
+	</th:block>
+</head>
+<style>
+    .slider-for .slick-slide img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    /* GPU 레이어로 깜빡임 방지 */
+    .slider-for .slick-list,
+    .slider-for .slick-track {
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+    }
+
+    /* 썸네일 복제 슬라이드 포커스 차단 */
+    .slider-nav .slick-cloned button {
+        pointer-events: none;
+    }
+</style>
+<body>
+
+<div layout:fragment="main_content" class="content_wrap">
+
+    <h3 class="stit" th:text="${boardInfo.bbsNm}">갤러리 게시판</h3>
+
+    <div class="board_wrap">
+        <div class="board_view">
+            <div class="board_view_header">
+                <h4 class="title">
+                    <span class="c_blue02" th:if="${boardInfo.ctgryYn == 'Y' and post.ctgry != null}"
+                          th:text="'[' + ${post.ctgry} + '] '"></span>
+                    <span th:text="${post.bbsPstTtl}">제목</span>
+                </h4>
+                <div class="board_info_row" style="margin-top:5px; color:#666; font-size:14px;">
+                    <span class="mr10">등록일: <span th:text="${#temporals.format(post.regDt, 'yyyy-MM-dd')}"></span></span>
+                    <span>조회수: <span th:text="${post.inqCnt}"></span></span>
+                </div>
+            </div>
+
+            <div class="board_content tac">
+
+                <!-- 갤러리 슬라이더 -->
+                <div class="gallery_wrap" th:if="${fileList != null and not #lists.isEmpty(fileList)}">
+
+                    <div class="slider-for">
+                        <div th:each="file : ${fileList}">
+                            <div style="width: 100%; display: inline-block;">
+                                <img th:src="@{|${basicFilePath}${file.strgFilePath}/${file.strgFileNm}|}"
+                                     th:alt="${file.orgnlFileNm}"
+                                     th:onerror="|this.onerror=null; this.src='/admin/images/Thumbnail_img.png';|">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fixed-content post-content" th:utext="${post.bbsPstCn}"></div>
+
+                    <div class="slider-nav" aria-label="이미지 섬네일 목록">
+                        <div th:each="file : ${fileList}">
+                            <div style="width: 100%; display: inline-block;">
+                                <button type="button" tabindex="0">
+                                    <img th:src="${file.strgSmlFilePath != null}
+					                            ? @{|${basicFilePath}${file.strgSmlFilePath}/${file.strgSmlFileNm}|}
+					                            : @{|${basicFilePath}${file.strgFilePath}/${file.strgFileNm}|}"
+                                         th:alt="${file.orgnlFileNm} + ' 크게 보기'"
+                                         th:onerror="|this.onerror=null; this.src='/admin/images/Thumbnail_img.png';|">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 이미지 없을 경우 -->
+                    <div th:if="${fileList == null or #lists.isEmpty(fileList)}"
+                         class="mt20 tal" style="min-height:200px;">
+                        <div class="post-content" th:utext="${post.bbsPstCn}"></div>
+                    </div>
+
+                </div>
+
+                <div class="btn_wrap mt20">
+                    <a href="javascript:;" class="btn_basic"
+                       onclick="galleryBoardPost.fnGoList()">목록</a>
+                </div>
+            </div>
+
+            <div class="pagination" th:if="${boardInfo.prevNextExpsrYn == 'Y'}">
+                <p class="prev">
+                    <span class="name">이전글</span>
+                    <span class="text">
+                        <a href="javascript:;" class="link"
+                           th:if="${prevBoardPost != null}"
+                           th:text="${prevBoardPost.bbsPstTtl}"
+                           th:onclick="galleryBoardPost.fnGoDetail([[${prevBoardPost.bbsPstOid}]])"></a>
+                        <span th:unless="${prevBoardPost != null}">이전글이 없습니다.</span>
+                    </span>
+                </p>
+                <p class="next">
+                    <span class="name">다음글</span>
+                    <span class="text">
+                        <a href="javascript:;" class="link"
+                           th:if="${nextBoardPost != null}"
+                           th:text="${nextBoardPost.bbsPstTtl}"
+                           th:onclick="galleryBoardPost.fnGoDetail([[${nextBoardPost.bbsPstOid}]])"></a>
+                        <em th:unless="${nextBoardPost != null}">다음글이 없습니다.</em>
+                    </span>
+                </p>
+            </div>
+
+            <div th:if="${boardInfo.cmntPsbltyYn == 'Y'}" class="comment_wrap">
+                <h4>댓글 <span th:text="${commentList != null ? commentList.size() : 0}" style="color:#e60000; font-size:0.8em;"></span></h4>
+
+                <div class="comment_list">
+                    <ul th:if="${commentList != null and !commentList.isEmpty()}">
+                        <li th:each="cmt : ${commentList}">
+                            <div class="info">
+                                <strong th:text="${cmt.wrtrNm}">작성자</strong>
+                                <span class="date" th:text="${#temporals.format(cmt.regDt, 'yyyy-MM-dd HH:mm')}"></span>
+
+                            </div>
+                            <div class="txt" th:utext="${#strings.replace(cmt.bbsCmntCn, '', '<br>')}"></div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="comment_write">
+                    <div class="inputs">
+                        <input type="text" id="cmt_writer" placeholder="작성자 이름" maxlength="20">
+                    </div>
+                    <textarea id="comment_content" placeholder="내용을 입력해주세요. (비방, 욕설은 삭제될 수 있습니다.)"></textarea>
+                    <div class="btn_area">
+                        <button type="button" class="btn_basic_s" onclick="galleryBoardPost.fnRegistComment()">등록</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="main_scripts" th:inline="javascript">
+    const galleryBoardPost = {
+        state: {
+            config: /*[[${boardInfo}]]*/ {},
+            post: /*[[${post}]]*/ {},
+            reqDto: /*[[${boardRequestDto}]]*/ {},
+            files: /*[[${fileList}]]*/ [],
+            DEFAULT_IMG: /*[[@{/admin/images/Thumbnail_img.png}]]*/ contextPath + '/admin/images/Thumbnail_img.png',
+        },
+
+        init: function() {
+            this.initSlider();
+        },
+
+        fnGoList: function() {
+            const menuCd = this.state.reqDto.menuCd;
+            const bbsOid = this.state.config.bbsOid;
+            location.href = `${contextPath}/board?menuCd=${menuCd}&bbsOid=${bbsOid}`;
+        },
+
+        fnGoDetail: function(targetBbsPstOid) {
+
+            const menuCd = this.state.reqDto.menuCd;
+            const bbsOid = this.state.config.bbsOid;
+            location.href = `${contextPath}/board/post?menuCd=${menuCd}&bbsOid=${bbsOid}&bbsPstOid=${targetBbsPstOid}`;
+        },
+
+        initSlider: function() {
+            const files = this.state.files;
+            if (!files || files.length === 0) return;
+
+            $(document).ready(function() {
+                const $gallery = $('.gallery_wrap');
+                const $main = $gallery.find('.slider-for');
+                const $thumb = $gallery.find('.slider-nav');
+
+                // 메인 슬라이드 초기화
+                $main.slick({
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    arrows: true,
+                    fade: true,
+                    infinite: true,
+                    adaptiveHeight: false,
+                    asNavFor: '.slider-nav',
+                    autoplay: false,
+                    cssEase: 'ease',
+                });
+
+                // 썸네일 슬라이드 초기화 및 접근성 처리
+                $thumb.on('init reInit afterChange', function () {
+                    const $slides = $thumb.find('.slick-slide');
+                    $slides.each(function () {
+                        const $slide = $(this);
+                        const $btn = $slide.find('button');
+                        $btn.attr('tabindex', '0');
+
+                        $btn.off('click focus').on('click focus', function () {
+                            const index = $slide.data('slick-index');
+                            if (index !== undefined) {
+                                $thumb.slick('slickGoTo', index);
+                            }
+                        });
+                    });
+                });
+
+                // 5개 이하의 사진들이라 썸네일 슬라이드에는 화살표 표기 X
+                $thumb.slick({
+                    slidesToShow: 5,
+                    slidesToScroll: 1,
+                    asNavFor: '.slider-for',
+                    focusOnSelect: true,
+                    arrows: true,
+                    infinite: true,
+                    cssEase: 'ease',
+                    responsive: [
+                        { breakpoint: 768, settings: { slidesToShow: 3 } },
+                        { breakpoint: 480, settings: { slidesToShow: 2 } }
+                    ]
+                });
+
+                // 초기화 완료 후 표시
+                $gallery.addClass('is-ready');
+            });
+        },
+
+        /**
+         * 댓글 저장
+         */
+        fnRegistComment: function() {
+
+            const _this = this;
+            const writerEl = document.getElementById('cmt_writer');
+            const contentEl = document.getElementById('comment_content');
+
+            // 필수 벨리데이션
+            if (!writerEl || !writerEl.value.trim()) {
+                uiCommon.fnShowAlertModal('작성자 이름을 입력해주세요.', function(){
+                    if(writerEl) writerEl.focus();
+                });
+                return;
+            }
+            if (!contentEl || !contentEl.value.trim()) {
+                uiCommon.fnShowAlertModal('내용을 입력해주세요.', function(){
+                    if(contentEl) contentEl.focus();
+                });
+
+                return;
+            }
+
+            uiCommon.fnShowConfirmModal('댓글을 등록하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+
+                const params = {
+                    bbsOid: _this.state.config.bbsOid,
+                    bbsPstOid: _this.state.post.bbsPstOid,
+                    wrtrNm: writerEl.value.trim(),
+                    bbsCmntCn: contentEl.value.trim(),
+                    menuCd: _this.state.reqDto.menuCd
+                };
+
+                try {
+                    await API.put('/api/common/board/comment/insert', params);
+                    uiCommon.fnShowAlertModal('댓글이 등록되었습니다.', function(){
+                        window.location.href = contextPath + `/board/post?menuCd=${_this.state.reqDto.menuCd}&bbsOid=${_this.state.config.bbsOid}&bbsPstOid=${_this.state.post.bbsPstOid}`;
+                    });
+                } catch (error) {
+                    console.error('삭제 실패:', error);
+                    uiCommon.fnShowAlertModal('삭제에 실패했습니다 : ', error);
+                }
+            });
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        galleryBoardPost.init();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,374 @@
+<th:block th:fragment="handle_menu" xmlns:th="http://www.thymeleaf.org">
+    <div id="handle_menu" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap wp700">
+                <h1 class="p_tit">메뉴 등록</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <div class="table_layout02 mb10">
+                                <table>
+                                    <caption>메뉴 등록</caption>
+                                    <colgroup>
+                                        <col style="width: 120px;">
+                                        <col style="width: auto;">
+                                    </colgroup>
+                                    <tbody>
+                                    <tr>
+                                        <th scope="row"><label for="parentMenuNm">상위메뉴</label></th>
+                                        <td>
+                                            <input type="text" name="" id="parentMenuNm" value="최상위" title="상위메뉴 입력" disabled="">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="menuNmp">메뉴명</label></th>
+                                        <td>
+                                            <input type="text" name="" id="menuNmp" title="메뉴명 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="menuCdp">메뉴코드</label></th>
+                                        <td>
+                                            <input type="text" name="" id="menuCdp" title="메뉴코드 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="menuPagep">메뉴페이지</label></th>
+                                        <td>
+                                            <input type="text" name="" id="menuPagep" title="메뉴페이지 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="menuUrlp">URL</label></th>
+                                        <td>
+                                            <input type="text" name="" id="menuUrlp" title="URL 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="menuAuthLv">메뉴권한레벨</label></th>
+                                        <td>
+                                            <select name="menuAuthLv" id="menuAuthLv">
+                                                <option value="ADMIN" selected>관리자</option>
+                                                <option value="USER">회원</option>
+                                                <option value="COMMON">공개</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="menuType">메뉴타입</label></th>
+                                        <td>
+                                            <select name="menuType" id="menuType">
+                                                <option value="LARGE" selected>대메뉴</option>
+                                                <option value="MIDDLE">중메뉴</option>
+                                                <option value="SMALL">소메뉴</option>
+                                                <option value="PAGE">페이지</option>
+                                                <option value="TAB">탭</option>
+                                                <option value="BOARD">게시판</option>
+                                                <option value="HIDDEN">숨김</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="bbsOid">게시판번호</label></th>
+                                        <td>
+                                            <input type="text" name="" id="bbsOid" title="게시판번호 입력" disabled>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="menuOrderp">메뉴 순번</label></th>
+                                        <td>
+                                            <input type="text" name="" id="menuOrderp" title="메뉴 순번 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label>사용여부</label></th>
+                                        <td>
+                                            <span class="radio-box"><input type="radio" id="useYp" name="useYnp" value="Y"><label for="useYp">Y</label></span>
+                                            <span class="radio-box"><input type="radio" id="useNp" name="useYnp" value="N"><label for="useNp">N</label></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label>새창열림여부</label></th>
+                                        <td>
+                                            <span class="radio-box"><input type="radio" id="newWindowYp" name="newWindowYnp" value="Y"><label for="newWindowYp">Y</label></span>
+                                            <span class="radio-box"><input type="radio" id="newWindowNp" name="newWindowYnp" value="N"><label for="newWindowNp">N</label></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label>메인페이지 2차메뉴 표기여부</label></th>
+                                        <td>
+                                            <span class="radio-box"><input type="radio" id="showYp" name="showYnp" value="Y"><label for="showYp">Y</label></span>
+                                            <span class="radio-box"><input type="radio" id="showNp" name="showYnp" value="N"><label for="showNp">N</label></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label>게시판사용여부</label></th>
+                                        <td>
+                                            <span class="radio-box"><input type="radio" id="boardUseYp" name="boardUseYnp" value="Y"><label for="boardUseYp">Y</label></span>
+                                            <span class="radio-box"><input type="radio" id="boardUseNp" name="boardUseYnp" value="N"><label for="boardUseNp">N</label></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label>개인정보취급여부</label></th>
+                                        <td>
+                                            <span class="radio-box"><input type="radio" id="privacyYp" name="privacyYnp" value="Y"><label for="privacyYp">Y</label></span>
+                                            <span class="radio-box"><input type="radio" id="privacyNp" name="privacyYnp" value="N"><label for="privacyNp">N</label></span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn_wrap mt30">
+                        <a href="javascript:;" id="btn_save_menu_pop" class="btn_basic bg_type01">저장</a>
+                        <a href="javascript:;" class="btn_basic bg_type02 btn_close_menu_pop">취소</a>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close btn_close_menu_pop">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        let handle_menu = {
+
+            /**
+             * 상태
+             */
+            state: {
+                mode: 'create',     // create or update
+                data: null,         // 수정할 데이터
+                parentData: null    // 상위 메뉴 데이터
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function (mode, data) {
+                this.state.mode = mode;
+                this.state.data = this.state.mode === 'create' ? null : data;
+                this.state.parentData = this.state.mode === 'create' ? (data || null) : null;
+
+                uiCommon.fnShowModal('handle_menu');
+                this.init();
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function () {
+                // 이벤트 바인딩
+                this.initEvent();
+
+                // 폼 값 초기화 또는 데이터 바인딩
+                if (this.state.mode === 'create') {
+                    this.initFormData();
+                } else {
+                    this.bindFormData();
+                }
+
+                // 제목 변경
+                this.updateTitle();
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function () {
+                const _this = this;
+
+                // 저장 버튼 클릭
+                $("#btn_save_menu_pop").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    _this.fnSave();
+                });
+
+                // [닫기/취소 버튼] 마찬가지로 기존 이벤트 제거 후 등록
+                $(".btn_close_menu_pop").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    uiCommon.fnHideModal('handle_menu');
+                });
+            },
+
+            /**
+             * 폼 입력값 초기화
+             */
+            initFormData: function () {
+                const parentMenu = this.state.parentData?.menuNm || '최상위';
+                document.getElementById('parentMenuNm').value = parentMenu;                   // 상위메뉴
+                document.getElementById('menuNmp').value = '';                                // 메뉴명
+                document.getElementById('menuCdp').value = '';                                // 메뉴코드
+                document.getElementById('menuPagep').value = '';                              // 메뉴페이지
+                document.getElementById('menuUrlp').value = '';                               // URL
+                document.getElementById('menuAuthLv').value = 'ADMIN';                         // 메뉴권한레벨
+                document.getElementById('menuType').value = 'PAGE';                           // 메뉴타입
+                document.getElementById('menuOrderp').value = '';                             // 메뉴 순번
+                document.getElementById('bbsOid').value = null;                              // 게시판번호
+                document.getElementById('useYp').checked = true;                              // 사용여부 - Y
+                document.getElementById('showYp').checked = true;                             // 메인페이지 2차메뉴 표기여부 - Y
+                document.getElementById('newWindowNp').checked = true;                        // 새창열림여부 - N
+                document.getElementById('boardUseYp').checked = true;                         // 게시판사용여부 - Y
+                document.getElementById('privacyYp').checked = true;                          // 개인정보취급여부 - Y
+            },
+
+            /**
+             * 폼 데이터 바인딩
+             */
+            bindFormData: function () {
+                if (!this.state.data) {
+                    return;
+                }
+
+                const data = this.state.data;
+                document.getElementById('parentMenuNm').value = data.parentMenuNm || '최상위';
+                document.getElementById('menuNmp').value = data.menuNm || '';
+                document.getElementById('menuCdp').value = data.menuCd || '';
+                document.getElementById('menuPagep').value = data.menuPage || '';
+                document.getElementById('menuUrlp').value = data.menuUrl || '';
+                document.getElementById('menuAuthLv').value = data.menuAuthLv || 'ADMIN';
+                document.getElementById('menuType').value = data.menuType || 'PAGE';
+                document.getElementById('bbsOid').value = data.bbsOid || '';
+                document.getElementById('menuOrderp').value = data.menuSeq ?? '';
+
+                if (data.useYn === 'Y') {
+                    document.getElementById('useYp').checked = true;
+                } else {
+                    document.getElementById('useNp').checked = true;
+                }
+
+                if (data.expsrYn === 'Y') {
+                    document.getElementById('showYp').checked = true;
+                } else {
+                    document.getElementById('showNp').checked = true;
+                }
+
+                if (data.bbsUseYn === 'Y') {
+                    document.getElementById('boardUseYp').checked = true;
+                } else {
+                    document.getElementById('boardUseNp').checked = true;
+                }
+
+                if (data.npagYn === 'Y') {
+                    document.getElementById('newWindowYp').checked = true;
+                } else {
+                    document.getElementById('newWindowNp').checked = true;
+                }
+
+                if (data.prvcUseYn === 'Y') {
+                    document.getElementById('privacyYp').checked = true;
+                } else {
+                    document.getElementById('privacyNp').checked = true;
+                }
+            },
+
+            /**
+             * 제목 업데이트
+             */
+            updateTitle: function () {
+                const title = this.state.mode === 'create' ? '메뉴 등록' : '메뉴 수정';
+                document.querySelector('#handle_menu .p_tit').textContent = title;
+            },
+
+            /**
+             * 저장, 수정
+             */
+            fnSave: async function () {
+                let _this = this;
+
+                try {
+                    // 값 할당
+                    const menuOid = _this.state.data?.menuOid;
+                    const menuNm = document.getElementById('menuNmp').value.trim();
+                    const menuCd = document.getElementById('menuCdp').value.trim();
+                    const menuPage = document.getElementById('menuPagep').value.trim() || null;
+                    const menuUrl = document.getElementById('menuUrlp').value.trim() || null;
+                    const menuAuthLv = document.getElementById('menuAuthLv').value;
+                    const menuType = document.getElementById('menuType').value;
+                    const upMenuOidC = _this.state.parentData?.menuOid || null;
+                    const upMenuOidU = _this.state.data?.upMenuOid || null;
+                    const menuLvC = _this.state.parentData ? (_this.state.parentData.menuLv + 1) : 1; // 메뉴 레벨(등록 일 때)
+                    const menuLvU = _this.state.data?.menuLv; // 메뉴 레벨(수정 일 때)
+                    const menuSeq = parseInt(document.getElementById('menuOrderp').value.trim());
+                    const bbsOid = _this.state.data?.bbsOid || null;
+                    const useYn = document.querySelector('input[name="useYnp"]:checked').value;
+                    const expsrYn = document.querySelector('input[name="showYnp"]:checked').value;
+                    const npagYn = document.querySelector('input[name="newWindowYnp"]:checked').value;
+                    const bbsUseYn = document.querySelector('input[name="boardUseYnp"]:checked').value;
+                    const prvcUseYn = document.querySelector('input[name="privacyYnp"]:checked').value;
+
+
+                    // 파라미터 구성
+                    const param = _this.state.mode === 'create' ? {
+                        menuNm: menuNm,
+                        menuCd: menuCd,
+                        menuPage: menuPage,
+                        menuUrl: menuUrl,
+                        menuAuthLv: menuAuthLv,
+                        menuType: menuType,
+                        upMenuOid: upMenuOidC,
+                        menuLv: menuLvC,
+                        menuSeq: menuSeq,
+                        bbsOid: null,
+                        useYn: useYn,
+                        expsrYn: expsrYn,
+                        npagYn: npagYn,
+                        bbsUseYn: bbsUseYn,
+                        prvcUseYn: prvcUseYn
+                    } : {
+                        menuOid: menuOid,
+                        menuNm: menuNm,
+                        menuCd: menuCd,
+                        menuPage: menuPage,
+                        menuUrl: menuUrl,
+                        menuAuthLv: menuAuthLv,
+                        menuType: menuType,
+                        upMenuOid: upMenuOidU,
+                        menuLv: menuLvU,
+                        menuSeq: menuSeq,
+                        bbsOid: bbsOid,
+                        useYn: useYn,
+                        expsrYn: expsrYn,
+                        npagYn: npagYn,
+                        bbsUseYn: bbsUseYn,
+                        prvcUseYn: prvcUseYn
+                    }
+
+                    // API 호출
+                    const result = _this.state.mode === 'create'
+                            ? await API.put('/api/admin/admin808/menu/insert', param)
+                            : await API.patch('/api/admin/admin808/menu/update', param);
+
+                    if (result > 0) {
+                        const message = _this.state.mode === 'create'
+                                ? '메뉴가 등록되었습니다.'
+                                : '메뉴가 수정되었습니다.';
+                        uiCommon.fnShowAlertModal(message, () => _this.fnCloseModal());
+                    }
+                } catch (error) {
+                    console.error('메뉴 저장 실패:', error);
+
+                    // APIError 객체에서 메시지 추출
+                    let errorMessage = '메뉴 저장 중 오류가 발생했습니다.';
+                    if (error instanceof APIError) {
+                        // 중복값
+                        if (error.code === 'COMMON_004') {
+                            errorMessage = error.details;
+                            // 빈 값
+                        } else if (error.isValidationError()) {
+                            errorMessage = error.getUserMessage();
+                        }
+                    }
+                    uiCommon.fnShowAlertModal(errorMessage);
+                }
+            },
+
+            /**
+             * 모달 hide, 부모 페이지 리로드
+             */
+            fnCloseModal: function () {
+                uiCommon.fnHideModal('handle_menu');
+                admin808.init();
+            }
+        };
+    </script>
+</th:block>

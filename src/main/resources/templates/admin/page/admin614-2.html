@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > 안내(팝업)관리 > 안내(팝업)상세정보</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="sub_cont_wrap">
+    <div class="table_layout02 mb10 has_editor">
+        <table>
+            <caption>안내(팝업)등록</caption>
+            <colgroup>
+                <col style="width: 100px;">
+                <col style="width: 100px;">
+                <col style="width: auto;">
+                <col style="width: 100px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row"><label>제목</label></th>
+                <td colspan="2" id="admin614_2_popupNm"></td>
+                <th scope="row"><label>기간</label></th>
+                <td id="admin614_2_Dt"></td>
+            </tr>
+            <tr>
+                <th scope="row">공개상태</th>
+                <td colspan="2" id="admin614_2_openYn"></td>
+                <th scope="row">작성방식</th>
+                <td id="admin614_2_popupType"></td>
+            </tr>
+            <tr id="popup_attach_row">
+                <th scope="row">팝업첨부</th>
+                <td colspan="4">
+                    <div class="table_layout">
+                        <table>
+                            <caption>첨부파일 : 파일명, 파일사이즈, 업로드일자, 다운로드</caption>
+                            <colgroup>
+                                <col style="width: auto;">
+                                <col style="width: 15%;">
+                                <col style="width: 20%;">
+                                <col style="width: 15%;">
+                            </colgroup>
+                            <thead>
+                            <tr>
+                                <th scope="col">파일명</th>
+                                <th scope="col">파일사이즈</th>
+                                <th scope="col">업로드일자</th>
+                                <th scope="col">다운로드</th>
+                            </tr>
+                            </thead>
+                            <tbody id="admin614_2_files_tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            <tr id="popup_link_row">
+                <th scope="row">링크</th>
+                <td colspan="4" id="admin614_2_linkUrl"></td>
+            </tr>
+            <tr id="content_row" style="display: none;">
+                <th scope="row"><label>내용</label></th>
+                <td colspan="4" id="admin614_2_htmlContent" class="post-content"></td>
+            </tr>
+            <tr>
+                <th scope="row" rowspan="2">위치/크기</th>
+                <th scope="row">X 좌표</th>
+                <td id="admin614_2_positionX"></td>
+                <th scope="row">Y 좌표</th>
+                <td id="admin614_2_positionY"></td>
+            </tr>
+            <tr>
+                <th scope="row">가로 크기(W)</th>
+                <td id="admin614_2_width"></td>
+                <th scope="row">세로 크기(H)</th>
+                <td id="admin614_2_height"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="btn_wrap">
+        <a href="javascript:;" id="admin614_2_btn_update" class="btn_basic bg_type01">수정</a>
+        <a th:href="@{/admin/page/admin614}" class="btn_basic bg_type02">목록</a>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin614_1 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],        // 전체
+            strgFilePath: /*[[${basicFilePath}]]*/''
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // 이벤트 바인딩
+            this.initEvent();
+
+            // 데이터 조회
+            this.getData();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 수정 버튼 클릭
+            document.getElementById("admin614_2_btn_update").addEventListener("click", function (e) {
+                e.preventDefault();
+
+                const params = new URLSearchParams(window.location.search);
+                const popupOid = params.get("popupOid");
+
+                if (popupOid) {
+                    window.location.href = contextPath + '/admin/page/admin614-1?popupOid=' + popupOid;
+                }
+            });
+
+            // 이미지 등록 라디오 버튼 클릭 시
+            $('.img_input_radio').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('#popup_attach_row').css('display','table-row');
+                    $('#content_row').css('display','none');
+                }
+            });
+
+            // 텍스트 입력 라디오 버튼 클릭 시
+            $('.text_input_radio').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('#popup_attach_row').css('display','none');
+                    $('#content_row').css('display','table-row');
+                }
+            });
+
+            // 저장 버튼 클릭
+            $("#btn_save_pop").on("click", function (e) {
+                e.preventDefault();
+                alert('준비 중입니다.');
+            });
+
+            // 닫기/취소 버튼 클릭
+            $(".btn_close_register_pop").on("click", function (e) {
+                e.preventDefault();
+                uiCommon.fnHideModal('admin614_1');
+            });
+        },
+
+        getData: async function () {
+            const params = new URLSearchParams(window.location.search);
+            const popupOid = params.get("popupOid");
+
+            try {
+                const response = await API.get('/api/admin/admin614/select?popupOid=' + popupOid);
+
+                // 페이지 데이터에 저장
+                this.state.all = response;
+                this.renderTable();
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('목록 조회에 실패했습니다.');
+            }
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+            if (!this.state.all) {
+                console.error('데이터가 없습니다.');
+                return;
+            }
+
+            const data = this.state.all;
+
+            // 제목
+            document.getElementById('admin614_2_popupNm').textContent = data.popupTtl || '';
+
+            // 기간
+            const popupBgngDt = data.popupBgngDt || '';
+            const popupEndDt = data.popupEndDt || '';
+            document.getElementById('admin614_2_Dt').textContent = `${popupBgngDt} ~ ${popupEndDt}`;
+
+            // 공개상태
+            document.getElementById('admin614_2_openYn').textContent = 
+                data.openYn === 'Y' ? '공개' : '비공개';
+
+            // 작성방식
+            document.getElementById('admin614_2_popupType').textContent = 
+                data.popupType === 'I' ? '이미지 등록' :
+                data.popupType === 'H' ? '텍스트 입력(직접작성)' : '';
+
+            // 작성방식에 따라 보여줄 영역 조정
+            if (data.popupType === 'I') {
+                document.getElementById('popup_attach_row').style.display = 'table-row';
+                document.getElementById('popup_link_row').style.display = 'table-row';
+                document.getElementById('content_row').style.display = 'none';
+
+                const file = data.files;
+
+                if (file && (file.orgnlFileNm || file.strgFileNm) && file.fileOid) {
+                    const filesTbody = document.getElementById('admin614_2_files_tbody');
+                    filesTbody.innerHTML = '';
+
+                    const strgFilePath = this.state.strgFilePath;
+                    const strgFileNm = file.orgnlFileNm || file.strgFileNm || '';
+                    const fileRow = `
+                        <tr>
+                            <td><div class="tal">${strgFileNm}</div></td>
+                            <td>${common.bytesToMB(file.strgFileCpct || 0)}</td>
+                            <td>${common.formatDate(file.regDt)}</td>
+                            <td><a href="${strgFilePath}${file.strgFilePath}/${file.strgFileNm}" class="a_link" download='${file.orgnlFileNm}'>다운로드</a></td>
+                        </tr>
+                    `;
+
+                    filesTbody.insertAdjacentHTML('beforeend', fileRow);
+                }
+
+                // 링크 URL
+                const linkUrlEl = document.getElementById('admin614_2_linkUrl');
+                if (data.popupUrlAddr) {
+                    linkUrlEl.innerHTML = `<a href="${data.popupUrlAddr}" class="a_link" target="_blank">${data.popupUrlAddr}</a>`;
+                } else {
+                    linkUrlEl.textContent = '';
+                }
+
+            } else if (data.popupType === 'H') {
+                document.getElementById('popup_attach_row').style.display = 'none';
+                document.getElementById('popup_link_row').style.display = 'none';
+                document.getElementById('content_row').style.display = 'table-row';
+
+                // HTML 내용
+                document.getElementById('admin614_2_htmlContent').innerHTML = data.popupCn || '';
+            }
+
+            // 위치/크기
+            document.getElementById('admin614_2_positionX').textContent = data.pstnX || '0';
+            document.getElementById('admin614_2_positionY').textContent = data.pstnY || '0';
+            document.getElementById('admin614_2_width').textContent = data.sizeW || '0';
+            document.getElementById('admin614_2_height').textContent = data.sizeH || '0';
+        }
+    };
+
+    $(document).ready(function () {
+        admin614_1.init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<header th:fragment="main_header" id="header" class="header"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+    <div class="header_wrap">
+        <h1 class="logo"><a th:href="@{/main}">국가생명윤리정책원</a></h1>
+        <a class="m_menu" href="#none">모바일메뉴</a>
+        <nav class="gnb_wrap">
+            <ul id="gnbMenu"></ul>
+        </nav>
+
+        <div class="util_wrap">
+            <div class="search">
+                <a href="javascript:;">검색 열기</a>
+                <div class="search_layer_wrap">
+                    <div class="search_input">
+                        <input id="totalSearchKeyword" type="text" title="검색어 입력" placeholder="검색어를 입력해 주세요.">
+                        <button id="totalSearchBtn">검색</button>
+                    </div>
+                    <a href="javascript:;" class="close_search">검색 닫기</a>
+                </div>
+            </div>
+            <div class="all_menu">
+                <a href="javascript:;">전체메뉴 열기</a>
+                <div class="all_menu_layer">
+                    <div class="all_menu_wrap">
+                        <h2 class="sm_tit">전체메뉴</h2>
+                        <ul id="sitemapMenu"></ul>
+                    </div>
+                    <a href="javascript:;" class="close_sitemap">전체메뉴 닫기</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

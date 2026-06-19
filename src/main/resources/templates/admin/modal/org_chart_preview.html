@@ -1,0 +1,24 @@
+<th:block th:fragment="org_chart_preview" xmlns:th="http://www.thymeleaf.org">
+    <div id="org_chart_preview" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap" style="max-width: 1400px; width: 95%;">
+                <h1 class="p_tit">조직도 미리보기</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <div class="org_preview_container" id="org_preview_container">
+                                <!-- 조직도가 여기에 렌더링됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn_wrap mt30">
+                        <a href="javascript:;" class="btn_basic bg_type02"
+                           onclick="uiCommon.fnHideModal('org_chart_preview')">닫기</a>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close"
+                   onclick="uiCommon.fnHideModal('org_chart_preview')">닫기</a>
+            </div>
+        </div>
+    </div>
+</th:block>

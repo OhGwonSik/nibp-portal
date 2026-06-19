@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.common.auth.mapper.RefreshTokenMapper">
+
+	<!-- Refresh Token 저장 -->
+	<insert id="insertRefreshToken" parameterType="egovframework.common.auth.domain.RefreshToken">
+		INSERT INTO REFRESH_TOKEN (
+			TOKEN_ID,
+			USER_ID,
+			TOKEN,
+			EXPIRY_DT,
+			REG_DT,
+			LAST_USED_DT,
+			REVOKED_YN
+		) VALUES (
+			#{tokenId},
+			#{userOid},
+			#{token},
+			#{expiryDt},
+			NOW(),
+			NOW(),
+			'N'
+		)
+	</insert>
+
+	<!-- Token ID로 조회 -->
+	<select id="selectRefreshTokenByTokenId" parameterType="String" resultType="egovframework.common.auth.domain.RefreshToken">
+		SELECT
+			TOKEN_ID as tokenId,
+			USER_ID as userId,
+			TOKEN as token,
+			EXPIRY_DT as expiryDt,
+			REG_DT as regDt,
+			LAST_USED_DT as lastUsedDt,
+			REVOKED_YN as revokedYn,
+			REVOKED_DT as revokedDt
+		FROM
+			REFRESH_TOKEN
+		WHERE
+			TOKEN_ID = #{tokenId}
+			AND REVOKED_YN = 'N'
+	</select>
+
+	<!-- Token 값으로 조회 -->
+	<select id="selectRefreshTokenByToken" parameterType="String" resultType="egovframework.common.auth.domain.RefreshToken">
+		SELECT
+			TOKEN_ID as tokenId,
+			USER_ID as userId,
+			TOKEN as token,
+			EXPIRY_DT as expiryDt,
+			REG_DT as regDt,
+			LAST_USED_DT as lastUsedDt,
+			REVOKED_YN as revokedYn,
+			REVOKED_DT as revokedDt
+		FROM
+			REFRESH_TOKEN
+		WHERE
+			TOKEN = #{token}
+			AND REVOKED_YN = 'N'
+			AND EXPIRY_DT > NOW()
+	</select>
+
+	<!-- 마지막 사용 일시 업데이트 -->
+	<update id="updateLastUsedDt" parameterType="String">
+		UPDATE REFRESH_TOKEN
+		SET
+			LAST_USED_DT = NOW()
+		WHERE
+			TOKEN_ID = #{tokenId}
+	</update>
+
+	<!-- Refresh Token 폐기 -->
+	<update id="revokeRefreshToken" parameterType="String">
+		UPDATE REFRESH_TOKEN
+		SET
+			REVOKED_YN = 'Y',
+			REVOKED_DT = NOW()
+		WHERE
+			TOKEN_ID = #{tokenId}
+	</update>
+
+	<!-- 사용자의 모든 Refresh Token 폐기 -->
+	<update id="revokeAllTokensByUserId" parameterType="String">
+		UPDATE REFRESH_TOKEN
+		SET
+			REVOKED_YN = 'Y',
+			REVOKED_DT = NOW()
+		WHERE
+			USER_ID = #{userOid}
+			AND REVOKED_YN = 'N'
+	</update>
+
+	<!-- 만료된 Refresh Token 삭제 -->
+	<delete id="deleteExpiredTokens">
+		DELETE FROM REFRESH_TOKEN
+		WHERE
+			EXPIRY_DT &lt; NOW()
+			OR (REVOKED_YN = 'Y' AND REVOKED_DT &lt; DATE_SUB(NOW(), INTERVAL 30 DAY))
+	</delete>
+
+</mapper>

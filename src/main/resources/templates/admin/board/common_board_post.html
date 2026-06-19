@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${boardInfo != null ? boardInfo.bbsNm : '게시판'} + ' > 상세정보'">게시판 상세정보</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02 has_editor">
+            <table>
+                <caption th:text="${boardInfo != null ? boardInfo.bbsNm : '게시판'} + ' 상세'">게시판 상세</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                    <!-- 등록일시 -->
+                    <tr th:if="${boardInfo.wrtDtExpsrYn == 'Y'}">
+                        <th scope="row">등록일시</th>
+                        <td colspan="3" th:text="${#temporals.format(post.regDt, 'yyyy-MM-dd HH:mm')}"></td>
+                    </tr>
+
+                    <!-- 제목 -->
+                    <tr>
+                        <th scope="row">제목</th>
+                        <td colspan="3">
+                            <span th:if="${boardInfo.ctgryYn == 'Y' and post.ctgry != null}"
+                                  th:text="'[' + ${post.ctgry} + '] '"></span>
+                            <span th:text="${post.bbsPstTtl}"></span>
+                        </td>
+                    </tr>
+                    
+					<th:block th:if="${boardInfo != null and (boardInfo.bbsSubSeCd == 'MEDIA_TRENDS_DOMESTIC' or boardInfo.bbsSubSeCd == 'MEDIA_TRENDS_OVERSEAS')}">
+					    <tr>
+					        <th scope="row">게재일자</th>
+					        <td colspan="3">
+					            <span th:text="${post.bgngDt != null ? #temporals.format(post.bgngDt, 'yyyy-MM-dd') : ''}"></span>
+					            <th:block th:if="${post.endDt != null}">
+					                ~ <span th:text="${#temporals.format(post.endDt, 'yyyy-MM-dd')}"></span>
+					            </th:block>
+					            <span th:if="${post.bgngDt == null and post.endDt == null}">-</span>
+					        </td>
+					    </tr>
+					    <tr>
+					        <th scope="row">키워드</th>
+					        <td colspan="3" th:text="${post.kwrd != null and post.kwrd != '' ? post.kwrd : '-'}"></td>
+					    </tr>
+					</th:block>                    
+
+                    <!--분류-->
+                    <tr th:if="${boardInfo.ctgryYn == 'Y' and boardInfo.ctgryList != null}">
+                        <th scope="row">분류</th>
+                        <td colspan="3" th:text="${post.ctgry}">-</td>
+                    </tr>
+
+                    <!-- 작성자, 조회수 -->
+                    <tr th:if="${boardInfo.wrtrExpsrYn == 'Y' or boardInfo.inqCntExpsrYn == 'Y'}">
+                        <th:block th:if="${boardInfo.wrtrExpsrYn == 'Y' and boardInfo.inqCntExpsrYn == 'Y'}">
+                            <th scope="row">작성자</th>
+                            <td th:text="${post.wrtrNm}">-</td>
+                            <th scope="row" class="bl">조회수</th>
+                            <td th:text="${post.inqCnt}">0</td>
+                        </th:block>
+                        <th:block th:if="${boardInfo.wrtrExpsrYn == 'Y' and boardInfo.inqCntExpsrYn != 'Y'}">
+                            <th scope="row">작성자</th>
+                            <td colspan="3" th:text="${post.wrtrNm}">-</td>
+                        </th:block>
+                        <th:block th:if="${boardInfo.wrtrExpsrYn != 'Y' and boardInfo.inqCntExpsrYn == 'Y'}">
+                            <th scope="row">조회수</th>
+                            <td colspan="3" th:text="${post.inqCnt}">0</td>
+                        </th:block>
+                    </tr>
+                    <!--모집유형 (채용공고용)-->
+                    <th:block th:if="${boardInfo.bbsSubSeCd != null and boardInfo.bbsSubSeCd == 'RECRUITMENT'}">
+                        <tr>
+                            <th scope="row">모집유형</th>
+                            <td colspan="3"
+                                th:text="${post.rcrtType == '전체' ? '신입, 경력' : post.rcrtType}">
+                                -
+                            </td>
+                        </tr>
+                    </th:block>
+
+                    <!-- 진행상태, 마감일 (채용공고/입찰공고/사업실명제용) -->
+                    <tr th:if="(${boardInfo.prgrsSttsExpsrYn == 'Y' and post.stts != null} or ${boardInfo.ddlnDtExpsrYn == 'Y'})">
+
+                        <th:block th:with="
+                            isRecruit=${boardInfo.bbsSubSeCd == 'RECRUITMENT'},
+                            isBid=${boardInfo.bbsSubSeCd == 'BID_ANNOUNCEMENT'},
+                            isProject=${boardInfo.bbsSubSeCd == 'PROJECT_REAL_NAME'},
+                            dateLabel=${isRecruit ? '모집기간' : (isBid ? '입찰기간' : '마감일')},
+                            formattedDate=${isRecruit or isBid
+                                ? (post.bgngDt != null
+                                    ? #temporals.format(post.bgngDt, 'yyyy-MM-dd') + ' ~ ' + (post.endDt != null ? #temporals.format(post.endDt, 'yyyy-MM-dd') : '')
+                                    : (post.endDt != null ? '~ ' + #temporals.format(post.endDt, 'yyyy-MM-dd') : ''))
+                                : (post.ddlnDt != null ? #temporals.format(post.ddlnDt, 'yyyy-MM-dd') : '')}">
+
+                            <th:block th:if="${isProject}">
+                                <th scope="row">진행상태</th>
+                                <td colspan="3" th:text="${post.stts}">-</td>
+                            </th:block>
+
+                            <th:block th:if="${!isProject and boardInfo.prgrsSttsExpsrYn == 'Y' and post.stts != null and boardInfo.ddlnDtExpsrYn == 'Y'}">
+                                <th scope="row">진행상태</th>
+                                <td th:text="${post.stts}">-</td>
+                                <th scope="row" class="bl" th:text="${dateLabel}">마감일</th>
+                                <td th:text="${formattedDate}">-</td>
+                            </th:block>
+
+                            <th:block th:if="${!isProject and boardInfo.prgrsSttsExpsrYn == 'Y' and post.stts != null and boardInfo.ddlnDtExpsrYn != 'Y'}">
+                                <th scope="row">진행상태</th>
+                                <td colspan="3" th:text="${post.stts}">-</td>
+                            </th:block>
+
+                            <th:block th:if="${!isProject and (boardInfo.prgrsSttsExpsrYn != 'Y' or post.stts == null) and boardInfo.ddlnDtExpsrYn == 'Y'}">
+                                <th scope="row" th:text="${dateLabel}">마감일</th>
+                                <td colspan="3" th:text="${formattedDate}">-</td>
+                            </th:block>
+
+                        </th:block>
+                    </tr>
+
+                    <!-- 내용 -->
+                    <tr>
+                        <th scope="row">내용</th>
+                        <td colspan="3" th:utext="${post.bbsPstCn}" class="post-content"></td>
+                    </tr>
+
+                    <!-- 첨부파일 -->
+                    <tr th:if="${boardInfo.atchFileEnYn == 'Y'}">
+                        <th scope="row">첨부파일</th>
+                        <td colspan="3">
+                            <th:block th:if="${fileList != null and !fileList.isEmpty()}">
+                                <th:block th:each="file, iterStat : ${fileList}">
+                                    <a th:href="@{|${basicFilePath}${file.strgFilePath}/${file.strgFileNm}|}"
+                                       class="a_link"
+                                       th:attr="download=${file.orgnlFileNm}"
+                                       th:text="${file.orgnlFileNm}"></a>
+                                    <span th:if="${!iterStat.last}"> </span>
+                                </th:block>
+                            </th:block>
+                            <span th:if="${fileList == null or fileList.isEmpty()}">-</span>
+                        </td>
+                    </tr>
+
+                    <!-- 첫 번째 이미지 대체 텍스트 -->
+                    <tr th:if="${boardInfo.atchFileEnYn == 'Y' and fileList != null and !fileList.isEmpty() and fileList[0].imgSbstTxtCn != null and fileList[0].imgSbstTxtCn != ''}">
+                        <th scope="row">첫 번째 이미지 대체 텍스트</th>
+                        <td colspan="3" th:text="${fileList[0].imgSbstTxtCn}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="cm_brd_post_btn_list" class="btn_basic bg_type01">목록</a>
+            <a href="javascript:;" id="cm_brd_post_btn_update" class="btn_basic bg_type02">수정</a>
+            <a href="javascript:;" id="cm_brd_post_btn_delete" class="btn_basic line_type02">삭제</a>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin_common_board_post = {
+        state: {
+            config: /*[[${boardInfo}]]*/ {},
+            post: /*[[${post}]]*/ {},
+            reqDto: /*[[${boardRequestDto}]]*/ {}
+        },
+
+        init: function () {
+            this.initEvent();
+        },
+
+        initEvent: function () {
+            const _this = this;
+
+            // 목록 버튼
+            $('#cm_brd_post_btn_list').on('click', function (e) {
+                e.preventDefault();
+                _this.fnGoToListPage();
+            });
+
+            // 수정 버튼
+            $('#cm_brd_post_btn_update').on('click', function (e) {
+                e.preventDefault();
+                const bbsPstOid = _this.state.post.bbsPstOid;
+                const bbsOid = _this.state.config.bbsOid;
+                const menuCd = _this.state.reqDto.menuCd;
+                window.location.href = `${contextPath}/admin/board/write?bbsOid=${bbsOid}&menuCd=${menuCd}&bbsPstOid=${bbsPstOid}`;
+            });
+
+            // 삭제 버튼
+            $('#cm_brd_post_btn_delete').on('click', async function (e) {
+                e.preventDefault();
+
+                uiCommon.fnShowConfirmModal('삭제하시겠습니까?', async () => {
+                    uiCommon.fnHideConfirmModal();
+                    const param = {
+                        bbsOid : _this.state.config.bbsOid,
+                        bbsPstOid: _this.state.post.bbsPstOid
+                    }
+
+                    if (!param.bbsPstOid) {
+                        uiCommon.fnShowAlertModal('게시글 번호가 없습니다.');
+                        return;
+                    }
+
+                    try {
+                        await API.patch('/api/admin/board/delete', [param]);
+                        uiCommon.fnShowAlertModal('삭제되었습니다.', () => _this.fnGoToListPage());
+                    } catch (error) {
+                        console.error('삭제 실패:', error);
+                        uiCommon.fnShowAlertModal('삭제에 실패했습니다.');
+                    }
+                });
+            });
+        },
+
+        fnGoToListPage: function () {
+            const bbsOid = this.state.config.bbsOid;
+            const menuCd = this.state.reqDto.menuCd;
+            window.location.href = `${contextPath}/admin/board?bbsOid=${bbsOid}&menuCd=${menuCd}`;
+        }
+    };
+
+    $(document).ready(function () {
+        admin_common_board_post.init();
+    });
+</script>
+</body>
+</html>

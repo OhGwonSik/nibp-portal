@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.portal.sns.mapper.SnsMapper">
+
+    <!--Sns 목록 조회-->
+    <select id="selectSnsList" resultType="egovframework.portal.sns.dto.SnsDTO">
+        SELECT
+            sns_chnl_oid,
+            pltfm_type,
+            chnl_nm,
+            dply_seq,
+            chnl_url,
+            rss_feed_url
+        FROM ${schema}.sns_chnl
+        ORDER BY dply_seq ASC
+    </select>
+</mapper>

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 게시판 관리 > 게시판 등록/수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02">
+            <table>
+                <caption>메뉴 등록</caption>
+                <colgroup>
+                    <col style="width: 170px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row"><label>게시판유형</label></th>
+                    <td>
+                        <span class="radio-box">
+                            <input type="radio" id="radio_01_01" name="radio_01" value="COMMON" checked>
+                            <label for="radio_01_01">일반게시판</label>
+                        </span>
+                        <span class="radio-box ml10">
+                            <input type="radio" id="radio_01_02" name="radio_01" value="USER">
+                            <label for="radio_01_02">사용자게시판</label>
+                        </span>
+                        <span class="radio-box ml10">
+                            <input type="radio" id="radio_01_03" name="radio_01" value="FAQ">
+                            <label for="radio_01_03">FAQ</label>
+                        </span>
+                        <span class="radio-box ml10">
+                            <input type="radio" id="radio_01_04" name="radio_01" value="QNA">
+                            <label for="radio_01_04">질문과 답변(Q&A)</label>
+                        </span>
+                        <span class="radio-box ml10">
+                            <input type="radio" id="radio_01_05" name="radio_01" value="PHOTO">
+                            <label for="radio_01_05">포토갤러리 게시판</label>
+                        </span>
+                        <span class="radio-box ml10">
+                            <input type="radio" id="radio_01_06" name="radio_01" value="THUMBNAIL">
+                            <label for="radio_01_06">썸네일 게시판</label>
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label>사용여부</label></th>
+                    <td>
+                        <span class="radio-box"><input type="radio" id="radio_02_01" name="radio_02" checked><label for="radio_02_01">사용</label></span>
+                        <span class="radio-box ml10"><input type="radio" id="radio_02_02" name="radio_02"><label for="radio_02_02">미사용</label></span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="lab_03">게시판명</label></th>
+                    <td>
+                        <input type="text" id="lab_03" title="게시판명 입력" class="w100">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label>기능선택</label></th>
+                    <td>
+                        <span class="radio-box"><input type="checkbox" id="admin807CommentYn"><label for="admin807CommentYn">상단고정</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807ReplyYn"><label for="admin807ReplyYn">비밀글</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807AttachYn"><label for="admin807AttachYn">회원만 글 작성</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807EditorYn"><label for="admin807EditorYn">이전글/다음글 노출</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807RatingYn"><label for="admin807RatingYn">댓글</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807CategoryYn"><label for="admin807CategoryYn">분류</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807ListImageYn"><label for="admin807ListImageYn">목록에 내용 노출</label></span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="lab_04">분류입력</label></th>
+                    <td>
+                        <div class="flex_col ">
+                            <input type="text" id="lab_04" class="category">
+                            <a href="javascript:;" class="s_btn_basic bg_type01 add_in">추가</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="lab_05">파일업로드개수</label></th>
+                    <td>
+                        <div class="flex_col ">
+                            <input type="text" id="lab_05" class="wp50" value="0"> 개
+                            <p class="c_red">※ 일업로드 기능이 필요하지 않으면 0 입력 (최대 업로드개수는 10개)</p>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="lab_06">개별업로드용량</label></th>
+                    <td>
+                        <div class="flex_col ">
+                            <input type="text" id="lab_06" class="wp50" value="500"> MB
+                            <p class="c_red">※ 1개 파일당 최대 500MB 업로드 가능</p>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label>사이트목록 노출항목</label></th>
+                    <td>
+                        <span class="radio-box"><input type="checkbox" id="admin807SideNewYn"><label for="admin807SideNewYn">게시글 번호</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807SideWriterYn"><label for="admin807SideWriterYn">작성자</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807SideWriteDtYn"><label for="admin807SideWriteDtYn">작성일</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807SideUpdateDtYn"><label for="admin807SideUpdateDtYn">마감일</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807SideNoticeYn"><label for="admin807SideNoticeYn">첨부파일(유무 표시)</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807SideStatusYn"><label for="admin807SideStatusYn">진행상황</label></span>
+                        <span class="radio-box ml10"><input type="checkbox" id="admin807SideAttendYn"><label for="admin807SideAttendYn">조회수</label></span>
+                        <a href="javascript:;" id="admin807BoardPreviewBtn" class="s_btn_basic bg_type01 ml10">미리보기</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label>게시글검색창</label></th>
+                    <td>
+                        <span class="radio-box"><input type="radio" id="radio_03_01" name="radio_03" checked><label for="radio_03_01">사용</label></span>
+                        <span class="radio-box ml10"><input type="radio" id="radio_03_02" name="radio_03"><label for="radio_03_02">미사용</label></span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="lab_07">페이지당게시글수</label></th>
+                    <td>
+                        <div class="flex_col ">
+                            <input type="text" id="lab_07" class="wp50" value="10"> 개
+                            <p class="c_red">※ 일업로드 기능이 필요하지 않으면 0 입력 (최대 업로드개수는 10개)</p>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="lab_08">페이징수</label></th>
+                    <td>
+                        <div class="flex_col ">
+                            <input type="text" id="lab_08" class="wp50" value="5">
+                            <p class="c_red">※ 페이징수는 최대 10</p>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="lab_09">페이지당이미지수</label></th>
+                    <td>
+                        <div class="flex_col ">
+                            가로<select id="lab_02" title="분류 선택" class="wp80">
+                            	<option value="3">3</option>
+                            	<option value="4">4</option>
+                            	</select> 개 X
+                            세로<input type="text" id="lab_09" class="wp80"> 개
+                            <p class="c_red">※ 포토갤러리 가로는 3개, 4개 중 선택 </p>
+                        </div>
+                    </td>
+                </tr>
+
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="btn_board_save" class="btn_basic bg_type01">확인</a>
+            <a href="javascript:;" id="btn_board_cancel" class="btn_basic line_type02">취소</a>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="admin_modal">
+    <th:block th:replace="~{admin/modal/board_preview :: board_preview}"></th:block>
+</th:block>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin807_1 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: null,        // 조회한 데이터
+            mode: 'insert',   // 저장인지 수정인지 상태값
+            BOARD_DEFAULTS: { // 게시판 별 설정 초기 세팅 -> defaults는 미리보기시 꼭 보여줘야하는 항목
+                'COMMON': {
+                    features: [
+                        'admin807CommentYn',
+                        'admin807EditorYn',
+                        'admin807RatingYn',
+                        'admin807CategoryYn',
+                        'admin807ListImageYn'
+                    ],
+                    show: [
+                        'admin807SideNewYn',
+                        'admin807SideWriterYn',
+                        'admin807SideWriteDtYn',
+                        'admin807SideUpdateDtYn',
+                        'admin807SideStatusYn',
+                        'admin807SideNoticeYn',
+                        'admin807SideAttendYn'
+                    ],
+                    defaults: ['제목']
+                },
+
+                'USER': {
+                    features: [
+                        'admin807ReplyYn',
+                        'admin807AttachYn',
+                        'admin807EditorYn',
+                        'admin807RatingYn',
+                        'admin807CategoryYn'
+                    ],
+                    show: [
+                        'admin807SideNewYn',
+                        'admin807SideWriterYn',
+                        'admin807SideWriteDtYn',
+                        'admin807SideAttendYn'
+                    ],
+                    defaults: ['제목']
+                },
+
+                'FAQ': {
+                    features: [
+                        'admin807CommentYn',
+                        'admin807CategoryYn'
+                    ],
+                    show: [
+                        'admin807SideNewYn',
+                        'admin807SideAttendYn'
+                    ],
+                    defaults: ['질문']
+                },
+
+                'QNA': {
+                    features: [
+                        'admin807ReplyYn',
+                        'admin807AttachYn',
+                        'admin807RatingYn',
+                        'admin807CategoryYn'
+                    ],
+                    show: [
+                        'admin807SideNewYn',
+                        'admin807SideWriterYn',
+                        'admin807SideWriteDtYn',
+                        'admin807SideAttendYn'
+                    ],
+                    defaults: ['제목', '진행상황']
+                },
+
+                'PHOTO': {
+                    features: [
+                        'admin807CommentYn',
+                        'admin807EditorYn',
+                        'admin807RatingYn',
+                        'admin807CategoryYn'
+                    ],
+                    show: [
+                        'admin807SideWriteDtYn',
+                        'admin807SideAttendYn'
+                    ],
+                    defaults: ['이미지', '제목']
+                },
+
+                'THUMBNAIL': {
+                    features: [
+                        'admin807CommentYn',
+                        'admin807EditorYn',
+                        'admin807RatingYn',
+                        'admin807CategoryYn',
+                        'admin807ListImageYn'
+                    ],
+                    show: [
+                        'admin807SideNewYn',
+                        'admin807SideWriteDtYn',
+                        'admin807SideAttendYn'
+                    ],
+                    defaults: ['썸네일', '제목']
+                }
+            }
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+        	
+            const urlParams = new URLSearchParams(window.location.search);
+            const bbsOid = urlParams.get("bbsOid");
+            
+            this.toggleCategoryInput(false);   // 분류입력 기본 숨김
+            this.toggleImageConfig(false);     // 이미지수 기본 숨김
+            
+            if(bbsOid){
+            	//(수정모드)
+            	this.state.mode = 'update';
+            	await this.loadBoardInfo(bbsOid);
+            	document.querySelector("#btn_board_save").innerText = '수정';
+            }else{
+            	this.state.mode = 'insert';
+                //게시판 별 초기 세팅 (등록모드)
+				const selected = document.querySelector("input[name='radio_01']:checked").value;
+    			
+    			this.applyBoardDefaults(selected);
+    			
+    			document.querySelector("#btn_board_save").innerText = '확인';
+            }
+            
+			this.initEvent();
+        },
+        
+        /**
+         * 옵션 숨기기 / 보이기
+         */
+         hideOption: function (id) {
+             const el = document.querySelector(`#${id}`);
+             el.checked = false;
+             el.disabled = true;
+             el.closest(".radio-box").style.display = "none";
+         },
+
+         showOption: function(id) {
+             const el = document.querySelector(`#${id}`);
+             el.disabled = false;
+             el.closest(".radio-box").style.display = "inline-block";
+         },     
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            /**
+             * 게시판 유형 변경 시 처리
+             **/
+            document.querySelectorAll("input[name='radio_01']").forEach(r => {
+                r.addEventListener("change", e => {
+                	const type = e.target.value;
+                    _this.applyBoardDefaults(type);
+
+                    _this.toggleImageConfig(type === "PHOTO");
+                });
+            });
+
+            /** 
+             * 분류 체크
+             */
+            document.querySelector("#admin807CategoryYn").addEventListener("change", e => {
+                _this.toggleCategoryInput(e.target.checked);
+            });
+
+            /**
+             * 분류 추가 버튼(add_in)
+             */
+            document.addEventListener("click", e => {
+                if (e.target.matches(".add_in")) {
+                    const wrap = e.target.closest(".flex_col");
+                    wrap.insertAdjacentHTML("afterend", `
+                        <div class="flex_col mt5">
+                            <input type="text" class="lab_04_clone category">
+                            <a href="javascript:;" class="s_btn_basic bg_type01 add_in">추가</a>
+                            <a href="javascript:;" class="s_btn_basic bg_type02 add_del">삭제</a>
+                        </div>
+                    `);
+                }
+            });
+
+            /** 
+             * 분류 삭제 버튼(add_del)
+             */
+            document.addEventListener("click", e => {
+                if (e.target.matches(".add_del")) {
+                    e.target.closest(".flex_col").remove();
+                }
+            });
+
+            /** 
+             * 숫자 validations
+             */
+            document.querySelector("#lab_05").addEventListener("change", e => {
+                const v = Number(e.target.value);
+                if (isNaN(v) || v < 0 || v > 10) e.target.value = "";
+            });
+
+            document.querySelector("#lab_06").addEventListener("change", e => {
+                const v = Number(e.target.value);
+                if (isNaN(v) || v < 1 || v > 500) e.target.value = "";
+            });
+
+            document.querySelector("#lab_07").addEventListener("change", e => {
+                const v = Number(e.target.value);
+                if (isNaN(v) || v < 5) e.target.value = 5;
+            });
+
+            document.querySelector("#lab_09").addEventListener("change", e => {
+                const v = Number(e.target.value);
+                if (isNaN(v) || v < 1) e.target.value = "";
+            });
+
+            /** 
+             * 미리보기
+             */
+             document.querySelector("#admin807BoardPreviewBtn").addEventListener("click", e => {
+                 e.preventDefault();
+
+                 const boardType = document.querySelector("input[name='radio_01']:checked").value;
+
+                 const defaults = this.state.BOARD_DEFAULTS[boardType].defaults;
+
+                 let categoryList = null;
+
+                 if (document.querySelector("#admin807CategoryYn").checked) {
+                     const list = [];
+                     const first = document.querySelector("#lab_04").value.trim();
+                     if (first) list.push(first);
+
+                     document.querySelectorAll(".lab_04_clone").forEach(el => {
+                         const v = el.value.trim();
+                         if (v) list.push(v);
+                     });
+
+                     categoryList = list.length ? list.join(",") : null;
+                 }
+
+                 const config = {
+                     boardType,
+                     defaults,
+
+                     showCategory: document.querySelector("#admin807CategoryYn").checked,
+                     showNumber: document.querySelector("#admin807SideNewYn").checked,
+                     showWriter: document.querySelector("#admin807SideWriterYn").checked,
+                     showRegDt: document.querySelector("#admin807SideWriteDtYn").checked,
+                     showEndDt: document.querySelector("#admin807SideUpdateDtYn").checked,
+                     showAttachment: document.querySelector("#admin807SideNoticeYn").checked,
+                     showStatus: document.querySelector("#admin807SideStatusYn").checked,
+                     showViews: document.querySelector("#admin807SideAttendYn").checked,
+
+                     showImage: boardType === "PHOTO",
+                     showThumb: boardType === "THUMBNAIL",
+
+                     categoryList,
+
+                     srchUseYn: document.querySelector("#radio_03_01").checked ? "Y" : "N"
+                 };
+
+                 board_preview.initModal(config);
+             });
+
+             /** 
+              * 저장 버튼 클릭
+              */
+             document.querySelector("#btn_board_save").addEventListener("click", e => {
+                 e.preventDefault();
+                 if (!this.validateRequired()) return;
+                 this.saveBoardInfo();
+             });
+
+             /** 
+              * 취소 버튼 클릭
+              */
+             document.querySelector("#btn_board_cancel").addEventListener("click", e => {
+                 e.preventDefault();
+                 uiCommon.fnShowConfirmModal("목록으로 이동하시겠습니까?", () =>
+                     this.fnGoToListPage()
+                 );
+             });
+        },     
+        
+        /**
+         * 수정일떄 초기 데이터 불러오는 함수
+         */
+        loadBoardInfo: async function(bbsOid) {
+            try {
+                const data = await API.get(`/api/admin/admin807/board/list?bbsOid=${bbsOid}`);
+
+                this.state.all = data.list;
+                
+                if(!this.state.all.length){
+                    uiCommon.fnShowAlertModal('데이터가 존재하지 않습니다.', function(){
+                    	window.location.href = contextPath + "/admin/page/admin807";	
+                    });
+                }
+                
+                this.applyLoadedData(this.state.all);
+
+            } catch (error) {
+                uiCommon.fnShowAlertModal('[error] : ' + error, function(){
+                	window.location.href = contextPath + "/admin/page/admin807";	
+                });
+            }
+        },
+        
+        /**
+         * 수정일떄 불러온 데이터 화면에 세팅
+         */
+        applyLoadedData: function(dataList) {
+
+        	const data = dataList[0];
+            /** 게시판유형 라디오 설정 */
+            document.querySelectorAll("input[name='radio_01']").forEach(r => {
+                if (r.value === data.bbsSeCd) {
+                    r.checked = true;
+                }
+            });
+
+            // 초기 기본값 적용
+            this.applyBoardDefaults(data.bbsSeCd);
+
+            /** 사용 여부 */
+            if (data.useYn === "Y") {
+                document.querySelector("#radio_02_01").checked = true;
+            } else {
+                document.querySelector("#radio_02_02").checked = true;
+            }
+
+            /** 게시판명 */
+            document.querySelector("#lab_03").value = data.bbsNm || "";
+
+            /** 기능 체크박스 */
+            document.querySelector("#admin807CommentYn").checked = data.upendFixYn === "Y";
+            document.querySelector("#admin807ReplyYn").checked = data.prvtYn === "Y";
+            document.querySelector("#admin807AttachYn").checked = data.mbrWrtYn === "Y";
+            document.querySelector("#admin807EditorYn").checked = data.prevNextExpsrYn === "Y";
+            document.querySelector("#admin807RatingYn").checked = data.cmntPsbltyYn === "Y";
+            document.querySelector("#admin807CategoryYn").checked = data.ctgryYn === "Y";
+            document.querySelector("#admin807ListImageYn").checked = data.listCnExpsrYn === "Y";
+
+            /** 분류입력 */
+            if (data.ctgryYn === "Y" && data.ctgryList) {
+                const categoryArr = data.ctgryList.split(",");
+                this.toggleCategoryInput(true);
+
+                // 첫 번째 값 세팅
+                document.querySelector("#lab_04").value = categoryArr[0] || "";
+
+                // 나머지 값은 추가 버튼처럼 동적 추가
+                categoryArr.slice(1).forEach(c => {
+                    const base = document.querySelector("#lab_04").closest(".flex_col");
+                    base.insertAdjacentHTML("afterend", `
+                        <div class="flex_col mt5">
+                            <input type="text" class="lab_04_clone category" value="${c}">
+                            <a href="javascript:;" class="s_btn_basic bg_type01 add_in">추가</a>
+                            <a href="javascript:;" class="s_btn_basic bg_type02 add_del">삭제</a>
+                        </div>
+                    `);
+                });
+            }
+
+            /** 파일업로드 설정 */
+            document.querySelector("#lab_05").value = data.fileUldCnt || 0;
+            document.querySelector("#lab_06").value = data.fileUldSize || 0;
+
+            /** 사이트 목록 노출 항목 */
+            document.querySelector("#admin807SideNewYn").checked = data.pstOidExpsrYn === "Y";
+            document.querySelector("#admin807SideWriterYn").checked = data.wrtrExpsrYn === "Y";
+            document.querySelector("#admin807SideWriteDtYn").checked = data.wrtDtExpsrYn === "Y";
+            document.querySelector("#admin807SideUpdateDtYn").checked = data.ddlnDtExpsrYn === "Y";
+            document.querySelector("#admin807SideNoticeYn").checked = data.atchFileEnYn === "Y";
+            document.querySelector("#admin807SideStatusYn").checked = data.prgrsSttsExpsrYn === "Y";
+            document.querySelector("#admin807SideAttendYn").checked = data.inqCntExpsrYn === "Y";
+
+            /** 게시글 검색창 */
+            document.querySelector("#radio_03_01").checked = data.srchUseYn === "Y";
+            document.querySelector("#radio_03_02").checked = data.srchUseYn !== "Y";
+
+            /** 페이지당 게시글수 */
+            document.querySelector("#lab_07").value = data.pageCnt || 10;
+
+            /** 페이징수 */
+            document.querySelector("#lab_08").value = data.pagingCnt || 5;
+
+            /** 포토갤러리 전용 설정 */
+            if (data.bbsSeCd === "PHOTO") {
+                this.toggleImageConfig(true);
+                document.querySelector("#lab_02").value = data.imgWdthCnt || 3;
+                document.querySelector("#lab_09").value = data.imgVrtcCnt || "";
+            }
+        },        
+        
+        /**
+         * 게시판 초기 세팅
+         */
+         applyBoardDefaults: function (type) {
+             const cfg = this.state.BOARD_DEFAULTS[type];
+             if (!cfg) return;
+
+             const allIds = [
+                 'admin807CommentYn','admin807ReplyYn','admin807AttachYn','admin807EditorYn',
+                 'admin807RatingYn','admin807CategoryYn','admin807ListImageYn','admin807SideNewYn',
+                 'admin807SideWriterYn','admin807SideWriteDtYn','admin807SideUpdateDtYn',
+                 'admin807SideNoticeYn','admin807SideStatusYn','admin807SideAttendYn'
+             ];
+
+             allIds.forEach(id => this.hideOption(id));
+
+             cfg.features.forEach(id => this.showOption(id));
+             cfg.show.forEach(id => this.showOption(id));
+
+             this.toggleCategoryInput(document.querySelector("#admin807CategoryYn").checked);
+         },
+
+         toggleCategoryInput: function (visible) {
+             const row = document.querySelector("#lab_04").closest("tr");
+             row.style.display = visible ? "" : "none";
+
+             if (!visible) {
+                 document.querySelectorAll(".lab_04_clone").forEach(el => el.closest(".flex_col").remove());
+                 document.querySelector("#lab_04").value = "";
+             }
+         },
+
+         toggleCategoryInput: function (visible) {
+             const row = document.querySelector("#lab_04").closest("tr");
+             row.style.display = visible ? "" : "none";
+
+             if (!visible) {
+                 document.querySelectorAll(".lab_04_clone").forEach(el => el.closest(".flex_col").remove());
+                 document.querySelector("#lab_04").value = "";
+             }
+         },
+
+         toggleImageConfig: function (visible) {
+             const row = document.querySelector("#lab_09").closest("tr");
+             row.style.display = visible ? "" : "none";
+
+             if (!visible) document.querySelector("#lab_09").value = "";
+         },
+
+         fnGoToListPage: function() {
+             window.location.href = contextPath + "/admin/page/admin807";
+         },
+         
+         /** 
+          * 저장
+          */
+         saveBoardInfo: async function () {
+        	 const yn = id => document.querySelector(id).checked ? "Y" : "N";
+
+        	 const boardType = document.querySelector("input[name='radio_01']:checked").value;
+
+             const categoryYn = yn("#admin807CategoryYn");
+             let categoryList = null;
+
+             if (categoryYn === "Y") {
+                 const list = [];
+                 const first = document.querySelector("#lab_04").value.trim();
+                 if (first) list.push(first);
+
+                 document.querySelectorAll(".lab_04_clone").forEach(el => {
+                     const v = el.value.trim();
+                     if (v) list.push(v);
+                 });
+
+                 categoryList = list.length ? list.join(",") : null;
+             }
+
+             const payload = {
+                 boardType,
+                 useYn: document.querySelector("#radio_02_01").checked ? "Y" : "N",
+
+                 bbsNm: document.querySelector("#lab_03").value.trim(),
+
+                 upendFixYn: yn("#admin807CommentYn"),
+                 prvtYn: yn("#admin807ReplyYn"),
+                 mbrWrtYn: yn("#admin807AttachYn"),
+                 prevNextExpsrYn: yn("#admin807EditorYn"),
+                 cmntPsbltyYn: yn("#admin807RatingYn"),
+                 categoryYn,
+                 listCnExpsrYn: yn("#admin807ListImageYn"),
+
+                 categoryList,
+
+                 fileUldCnt: Number(document.querySelector("#lab_05").value) || 0,
+                 fileUldSize: Number(document.querySelector("#lab_06").value) || 0,
+
+                 pstOidExpsrYn: yn("#admin807SideNewYn"),
+                 wrtrExpsrYn: yn("#admin807SideWriterYn"),
+                 wrtDtExpsrYn: yn("#admin807SideWriteDtYn"),
+                 ddlnDtExpsrYn: yn("#admin807SideUpdateDtYn"),
+                 atchFileEnYn: yn("#admin807SideNoticeYn"),
+                 prgrsSttsExpsrYn: yn("#admin807SideStatusYn"),
+                 inqCntExpsrYn: yn("#admin807SideAttendYn"),
+
+                 srchUseYn: document.querySelector("#radio_03_01").checked ? "Y" : "N",
+
+                 pageCnt: Number(document.querySelector("#lab_07").value) || 10,
+                 pagingCnt: Number(document.querySelector("#lab_08").value) || 5,
+                 imgWdthCnt:
+                     boardType === "PHOTO"
+                         ? Number(document.querySelector("#lab_02").value)
+                         : null,
+
+                 imgVrtcCnt:
+                     boardType === "PHOTO"
+                         ? Number(document.querySelector("#lab_09").value)
+                         : null,
+
+                 bbsExpln: null
+             };
+             
+             let url = '';
+             let method = '';
+
+             if(this.state.mode === 'insert'){
+                 url = '/api/admin/admin807/board/save';
+                 method = 'put';
+             }else{
+                 const urlParams = new URLSearchParams(window.location.search);
+                 const bbsOid = urlParams.get('bbsOid');
+                 payload.bbsOid = urlParams.get("bbsOid");
+                 url = `/api/admin/admin807/board/update`;
+                 method = 'patch';
+             }            
+			
+             uiCommon.fnShowConfirmModal('게시판 정보를 저장하시겠습니까?', async () => {
+                 uiCommon.fnHideConfirmModal();
+                 try {
+                	 await API[method](url, payload);
+                	 
+                     uiCommon.fnShowAlertModal('정상적으로 저장되었습니다.', () => {
+                         uiCommon.fnHideAlertModal();
+                         admin807_1.fnGoToListPage();
+                     });
+                 } catch (err) {
+                     uiCommon.fnShowAlertModal('저장 중 오류가 발생했습니다.', () => {
+                         uiCommon.fnHideAlertModal();
+                     });
+                 }
+             });
+         },
+        
+        /**
+         * 저장 벨리데이션
+         */
+         validateRequired: function () {
+        	 const required = (selector, message) => {
+                 const el = document.querySelector(selector);
+                 if (!el.value.trim()) {
+                     uiCommon.fnShowAlertModal(message, () => {
+                         uiCommon.fnHideAlertModal();
+                         el.focus();
+                     });
+                     return false;
+                 }
+                 return true;
+             };
+
+             if (!required("#lab_03", "게시판명을 입력해주세요.")) return false;
+             if (!required("#lab_07", "페이지당 게시글 수를 입력해주세요.")) return false;
+             if (!required("#lab_08", "페이징 수를 입력해주세요.")) return false;
+
+             const boardType = document.querySelector("input[name='radio_01']:checked").value;
+
+             if (boardType === "PHOTO") {
+                 if (!required("#lab_02", "이미지 가로 개수를 선택해주세요.")) return false;
+                 if (!required("#lab_09", "이미지 세로 개수를 입력해주세요.")) return false;
+             }
+
+             return true;
+         }
+    };
+    
+    $(document).ready(function () {
+        admin807_1.init();
+    });
+</script>
+</body>
+</html>

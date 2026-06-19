@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin700.mapper.Admin709Mapper">
+    <select id="selectVisitorStatistics">
+        <bind name="fixedDate" value="targetDate + '-01'" />
+        -- selectVisitorStatistics
+        SELECT 
+            YEAR(reg_dt) AS statYear,
+            SUM(CASE WHEN MONTH(reg_dt) <![CDATA[<]]> MONTH(#{fixedDate}) THEN 1 ELSE 0 END) AS prevAcc,
+            SUM(CASE WHEN MONTH(reg_dt) = MONTH(#{fixedDate}) THEN 1 ELSE 0 END) AS targetVal
+        FROM (
+            SELECT reg_dt, 
+                CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END AS user_key
+            FROM ${schema}.user_acs_log
+            WHERE acs_type = 'PAGE'
+            AND (
+                /* 올해 범위: 올해 1월 1일 ~ 당월 말일 */
+                (reg_dt <![CDATA[>=]]> DATE_FORMAT(#{fixedDate}, '%Y-01-01') 
+                    AND reg_dt <![CDATA[<]]> DATE_ADD(#{fixedDate}, INTERVAL 1 MONTH))
+                OR 
+                /* 작년 범위: 작년 1월 1일 ~ 작년 동월 말일 */
+                (reg_dt <![CDATA[>=]]> DATE_FORMAT(DATE_SUB(#{fixedDate}, INTERVAL 1 YEAR), '%Y-01-01') 
+                    AND reg_dt <![CDATA[<]]> DATE_ADD(DATE_SUB(#{fixedDate}, INTERVAL 1 YEAR), INTERVAL 1 MONTH))
+            )
+            GROUP BY DATE(reg_dt), user_key
+        ) AS VisitorLog
+        GROUP BY statYear
+        ORDER BY statYear DESC
+    </select>
+    
+    <select id="selectInquiryStatistics">
+        <bind name="fixedDate" value="targetDate + '-01'" />
+        -- selectInquiryStatistics
+        SELECT 
+            YEAR(tbbp.reg_dt) AS statYear,
+            COUNT(CASE WHEN MONTH(tbbp.reg_dt) <![CDATA[<]]> MONTH(#{fixedDate}) THEN 1 END) AS prevAcc,
+            COUNT(CASE WHEN MONTH(tbbp.reg_dt) = MONTH(#{fixedDate}) THEN 1 END) AS targetVal
+        FROM ${schema}.bbs_pst tbbp
+        INNER JOIN ${schema}.bbs tbb on tbb.bbs_oid = tbbp.bbs_oid
+        WHERE tbbp.up_bbs_pst_oid IS NULL
+        AND tbb.bbs_se_cd = 'QNA'
+        AND tbb.stats_yn ='Y'
+        AND tbb.use_yn = 'Y'
+        AND tbbp.del_yn = 'N'
+        AND (
+            (tbbp.reg_dt <![CDATA[>=]]> DATE_FORMAT(#{fixedDate}, '%Y-01-01') AND tbbp.reg_dt <![CDATA[<]]> DATE_ADD(#{fixedDate}, INTERVAL 1 MONTH))
+            OR 
+            (tbbp.reg_dt <![CDATA[>=]]> DATE_FORMAT(DATE_SUB(#{fixedDate}, INTERVAL 1 YEAR), '%Y-01-01') AND tbbp.reg_dt <![CDATA[<]]> DATE_ADD(DATE_SUB(#{fixedDate}, INTERVAL 1 YEAR), INTERVAL 1 MONTH))
+        )
+        GROUP BY statYear
+        ORDER BY statYear DESC
+    </select>
+    
+    <select id="selectResponseStatistics">
+        <bind name="fixedDate" value="targetDate + '-01'" />
+        -- selectResponseStatistics
+        SELECT 
+            YEAR(ans_dt) AS statYear,
+            COUNT(CASE WHEN MONTH(ans_dt) <![CDATA[<]]> MONTH(#{fixedDate}) THEN 1 END) AS prevAcc,
+            COUNT(CASE WHEN MONTH(ans_dt) = MONTH(#{fixedDate}) THEN 1 END) AS targetVal
+        FROM (
+            SELECT MIN(tbbp.reg_dt) AS ans_dt
+            FROM ${schema}.bbs_pst tbbp
+            INNER JOIN ${schema}.bbs tbb ON tbb.bbs_oid = tbbp.bbs_oid
+            WHERE up_bbs_pst_oid IS NOT NULL
+            AND tbb.bbs_se_cd = 'QNA'
+            AND tbb.stats_yn ='Y'
+            AND tbb.use_yn = 'Y'
+            AND tbbp.del_yn = 'N'
+            AND (
+                (tbbp.reg_dt <![CDATA[>=]]> DATE_FORMAT(#{fixedDate}, '%Y-01-01') AND tbbp.reg_dt <![CDATA[<]]> DATE_ADD(#{fixedDate}, INTERVAL 1 MONTH))
+                OR 
+                (tbbp.reg_dt <![CDATA[>=]]> DATE_FORMAT(DATE_SUB(#{fixedDate}, INTERVAL 1 YEAR), '%Y-01-01') AND tbbp.reg_dt <![CDATA[<]]> DATE_ADD(DATE_SUB(#{fixedDate}, INTERVAL 1 YEAR), INTERVAL 1 MONTH))
+            )
+            GROUP BY up_bbs_pst_oid
+        ) AS AnswerData
+        GROUP BY statYear
+        ORDER BY statYear DESC
+    </select>
+</mapper>

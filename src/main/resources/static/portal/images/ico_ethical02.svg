@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 24 24">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+  </defs>
+  <!-- Generator: Adobe Illustrator 28.7.1, SVG Export Plug-In . SVG Version: 1.2.0 Build 142)  -->
+  <g>
+    <g id="_레이어_1" data-name="레이어_1">
+      <g>
+        <polyline class="cls-1" points="6 23 6 19 18 19 18 23"/>
+        <line class="cls-1" x1="21" y1="23" x2="3" y2="23"/>
+        <circle class="cls-1" cx="12" cy="3" r="2"/>
+        <line class="cls-1" x1="12" y1="5" x2="12" y2="19"/>
+        <path class="cls-1" d="M9,10c0,2.2-1.8,4-4,4s-4-1.8-4-4h8Z"/>
+        <path class="cls-1" d="M23,10c0,2.2-1.8,4-4,4s-4-1.8-4-4h8Z"/>
+        <line class="cls-1" x1="10" y1="3" x2="5" y2="3"/>
+        <line class="cls-1" x1="19" y1="3" x2="14" y2="3"/>
+        <line class="cls-1" x1="5" y1="3" x2="1" y2="10"/>
+        <line class="cls-1" x1="5" y1="3" x2="9" y2="10"/>
+        <line class="cls-1" x1="19" y1="3" x2="15" y2="10"/>
+        <line class="cls-1" x1="19" y1="3" x2="23" y2="10"/>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>메일링 서비스 알림</title>
+</head>
+<body>
+    <div style="font-family: 'Malgun Gothic', dotum, sans-serif; font-size: 14px; line-height: 1.6; color: #333;">
+        
+        <div th:if="${mode == 'CHANGE'}" style="margin-bottom: 30px;">
+            <h3 style="margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #333; padding-bottom: 5px; width: fit-content;">
+                [변경 전]
+            </h3>
+            <p style="margin: 5px 0;"><strong>메일 :</strong> <span th:text="${oldEmlFull}">old@email.com</span></p>
+        </div>
+
+        <div>
+            <h3 style="margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #333; padding-bottom: 5px; width: fit-content;">
+                <span th:if="${mode == 'SIGNUP'}">[신청 내역]</span>
+                <span th:if="${mode == 'CHANGE'}">[변경 후]</span>
+                <span th:if="${mode == 'CANCEL'}">[해지 내역]</span>
+            </h3>
+
+            <p style="margin: 5px 0;"><strong>이름 :</strong> <span th:text="${userNm}">홍길동</span></p>
+            <p style="margin: 5px 0;"><strong>전화번호 :</strong> <span th:text="${mpnoFull}">010-1234-5678</span></p>
+            <p style="margin: 5px 0;"><strong>메일 :</strong> <span th:text="${emlFull}">new@email.com</span></p>
+
+            <p th:if="${mode != 'CANCEL'}" style="margin: 5px 0;">
+                <strong>소속 :</strong> <span th:text="${orgNm}"></span>
+            </p>
+            <p th:if="${mode != 'CANCEL'}" style="margin: 5px 0;">
+                <strong>직위 :</strong> <span th:text="${pstnNm}"></span>
+            </p>
+        </div>
+
+        <div style="margin-top: 40px; font-size: 12px; color: #888; border-top: 1px solid #ddd; padding-top: 10px;">
+            ※ 본 메일은 발신 전용 메일입니다.
+        </div>
+    </div>
+</body>
+</html>

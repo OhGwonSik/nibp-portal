@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* footer fragment */-->
+<footer th:fragment="admin_footer" class="footer mt-auto py-3 bg-light">
+<!--    <div class="footer">-->
+        <div class="inner">
+            <h1>
+                <a th:href="@{/}">
+                    <img class="w" th:src="@{/common/img/logo_footer_w.png}" alt="egovframe simple homepage" />
+                    <img class="m" th:src="@{/common/img/logo_footer_m.png}" alt="egovframe simple homepage" />
+                </a>
+            </h1>
+            <div class="info">
+                <p>
+                    (04933) 서울특별시 광진구 능동로 400, 별관 2층 국가생명윤리정책원(중곡동, 보건복지행정타운) <span class="m_hide">|</span>
+                    <br class="m_show" /> 대표전화 : 0000-0000 (000-0000-0000)
+                    <br />
+                    호환성확인 : 000-0000-0000 | 교육문의 : 0000-0000-0000
+                </p>
+                <p class="copy">
+
+            Copyright (C)KONIBP All Rights Reserved.
+                </p>
+            </div>
+            <div class="right_col">
+                <a href="https://www.mois.go.kr/" target="_blank" title="새창">
+                    <img class="w" th:src="@{/common/img/banner_w_01.png}" alt="행정안전부" />
+                    <img class="m" th:src="@{/common/img/banner_m_01.png}" alt="행정안전부" />
+                </a>
+                <a href="https://www.nia.or.kr/" target="_blank" title="새창">
+                    <img class="w" th:src="@{/common/img/banner_w_02.png}" alt="한국지능정보사회진흥원" />
+                    <img class="m" th:src="@{/common/img/banner_m_02.png}" alt="한국지능정보사회진흥원" />
+                </a>
+            </div>
+        </div>
+<!--    </div>-->
+</footer>
+</body>
+</html>

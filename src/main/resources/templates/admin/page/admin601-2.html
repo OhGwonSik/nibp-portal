@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > 공지사항 > 공지사항 상세정보</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02 has_editor">
+            <table>
+                <caption>공지사항 상세</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody id="list_notice_detail_tbody"></tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="/admin/page/admin601" class="btn_basic bg_type01">목록</a>
+            <a href="javascript:;" id="btn_update" class="btn_basic bg_type02">수정</a>
+            <a href="javascript:;" id="btn_delete" class="btn_basic line_type02">삭제</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin601_2 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],        // 전체 목록
+            notice: {},     // 공지사항 상세
+            strgFilePath: /*[[${basicFilePath}]]*/''
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+
+            this.fetchList()
+                    .then((response) => {
+                        this.state.notice = response
+                        this.renderTable();
+                    });
+
+            this.updateNoticeInqCnt();
+
+            // 이벤트 바인딩
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 수정버튼 클릭
+            $("#btn_update").on("click", function (e) {
+                e.preventDefault();
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const ntcOid = urlParams.get('ntcOid');
+
+                window.location.href = contextPath + `/admin/page/admin601-1?ntcOid=${ntcOid}`;
+            });
+
+            // 삭제버튼 클릭
+            $("#btn_delete").on("click", async function (e) {
+                e.preventDefault();
+
+                uiCommon.fnShowConfirmModal('삭제하시겠습니까?', async () => {
+                    uiCommon.fnHideConfirmModal();
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const ntcOid = urlParams.get('ntcOid');
+
+                    if (!ntcOid) {
+                        uiCommon.fnShowAlertModal('번호가 없습니다');
+                        return;
+                    }
+
+                    const response = await API.delete(`/api/admin/admin601/notice/${ntcOid}`);
+                    if (response === 0) {
+                        uiCommon.fnShowAlertModal('삭제 실패');
+                        return;
+                    }
+                    uiCommon.fnShowAlertModal('삭제되었습니다.', () => _this.fnGoToListPage());
+                })
+
+            });
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+            const $tbody = $("#list_notice_detail_tbody");
+            $tbody.empty();
+
+            const notiData = this.state.notice;
+            if (!notiData) {
+                $tbody.append('<tr><td colspan="4" class="tac">조회된 결과가 없습니다.</td></tr>');
+                return;
+            }
+
+            const strgFilePath = this.state.strgFilePath;
+            const fileLinks = notiData.noticeAttachList
+                    .map(file => {
+                        const fileUrl = `${strgFilePath}${file.strgFilePath}/${file.strgFileNm}`;
+                        return `<a href="${fileUrl}" class="a_link" download="${file.orgnlFileNm}">${file.orgnlFileNm}</a>`;
+                    })
+                    .join(' ');
+
+            // 첫 번째 파일의 대체 텍스트
+            let firstFileAltTextRow = '';
+            if (notiData.noticeAttachList && notiData.noticeAttachList.length > 0) {
+                const firstFileAltText = notiData.noticeAttachList[0].imgSbstTxtCn || '';
+                if (firstFileAltText) {
+                    firstFileAltTextRow = `
+                        <tr>
+                            <th scope="row">첫 번째 이미지 대체 텍스트</th>
+                            <td colspan="3">${firstFileAltText}</td>
+                        </tr>
+                    `;
+                }
+            }
+
+            const tBody = `
+                <tr>
+                    <th scope="row">등록일시</th>
+                    <td colspan="3">${common.formatDateTime(notiData.regDt)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">제목</th>
+                    <td colspan="3">${notiData.ntcNm}</td>
+                </tr>
+                <tr>
+                    <th scope="row">공개여부</th>
+                    <td>${notiData.openYn === 'Y' ? '공개' : '비공개'}</td>
+                    <th scope="row" class="bl">상단고정 기간</th>
+                    <td>${common.formatDate(notiData.bgngDt)} ~ ${common.formatDate(notiData.endDt)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">내용</th>
+                    <td colspan="3" class="post-content">${notiData.ntcCn}</td>
+                </tr>
+                <tr>
+                    <th scope="row">파일첨부</th>
+                    <td colspan="3">${fileLinks}</td>
+                </tr>
+                ${firstFileAltTextRow}
+            `;
+
+            $tbody.append(tBody);
+        },
+
+        /**
+         * 더미데이터 공급
+         */
+        fetchList: async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ntcOid = urlParams.get('ntcOid');
+
+            if (!ntcOid) {
+                uiCommon.fnShowAlertModal('번호가 없습니다');
+                return;
+            }
+
+            const response = await API.get(`/api/admin/admin601/notice/${ntcOid}`);
+            return response;
+        },
+
+        updateNoticeInqCnt: async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ntcOid = urlParams.get('ntcOid');
+
+            if (!ntcOid) {
+                return;
+            }
+            try {
+                await API.patch(`/api/admin/admin601/notice/inq-cnt/${ntcOid}`);
+            } catch (e) {
+                console.error('조회수 증가 실패', e);
+            }
+        },
+
+        /**
+         * 페이지 이동 - 공지사항 목록
+         */
+        fnGoToListPage: function () {
+            uiCommon.fnShowConfirmModal('목록으로 이동하시겠습니까?', function () {
+                window.location.href = contextPath + '/admin/page/admin601';
+            });
+        }
+    };
+
+    $(document).ready(function () {
+        admin601_2.init();
+    });
+</script>
+</body>
+</html>

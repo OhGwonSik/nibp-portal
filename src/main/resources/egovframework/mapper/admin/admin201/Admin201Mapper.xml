@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin201.mapper.Admin201Mapper">
+
+	<select id="selectOpinionList" resultType="egovframework.admin.admin201.domain.Admin201DTO">
+		/* selectOpinionList */
+		SELECT
+			pbl_data_opnn_oid, pbl_data_opnn_ttl, pbl_data_opnn_cn
+			, reg_id, reg_dt, mdfcn_id, mdfcn_dt
+		FROM
+			${schema}.pbl_data_opnn
+		<where>
+			<if test='pblDataOpnnOid != null and pblDataOpnnOid != 0'>
+				AND pbl_data_opnn_oid = #{pblDataOpnnOid}
+			</if>
+			<if test='keyword != null and keyword != ""'>
+				AND pbl_data_opnn_ttl LIKE CONCAT('%',#{keyword},'%')
+			</if>		
+			<if test='regDtFrom != null and regDtFrom != ""'>
+				AND reg_dt >= #{regDtFrom}
+			</if>
+			<if test='regDtTo != null and regDtTo != ""'>
+				AND reg_dt <![CDATA[ < ]]> DATE_ADD(#{regDtTo}, INTERVAL 1 DAY)
+			</if>
+		</where>
+		ORDER BY pbl_data_opnn_oid DESC
+	</select>
+	
+	<select id="selectOpinionDetail" resultType="egovframework.admin.admin201.domain.Admin201DTO">
+		/* selectOpinionDetail */
+		SELECT
+			pbl_data_opnn_oid, pbl_data_opnn_ttl, pbl_data_opnn_cn
+			, reg_id, reg_dt, mdfcn_id, mdfcn_dt
+		FROM
+			${schema}.pbl_data_opnn
+		WHERE
+			pbl_data_opnn_oid = #{pblDataOpnnOid}
+		ORDER BY pbl_data_opnn_oid DESC
+	</select>	
+</mapper>

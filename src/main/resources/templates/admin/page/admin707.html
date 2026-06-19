@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>통계 > 질의 유형 통계</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="search_wrap s_type">
+        <ul>
+            <li>
+                <label for="datepicker1">기간</label>
+                <span class="datepicker"><input type="text" value="시작일" id="datepicker1"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span>
+            </li>
+        </ul>
+        <div class="s_wrap"><a id="admin707SearchBtn" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_top_btn">
+            <a href="javascript:;" id="admin707ExlDownBtn" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+        </div>
+        <div class="table_layout02 list_type mt10 mb20">
+            <table>
+                <caption>질의 유형 통계 테이블</caption>
+                <colgroup>
+                    <col style="width: auto;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">구분</th>
+                    <th scope="col">계</th>
+                    <th scope="col">연구공통</th>
+                    <th scope="col">인간대상 연구</th>
+                    <th scope="col">인체유래물 연구</th>
+                    <th scope="col">인체유래물 은행</th>
+                    <th scope="col">배아 등의 생성 및 관리</th>
+                    <th scope="col">배아 등을 이용한 연구</th>
+                    <th scope="col">유전자검사 및 치료</th>
+                    <th scope="col">기관위원회 운영</th>
+                    <th scope="col">기타</th>
+                    <th scope="col">미지정</th>
+                </tr>
+                </thead>
+                <tbody id="admin707StatBody"></tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+const admin707 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            searchDate: null, // YYYY-MM
+            isInitializing: true
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            const _this = this;
+            
+            // 날짜 기본값 세팅
+            _this.setDefaultDate();
+            
+            // Datepicker 초기화
+            _this.initDatePickers();
+            
+            // 이벤트 바인딩
+            _this.initEvent();
+            
+            // 초기 목록 조회
+            await _this.getList();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼
+            document.querySelector('#admin707SearchBtn').addEventListener('click', function(e){
+                e.preventDefault();
+                _this.getList();
+            });
+            
+            // 엑셀 다운로드 버튼
+            const exlBtn = document.querySelector('#admin707ExlDownBtn');
+            if(exlBtn) {
+                exlBtn.addEventListener('click', async function() {
+                    const reason = await uiCommon.fnShowPromptModal('엑셀 다운로드 받으시겠습니까?', {
+                        qnaTtl: '엑셀 다운로드 요청',
+                        defaultValue: '',
+                        placeholder: '사유 입력',
+                    });
+
+                    if (reason === null) return;
+                    if (reason.trim() === '') {
+                        uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                        return;
+                    }
+                    if (reason.trim().length < 2) {
+                        uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                        return;
+                    }
+
+                    const params = _this.getSearchParams();
+                    params.reason = reason;
+                    params.pageId = 'admin707';
+
+                    try {
+                        await API.excelDownload('/api/admin/admin707/qna-stat/excel/export', params, {showLoading: true});
+                    } catch(err) {
+                        console.error(err);
+                        uiCommon.fnShowAlertModal("[error] : " + err, () => uiCommon.fnHideAlertModal());
+                    }
+                });
+            }
+        },
+        
+        /**
+         * 날짜 초기값 세팅
+         */
+        setDefaultDate: function() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1;
+            const formatMonth = (m) => m < 10 ? '0' + m : m;
+            
+            const initDate = currentYear + '-' + formatMonth(currentMonth);
+
+            document.getElementById('datepicker1').value = initDate;
+            this.state.searchDate = initDate;
+        },
+        
+        /**
+         * Datepicker 초기화
+         */
+        initDatePickers: function() {
+            const _this = this;
+            _this.state.isInitializing = true;
+            
+            const monthOptions = uiCommon.monthpicker.getDefaultOptions('month');
+            
+            // 초기값 설정
+            if (_this.state.searchDate) {
+                const [y, m] = _this.state.searchDate.split('-').map(Number);
+                monthOptions.startDate = new Date(y, m - 1, 1);
+                monthOptions.selectedDates = [new Date(y, m - 1, 1)];
+            }
+
+            // 날짜 선택 시 이벤트
+            monthOptions.onSelect = function({date, formattedDate}) {
+                _this.state.searchDate = formattedDate;
+                document.getElementById('datepicker1').value = formattedDate;
+                
+                if (!_this.state.isInitializing) {
+                    _this.getList();
+                }
+            };
+            
+            uiCommon.monthpicker.init('#datepicker1', monthOptions);
+            
+            setTimeout(() => {
+                _this.state.isInitializing = false;
+            }, 200);
+        },
+        
+        /**
+         * 검색 파라미터 생성
+         */
+        getSearchParams: function() {
+            // YYYY-MM 형식의 단일 날짜
+            const searchDate = document.getElementById('datepicker1').value;
+            return {
+                searchDate: searchDate
+            };
+        },
+
+        /**
+         * 목록 조회
+         */
+        getList: async function () {
+            const _this = this;
+            const params = _this.getSearchParams();
+
+            if (!params.searchDate) {
+                uiCommon.fnShowAlertModal("검색 기간을 선택해주세요.");
+                return;
+            }
+            
+            try {
+                // API 호출
+                const response = await API.get('/api/admin/admin707/qna-stat/list', params, {showLoading: true});
+                _this.renderTable(response);
+
+            } catch (error) {
+                console.error('API 호출 오류:', error);
+            }
+        },
+
+        /**
+         * 테이블 렌더링
+         */
+        renderTable: function (list) {
+            const tbody = document.getElementById('admin707StatBody');
+            let html = '';
+
+            if (!list || list.length === 0) {
+                html = '<tr><td colspan="12" class="nodata">데이터가 존재하지 않습니다.</td></tr>';
+            } else {
+                list.forEach(item => {
+                    html += `<tr>
+                                <td class="bg_blue">${item.gubun}</td>
+                                <td>${item.totalCnt}</td>
+                                <td>${item.researchCommon}</td>
+                                <td>${item.humanSubject}</td>
+                                <td>${item.humanDerived}</td>
+                                <td>${item.humanBank}</td>
+                                <td>${item.embryoCreate}</td>
+                                <td>${item.embryoResearch}</td>
+                                <td>${item.geneTest}</td>
+                                <td>${item.committee}</td>
+                                <td>${item.etc}</td>
+                                <td>${item.unspecified}</td>
+                             </tr>`;
+                });
+            }
+
+            tbody.innerHTML = html;
+        }        
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        admin707.init();
+    });
+</script>
+</body>
+</html>

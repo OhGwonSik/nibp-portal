@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>만족도 조사 > 조사결과 > 조사결과상세정보</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_desc">
+            <h3 class="stit mb0">설문 조사 결과</h3>
+            <div class="table_top_btn">
+            	<a href="javascript:;" id="admin5021respUserBtn" class="btn_basic bg_type01"><span>참여자 명단</span></a>
+                <a href="javascript:;" id="admin5021ExlDownBtn" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+                <a href="javascript:;" id="admin5021PrintBtn" class="s_btn_basic print"><span>인쇄</span></a>
+            </div>
+        </div>
+        <div class="table_layout02">
+            <table>
+                <caption>설문 결과</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody id="list_survey_detail_tbody">
+                <tr>
+                    <th scope="row">설문지명</th>
+                    <td colspan="3" id="admin502_1_srvy_ttl"></td>
+                </tr>
+                <tr>
+                    <th scope="row">조사기간</th>
+                    <td id="admin502_1_dt"> ~ </td>
+                    <th scope="row">조사참여자수</th>
+                    <td id="admin502_1_participant_count">명</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <h3 class="stit">결과 상세</h3>
+        <div class="table_layout02">
+            <table>
+                <caption>설문 응답 테이블</caption>
+                <colgroup>
+                    <col style="width: 50%;">
+                    <col style="width: 50%;">
+                </colgroup>
+                <tbody id="survey_results"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="admin_modal">
+    <th:block th:replace="~{admin/modal/survey_user_list :: survey_user_list}"></th:block>
+</th:block>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin502_1 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],        // 전체 목록
+            srvyOid: null,
+            filePath: /*[[${basicFilePath}]]*/ ''
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            // 설문 결과 차트 렌더링
+            const _this = this;
+            
+            const params = new URLSearchParams(window.location.search);
+            _this.state.srvyOid = params.get("srvyOid");
+            
+            if(!_this.state.srvyOid){
+            	uiCommon.fnShowAlertModal('잘못된 접근입니다.', function(){
+            		window.location.href = contextPath + `/admin/page/admin502`;
+            	});
+                return;
+            }
+            
+            await this.renderSurveyResults(_this.state.srvyOid);
+
+            // 이벤트 바인딩
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+			
+         	// 엑셀 다운로드 버튼 클릭
+            document.querySelector('#admin5021ExlDownBtn').addEventListener('click', async function(e){
+            	e.preventDefault();
+                const reason = await uiCommon.fnShowPromptModal('엑셀 다운로드 받으시겠습니까?', {
+                    title: '엑셀 다운로드 요청',
+                    defaultValue: '',
+                    placeholder: '사유 입력',
+                });
+
+                
+                // 취소 시 조용히 종료
+                if (reason === null) {
+                    return;
+                }
+
+                // 빈 값 체크
+                if (reason.trim() === '') {
+                    uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                    return;
+                }
+
+                // 2자 미만 체크
+                if (reason.trim().length < 2) {
+                    uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                    return;
+                }
+
+                const params = {
+                    srvyOid : _this.state.srvyOid,
+                    reason: reason.trim()
+                };
+
+                try {
+                    await API.excelDownload('/api/admin/admin502/survey/excel/export', params);
+                } catch(err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal("[error] : " + err.details, () => uiCommon.fnHideAlertModal());
+                }
+            });
+			
+            // 인쇄 버튼 클릭
+            document.querySelector('#admin5021PrintBtn').addEventListener('click', function(e){
+            	e.preventDefault();
+            	_this.fnOpenPrintWindow();
+            });
+            
+            $('#admin5021respUserBtn').off('click').on('click', function(e){
+                e.preventDefault();
+                
+                if (!_this.state.srvyOid) {
+                    uiCommon.fnShowAlertModal('설문 정보가 없습니다.');
+                    return;
+                }
+
+                const srvyOid = _this.state.srvyOid;
+
+                // 선택 srvyOid 를 모달로 전달
+                survey_user_list.initModal(srvyOid);
+            });
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+        	const data = this.state.all;
+        	
+            if (!data) {
+            	uiCommon.fnShowAlertModal('잘못된 접근입니다.', function(){
+            		window.location.href = contextPath + `/admin/page/admin502`;
+            	});
+                return;
+            }
+
+
+            // 조사참여율 계산
+            const targetCount = data.targetCount || 0;
+            const participantCount = data.participantCount || 0;
+            const participationRate = targetCount > 0
+                    ? (participantCount * 100 / targetCount).toFixed(2)
+                    : 0;
+
+            // ID로 각 요소에 데이터 설정
+            document.getElementById('admin502_1_srvy_ttl').textContent = data.srvyTtl || '-';
+            document.getElementById('admin502_1_dt').textContent = `${data.surveyPeriod || '-'}`;
+            document.getElementById('admin502_1_participant_count').textContent = `${participantCount}명`;
+        },
+
+        /**
+         * 설문 결과 테이블 렌더링
+         */
+        renderSurveyTable: function () {
+            const container = document.getElementById('survey_results');
+            container.innerHTML = '';
+
+            const data = this.state.all.questions;
+
+            data.forEach((qst) => {
+                switch(qst.srvyQitemType) {
+                    case 'MULTI':
+                    case 'IMG_SEL':
+                        this.renderMultiChart(qst);
+                        break;
+                    case 'LIKERT':
+                        this.renderLikertChart(qst);
+                        break;
+                    case 'SHORT':
+                    case 'LONG':
+                        this.renderTextResponses(qst);
+                        break;
+                    case 'RANK':
+                        this.renderRankChart(qst);
+                        break;
+                    case 'RATIO':
+                        this.renderRatioChart(qst);
+                        break;
+                    case 'IMG_RESP':
+                        this.renderImageResponses(qst);
+                        break;                        
+                }
+            });
+        },
+
+        /**
+         * 전체 데이터 조회
+         */
+        renderSurveyResults: async function(srvyOid) {
+            try {
+                const param = {
+                    srvyOid : srvyOid
+                }
+                const response = await API.post('/api/admin/admin502/survey/detail', param);
+
+                this.state.all = response;
+                this.renderTable();
+                this.renderSurveyTable();
+            } catch (error) {
+                console.error('상세 조회 실패:', error);
+                uiCommon.fnShowAlertModal('상세 조회에 실패했습니다.');
+            }
+        },
+
+        /**
+         * 객관식(MULTI) - 원그래프, 이미지선택형
+         */
+        renderMultiChart: function(qstData) {
+            const tbody = document.getElementById('survey_results');
+
+            // 전체 응답 수 계산
+            const totalCount = qstData.options.reduce((sum, opt) => sum + (opt.respCount || 0), 0);
+
+            // 문항 결과 테이블 생성
+            let resultTableRows = '';
+            qstData.options.forEach(opt => {
+                const count = opt.respCount || 0;
+                const percentage = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : 0;
+                resultTableRows += `
+                    <tr>
+                        <td class="tac">${opt.srvyQitemOptTxt}</td>
+                        <td class="tac">${count}</td>
+                        <td class="tac">${percentage}%</td>
+                    </tr>
+                `;
+            });
+            
+         	// 중복응답 + 개수 제한 표시 로직
+			let guideText = '';
+            if (qstData.srvyQitemType === 'MULTI' && qstData.plrlChcYn === 'Y') {
+                if (qstData.srvyQitemLmt && qstData.srvyQitemLmt > 1) {
+                    guideText = `※ 최대 ${qstData.srvyQitemLmt}개 중복 선택`;
+                } else {
+                    guideText = `※ 중복 선택 가능`;
+                }
+            }       
+
+            // 질문 제목
+            const titleRow = `
+                <tr>
+                    <th colspan="2" class="tal">${qstData.displayQNo}. ${qstData.srvyQitemTtl}</th>
+                </tr>
+            `;
+
+            // 차트와 응답 내용
+            const contentRow = `
+                <tr>
+                    <td>
+                        <div id="chart-${qstData.srvyQitemOid}" style="width: 100%; height: 400px;"></div>
+                    </td>
+                    <td>
+                        <div class="table_layout02">
+                            <table style="min-width: 0;">
+                                <colgroup>
+                                    <col style="width: 68%;">
+                                    <col style="width: 16%;">
+                                    <col style="width: 16%;">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">문항</th>
+                                        <th scope="col">No</th>
+                                        <th scope="col">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${resultTableRows}
+                                </tbody>
+                            </table>
+                            ${guideText ? `<div style="margin-top: 10px; color: #666; font-size: 13px; text-align: left;">${guideText}</div>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            tbody.insertAdjacentHTML('beforeend', titleRow + contentRow);
+
+            // 차트 렌더링 (DOM에 추가된 후 실행)
+            setTimeout(() => {
+                const chartDom = document.getElementById(`chart-${qstData.srvyQitemOid}`);
+                const myChart = echarts.init(chartDom);
+
+                const option = {
+                    color: ['#00286E', '#327ACC', '#A6C4E8', '#D8E1EA'],
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{b}: {c}명 ({d}%)'
+                    },
+                    legend: {
+                        orient: 'horizontal',
+                        left: 'center',
+                        bottom: 0
+                    },
+                    series: [{
+                        name: '응답수',
+                        type: 'pie',
+                        radius: '50%',
+                        data: qstData.options.map(opt => ({
+                            value: opt.respCount,
+                            name: opt.srvyQitemOptTxt
+                        })),
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }]
+                };
+
+                myChart.setOption(option);
+            }, 0);
+        },
+
+        /**
+         * 리커트 척도(LIKERT) - 원그래프
+         */
+        renderLikertChart: function(qstData) {
+            const tbody = document.getElementById('survey_results');
+
+            // 전체 응답 수 계산
+            const dataList = qstData.options || [];
+            
+            const totalCount = dataList.reduce((sum, item) => sum + (item.respCount || 0), 0);
+
+            // 문항 결과 테이블 생성
+            let resultTableRows = '';
+            dataList.forEach(item => {
+                const count = item.respCount || 0;
+                const percentage = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : 0;
+                const score = item.scaleValue || 0;
+                resultTableRows += `
+                    <tr>
+                        <td class="tac">${score}점</td>
+                        <td class="tac">${count}</td>
+                        <td class="tac">${percentage}%</td>
+                    </tr>
+                `;
+            });
+
+            // 질문 제목
+            const titleRow = `
+                <tr>
+                    <th colspan="2" class="tal">${qstData.displayQNo}. ${qstData.srvyQitemTtl}</th>
+                </tr>
+            `;
+
+            // 차트와 응답 내용
+            const contentRow = `
+                <tr>
+                    <td>
+                        <div id="chart-${qstData.srvyQitemOid}" style="width: 100%; height: 400px;"></div>
+                    </td>
+                    <td>
+                        <div class="table_layout02">
+                            <table style="min-width: 0;">
+                                <colgroup>
+                                    <col style="width: 68%;">
+                                    <col style="width: 16%;">
+                                    <col style="width: 16%;">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">문항</th>
+                                        <th scope="col">No</th>
+                                        <th scope="col">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${resultTableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            tbody.insertAdjacentHTML('beforeend', titleRow + contentRow);
+
+            // 차트 렌더링 (DOM에 추가된 후 실행)
+            setTimeout(() => {
+                const chartDom = document.getElementById(`chart-${qstData.srvyQitemOid}`);
+                const myChart = echarts.init(chartDom);
+
+                const option = {
+                    color: ['#00286E', '#327ACC', '#A6C4E8', '#D8E1EA'],
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{b}: {c}명 ({d}%)'
+                    },
+                    legend: {
+                        orient: 'horizontal',
+                        left: 'center',
+                        bottom: 0
+                    },
+                    series: [{
+                        name: '응답수',
+                        type: 'pie',
+                        radius: '50%',
+                        data: dataList.map(scale => ({
+                            value: scale.respCount,
+                            name: `${scale.scaleValue}점`
+                        })),
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }]
+                };
+
+                myChart.setOption(option);
+            }, 0);
+        },
+
+        /**
+         * 주관식(SHORT, LONG) - 텍스트 나열
+         */
+        renderTextResponses: function(qstData) {
+            const tbody = document.getElementById('survey_results');
+
+            // 질문 제목
+            const titleRow = `
+                <tr>
+                    <th colspan="2" class="tal">${qstData.displayQNo}. ${qstData.srvyQitemTtl}</th>
+                </tr>
+            `;
+
+            let html = titleRow;
+
+            // 응답 내용
+            if (qstData.responses && qstData.responses.length > 0) {
+                qstData.responses.forEach((resp) => {
+                    html += `
+                        <tr>
+                            <td colspan="2" class="tal">
+                                <p>${resp.srvyRspnsTxt || ''}</p>
+                                <!--임의로 넣어봄-->
+                                <small>${resp.regDt || ''} ${resp.srvyRspdntNm ? '- ' + resp.srvyRspdntNm : ''}</small>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                html += `
+                    <tr>
+                        <td colspan="2" class="tal">
+                            <p class="no-response">응답이 없습니다.</p>
+                        </td>
+                    </tr>
+                `;
+            }
+            tbody.insertAdjacentHTML('beforeend', html);
+        },
+
+        /**
+         * 순위(RANK) - 막대그래프
+         */
+        renderRankChart: function(qstData) {
+            const tbody = document.getElementById('survey_results');
+
+         	// 데이터 존재 여부 체크 
+            // responses 배열이 없거나 비어있으면 "데이터 없음" 처리 후 함수 종료 (순위는 없는 데이터를 0처리 하려면 JOIN을 엄청나게해야해서 불가능)
+            if (!qstData.responses || qstData.responses.length === 0) {
+                const noDataRow = `
+                    <tr>
+                        <th colspan="2" class="tal">
+                            ${qstData.displayQNo ? qstData.displayQNo + '.' : ''} ${qstData.srvyQitemTtl}
+                        </th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="tac" style="padding: 50px 0; color: #999; background-color: #f8f9fa;">
+                            순위 응답 데이터가 없습니다.
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', noDataRow);
+                return;
+            }            
+            // 순위별로 데이터 정리
+            const ranks = [...new Set(qstData.responses.map(r => r.srvyRspnsRank))].sort((a, b) => a - b);
+            const options = [...new Set(qstData.responses.map(r => r.srvyQitemOptTxt))];
+
+            // thead 생성 (순위)
+            const theadCols = ranks.map(rank => `<th scope="col">${rank}순위</th>`).join('');
+
+            // tbody 생성 (옵션별 순위별 응답 수)
+            let resultTableRows = '';
+            options.forEach(opt => {
+                const rankCells = ranks.map(rank => {
+                    const found = qstData.responses.find(
+                        r => r.srvyRspnsRank === rank && r.srvyQitemOptTxt === opt
+                    );
+                    return `<td class="tac">${found ? found.respCount : 0}</td>`;
+                }).join('');
+
+                resultTableRows += `
+                    <tr>
+                        <td class="tac">${opt}</td>
+                        ${rankCells}
+                    </tr>
+                `;
+            });
+
+            // 질문 제목
+            const titleRow = `
+                <tr>
+                    <th colspan="2" class="tal">${qstData.displayQNo}. ${qstData.srvyQitemTtl}</th>
+                </tr>
+            `;
+
+            // colgroup 동적 생성 (문항 + 순위 수)
+            const colCount = ranks.length + 1;
+            const colWidth = colCount > 1 ? Math.floor(100 / colCount) : 100;
+            const colgroups = `<col style="width: ${colWidth}%;">`.repeat(colCount);
+
+            // 차트와 응답 내용
+            const contentRow = `
+                <tr>
+                    <td>
+                        <div id="chart-${qstData.srvyQitemOid}" style="width: 100%; height: 400px;"></div>
+                    </td>
+                    <td>
+                        <div class="table_layout02">
+                            <table style="min-width: 0;">
+                                <colgroup>
+                                    ${colgroups}
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">문항</th>
+                                        ${theadCols}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${resultTableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            tbody.insertAdjacentHTML('beforeend', titleRow + contentRow);
+
+            // 차트 렌더링 (DOM에 추가된 후 실행)
+            setTimeout(() => {
+                const chartDom = document.getElementById(`chart-${qstData.srvyQitemOid}`);
+                const myChart = echarts.init(chartDom);
+
+                // 시리즈 데이터 구성
+                const series = ranks.map(rank => ({
+                    name: `${rank}순위`,
+                    type: 'bar',
+                    data: options.map(opt => {
+                        const found = qstData.responses.find(
+                            r => r.srvyRspnsRank === rank && r.srvyQitemOptTxt === opt
+                        );
+                        return found ? found.respCount : 0;
+                    })
+                }));
+
+                const option = {
+                    color: ['#00286E', '#327ACC', '#A6C4E8', '#D8E1EA'],
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    legend: {
+                        data: ranks.map(r => `${r}순위`),
+                        top: 'bottom'
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '15%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: options
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '응답수'
+                    },
+                    series: series
+                };
+
+                myChart.setOption(option);
+            }, 0);
+        },
+        
+        /**
+         * 비율(RATIO) - 방사형 차트 (Radar Chart)
+         */
+        renderRatioChart: function(qstData) {
+            const tbody = document.getElementById('survey_results');
+
+            // 데이터 체크
+            if (!qstData.options || qstData.options.length === 0) {
+                 const noDataRow = `
+                    <tr>
+                        <th colspan="2" class="tal">
+                            ${qstData.displayQNo ? qstData.displayQNo + '.' : ''} ${qstData.srvyQitemTtl}
+                        </th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="tac" style="padding: 50px 0; color: #999; background-color: #f8f9fa;">
+                            데이터가 없습니다.
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', noDataRow);
+                return;
+            }
+
+            // 결과 테이블 행 생성
+            let resultTableRows = '';
+            // 차트용 데이터 배열
+            const indicatorData = [];
+            const seriesData = [];
+            
+            // 최대 점수 계산 (차트 스케일용, 기본 5점 척도 가정하되 데이터가 더 크면 그에 맞춤)
+            let maxScore = 5; 
+
+            qstData.options.forEach(opt => {
+                const avg = opt.averageValue || 0;
+                if(avg > maxScore) maxScore = Math.ceil(avg);
+
+                resultTableRows += `
+                    <tr>
+                        <td class="tac">${opt.srvyQitemOptTxt}</td>
+                        <td class="tac">${avg.toFixed(2)}점</td> </tr>
+                `;
+                
+                // 차트 데이터 적재
+                indicatorData.push({ name: opt.srvyQitemOptTxt, max: maxScore });
+                seriesData.push(avg);
+            });
+
+            // 질문 제목
+            const titleRow = `
+                <tr>
+                    <th colspan="2" class="tal">${qstData.displayQNo}. ${qstData.srvyQitemTtl}</th>
+                </tr>
+            `;
+
+            // HTML 구조 조립
+            const contentRow = `
+                <tr>
+                    <td>
+                        <div id="chart-${qstData.srvyQitemOid}" style="width: 100%; height: 400px;"></div>
+                    </td>
+                    <td>
+                        <div class="table_layout02">
+                            <table style="min-width: 0;">
+                                <colgroup>
+                                    <col style="width: 70%;">
+                                    <col style="width: 30%;">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">항목</th>
+                                        <th scope="col">평균점수</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${resultTableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            tbody.insertAdjacentHTML('beforeend', titleRow + contentRow);
+
+            // ECharts 렌더링
+            setTimeout(() => {
+                const chartDom = document.getElementById(`chart-${qstData.srvyQitemOid}`);
+                const myChart = echarts.init(chartDom);
+
+                const option = {
+                    color: ['#327ACC'],
+                    tooltip: {},
+                    radar: {
+                        // shape: 'circle', // 원형을 원하면 주석 해제
+                        indicator: indicatorData,
+                        splitArea: {
+                            areaStyle: {
+                                color: ['#F8F9FA', '#F8F9FA', '#F8F9FA', '#F8F9FA'],
+                                shadowColor: 'rgba(0, 0, 0, 0.3)',
+                                shadowBlur: 10
+                            }
+                        }
+                    },
+                    series: [{
+                        name: '평균 점수',
+                        type: 'radar',
+                        data: [
+                            {
+                                value: seriesData,
+                                name: '평균 점수',
+                                areaStyle: {
+                                    color: 'rgba(50, 122, 204, 0.3)' // 채우기 색상
+                                }
+                            }
+                        ]
+                    }]
+                };
+
+                myChart.setOption(option);
+            }, 0);
+        },
+        
+        /**
+         * 이미지 응답형(IMG_RESP) - 그래프 없이 이미지+답변 나열
+         */
+        renderImageResponses: function(qstData) {
+            const tbody = document.getElementById('survey_results');
+           
+            const basePath = this.state.filePath || ''; 
+
+            // 질문 제목
+            const titleRow = `
+                <tr>
+                    <th colspan="2" class="tal">${qstData.displayQNo}. ${qstData.srvyQitemTtl}</th>
+                </tr>
+            `;
+            let html = titleRow;
+
+            // 응답 없음 처리
+            if (!qstData.responses || qstData.responses.length === 0) {
+                html += `
+                    <tr>
+                        <td colspan="2" class="tal">
+                            <p class="no-response" style="color:#999; padding: 20px; text-align: center;">응답이 없습니다.</p>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', html);
+                return;
+            }
+
+            // 응답 리스트 출력
+            qstData.responses.forEach((resp) => {
+                let imgHtml = '';
+
+                // 파일 정보가 있으면 이미지 태그 생성
+                if (resp.respStrgFileNm && resp.respStrgFilePath) {
+
+                    const fileUrl = `${basePath}${resp.respStrgFilePath}/${resp.respStrgFileNm}`;
+
+                    imgHtml = `
+                        <div class="mb10">
+                            <img src="${fileUrl}" alt="${resp.respOrgnlFileNm}"
+                                 style="max-width: 400px; max-height: 400px; width: auto; border: 1px solid #ddd; padding: 5px; border-radius: 4px; cursor: pointer;"
+                                 onerror="this.style.display='none';">
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <tr>
+                        <td colspan="2" class="tal" style="padding: 20px; border-bottom: 1px solid #eee;">
+                            ${imgHtml}
+                            <p style="white-space: pre-wrap; margin-bottom: 5px;">${resp.srvyRspnsTxt || ''}</p>
+                            <div style="color: #888; font-size: 13px;">
+                                ${resp.regDt || ''} ${resp.srvyRspdntNm ? '- ' + resp.srvyRspdntNm : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.insertAdjacentHTML('beforeend', html);
+        },        
+        
+        /**
+         * 인쇄 버튼 클릭 시 새 창 열기
+         */
+        fnOpenPrintWindow: function() {
+            // 팝업 크기 및 위치 설정
+            const width = 1000;
+            const height = 800;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+            
+            const srvyOid = this.state.srvyOid;
+            // 새 창 열기
+            const popupUrl = `/admin/page/admin502-2?srvyOid=${srvyOid}`;
+            
+            window.open(popupUrl, "SurveyPrintWindow", `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`);
+        },        
+    };
+
+    $(document).ready(function () {
+        admin502_1.init();
+    });
+</script>
+</body>
+</html>
+

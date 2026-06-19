@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin800.mapper.Admin802Mapper">
+	<!--그룹코드 목록 조회-->
+	<select id="selectGroupcodeWithFilter" parameterType="egovframework.admin.admin800.domain.GroupCodeFilterDTO" resultType="egovframework.admin.admin800.domain.GroupCodeResponseDTO">
+		SELECT
+			grp_cd_oid,
+			grp_cd,
+			grp_cd_nm,
+			grp_cd_expln,
+			use_yn,
+			reg_id,
+			reg_dt,
+			mdfcn_id,
+			mdfcn_dt
+		FROM
+			${schema}.grp_cd
+		<where>
+			<!-- AND system_id = #{systemId} -->
+			<if test="keyword != null and keyword != ''">
+				AND (
+					grp_cd LIKE CONCAT('%', #{keyword}, '%')
+					OR grp_cd_nm LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+			<if test="useYn != null and useYn != ''">
+				AND use_yn = #{useYn}
+			</if>
+		</where>
+	</select>
+
+	<!--코드 목록 조회-->
+	<select id="selectCodeWithFilter" parameterType="egovframework.admin.admin800.domain.CodeFilterDTO" resultType="egovframework.admin.admin800.domain.CodeResponseDTO">
+		SELECT
+			cd_oid,
+			grp_cd_oid,
+			cd_val,
+			cd_nm,
+			up_cd_val,
+			cd_expln,
+			cd_seq,
+			use_yn,
+			atrb1,
+			atrb2,
+			atrb3,
+			atrb4,
+			atrb5,
+			reg_id,
+			reg_dt,
+			mdfcn_id,
+			mdfcn_dt
+		FROM
+		${schema}.cd
+		<where>
+			<if test="grpCdOid != null and grpCdOid != ''">
+				AND grp_cd_oid = #{grpCdOid}
+			</if>
+			AND use_yn = 'Y'
+		</where>
+	</select>
+
+	<!--그룹코드로 그룹코드 테이블 조회-->
+	<select id="selectByGrpCd" parameterType="String" resultType="egovframework.admin.admin800.domain.GroupCode">
+		SELECT
+			grp_cd_oid,
+			grp_cd,
+			grp_cd_nm,
+			grp_cd_expln,
+			use_yn,
+			reg_id,
+			reg_dt,
+			mdfcn_id,
+			mdfcn_dt
+		FROM
+		${schema}.grp_cd
+		<where>
+			AND grp_cd = #{grpCd}
+		</where>
+	</select>
+
+	<!--그룹코드 등록-->
+	<insert id="insertAdmin802Group" parameterType="egovframework.admin.admin800.domain.GroupCode">
+		INSERT INTO ${schema}.grp_cd(
+			grp_cd_oid,
+			grp_cd,
+			grp_cd_nm,
+			grp_cd_expln,
+			use_yn,
+			reg_id,
+			reg_dt,
+			mdfcn_id,
+			mdfcn_dt
+		)
+		VALUES (
+		   #{grpCdOid},
+		   #{grpCd},
+		   #{grpCdNm},
+		   #{grpCdExpln},
+		   #{useYn},
+		   #{regId},
+		   now(),
+		   #{mdfcnId},
+		   now()
+	   )
+	</insert>
+	
+	<!--코드로 코드 테이블 중복 조회 (부모키값 - 코드값)-->
+	<select id="selectByCd" parameterType="egovframework.admin.admin800.domain.Code" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+			${schema}.cd
+		WHERE
+			grp_cd_oid = #{grpCdOid}
+			AND cd_val = #{cdVal}
+	</select>	
+
+	<!--코드 등록-->
+	<insert id="insertAdmin802Code" parameterType="egovframework.admin.admin800.domain.Code">
+		INSERT INTO ${schema}.cd(
+			cd_oid,
+			grp_cd_oid,
+			cd_val,
+			cd_nm,
+			up_cd_val,
+			cd_expln,
+			cd_seq,
+			use_yn,
+			atrb1,
+			atrb2,
+			atrb3,
+			atrb4,
+			atrb5,
+			reg_id,
+			reg_dt,
+			mdfcn_id,
+			mdfcn_dt
+		)
+		VALUES (
+		   #{cdOid},
+		   #{grpCdOid},
+		   #{cdVal},
+		   #{cdNm},
+		   #{upCdVal},
+		   #{cdExpln},
+		   #{cdSeq},
+		   #{useYn},
+		   #{atrb1},
+		   #{atrb2},
+		   #{atrb3},
+		   #{atrb4},
+		   #{atrb5},
+		   #{regId},
+		   now(),
+		   #{mdfcnId},
+		   now()
+	   )
+	</insert>
+
+	<!--그룹코드 수정-->
+	<update id="updateAdmin802Group" parameterType="egovframework.admin.admin800.domain.GroupCode">
+		UPDATE
+			${schema}.grp_cd
+		<set>
+			<if test="grpCd != null and grpCd != ''">
+				grp_cd = #{grpCd},
+			</if>
+			<if test="grpCdNm != null and grpCdNm != ''">
+				grp_cd_nm = #{grpCdNm},
+			</if>
+			<if test="grpCdExpln != null">
+				grp_cd_expln = #{grpCdExpln},
+			</if>
+			<if test="useYn != null and useYn != ''">
+				use_yn = #{useYn},
+			</if>
+			<if test="mdfcnId != null and mdfcnId != ''">
+				mdfcn_id = #{mdfcnId},
+			</if>
+			mdfcn_dt = now()
+		</set>
+		WHERE
+			grp_cd_oid = #{grpCdOid}
+	</update>
+
+	<!--코드 수정-->
+	<update id="updateAdmin802Code" parameterType="egovframework.admin.admin800.domain.Code">
+		UPDATE
+			${schema}.cd
+		<set>
+			<if test="cdVal != null and cdVal != ''">
+				cd_val = #{cdVal},
+			</if>
+			<if test="cdNm != null and cdNm != ''">
+				cd_nm = #{cdNm},
+			</if>
+			<if test="upCdVal != null">
+				up_cd_val = #{upCdVal},
+			</if>
+			<if test="cdExpln != null">
+				cd_expln = #{cdExpln},
+			</if>
+			<if test="cdSeq != null">
+				cd_seq = #{cdSeq},
+			</if>
+			<if test="useYn != null and useYn != ''">
+				use_yn = #{useYn},
+			</if>
+			<if test="atrb1 != null">
+				atrb1 = #{atrb1},
+			</if>
+			<if test="atrb2 != null">
+				atrb2 = #{atrb2},
+			</if>
+			<if test="atrb3 != null">
+				atrb3 = #{atrb3},
+			</if>
+			<if test="atrb4 != null">
+				atrb4 = #{atrb4},
+			</if>
+			<if test="atrb5 != null">
+				atrb5 = #{atrb5},
+			</if>
+			<if test="mdfcnId != null and mdfcnId != ''">
+				mdfcn_id = #{mdfcnId},
+			</if>
+			mdfcn_dt = now()
+		</set>
+		WHERE
+			cd_oid = #{cdOid}
+	</update>
+	
+	<insert id="deleteAdmin802" parameterType="EgovMap"> 
+		DELETE 
+		FROM 
+			${schema}.ADMIN802
+		WHERE
+			ADMIN802_ID = ${admin802Id}
+	</insert>
+</mapper>

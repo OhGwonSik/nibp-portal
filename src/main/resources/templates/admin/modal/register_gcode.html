@@ -1,0 +1,224 @@
+<th:block th:fragment="register_gcode" xmlns:th="http://www.thymeleaf.org">
+    <div id="register_gcode" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap wp700">
+                <h1 class="p_tit">그룹코드 신규</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <div class="table_layout02 mb10">
+                                <table>
+                                    <caption>그룹코드 신규</caption>
+                                    <colgroup>
+                                        <col style="width: 120px;">
+                                        <col style="width: auto;">
+                                    </colgroup>
+                                    <tbody>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="pop_lab_01">시스템구분</label></th>
+                                        <td>
+                                            <select id="pop_lab_01" title="시스템구분 선택" class="w100">
+                                                <option>전체</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="pop_group_cd">그룹코드</label></th>
+                                        <td>
+                                            <input type="text" id="pop_group_cd" placeholder="그룹코드를 입력해주세요." title="그룹코드 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="point"><label for="pop_group_cd_nm">그룹코드명</label></th>
+                                        <td>
+                                            <input type="text" id="pop_group_cd_nm" placeholder="그룹코드명을 입력해주세요." title="그룹코드명 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="pop_group_cd_desc">그룹코드설명</label></th>
+                                        <td>
+                                            <input type="text" id="pop_group_cd_desc" placeholder="그룹코드설명을 입력해주세요." title="그룹코드설명 입력">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="register_gcode_use_yn">사용여부</label></th>
+                                        <td>
+                                            <select id="register_gcode_use_yn" title="사용여부 선택" class="w100">
+                                                <option value="Y" selected>사용</option>
+                                                <option value="N">미사용</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn_wrap mt30">
+                        <a href="javascript:;" id="register_gcode_btn_save" class="btn_basic bg_type01">저장</a>
+                        <a href="javascript:;" id="register_gcode_btn_cancel" class="btn_basic bg_type02 btn_close_gcode">취소</a>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close btn_close_gcode">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        let register_gcode = {
+
+            /**
+             * 상태
+             */
+            state: {
+                mode: 'create',     // create or update
+                data: null          // 수정할 데이터
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function (mode, data) {
+                this.state.mode = mode || 'create';
+                this.state.data = this.state.mode === 'create' ? null : data;
+
+                uiCommon.fnShowModal('register_gcode');
+                this.init();
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function () {
+                // 이벤트 바인딩
+                this.initEvent();
+
+                // 폼 값 초기화 또는 데이터 바인딩
+                if (this.state.mode === 'create') {
+                    this.initFormData();
+                } else {
+                    this.bindFormData();
+                }
+
+                // 제목 변경
+                this.updateTitle();
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function () {
+                const _this = this;
+
+                // 저장 버튼 클릭
+                $("#register_gcode_btn_save").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    _this.fnSave();
+                });
+
+                // 닫기/취소 버튼 클릭
+                $(".btn_close_gcode").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    uiCommon.fnHideModal('register_gcode');
+                });
+            },
+
+            /**
+             * 폼 입력값 초기화
+             */
+            initFormData: function () {
+                $('#pop_lab_01').val('전체');
+                $('#pop_group_cd').val('');
+                $('#pop_group_cd_nm').val('');
+                $('#pop_group_cd_desc').val('');
+                $('#register_gcode_use_yn').val('Y');
+            },
+
+            /**
+             * 폼 데이터 바인딩
+             */
+            bindFormData: function () {
+                if (!this.state.data) {
+                    return;
+                }
+
+                const data = this.state.data;
+                $('#pop_lab_01').val(data.system || '전체');
+                $('#pop_group_cd').val(data.grpCd || '');
+                $('#pop_group_cd_nm').val(data.grpCdNm || '');
+                $('#pop_group_cd_desc').val(data.grpCdExpln || '');
+                $('#register_gcode_use_yn').val(data.useYn || 'Y');
+            },
+
+            /**
+             * 제목 업데이트
+             */
+            updateTitle: function () {
+                const title = this.state.mode === 'create' ? '그룹코드 등록' : '그룹코드 수정';
+                $('#register_gcode .p_tit').text(title);
+            },
+
+            /**
+             * 저장, 수정
+             */
+            fnSave: async function () {
+                const _this = this;
+
+                try {
+                    // 값 할당
+                    const groupCodeNo = _this.state.data?.grpCdOid;
+                    const grpCd = $('#pop_group_cd').val().trim();
+                    const grpCdNm = $('#pop_group_cd_nm').val().trim();
+                    const grpCdDesc = $('#pop_group_cd_desc').val().trim() || null;
+                    const useYn = $('#register_gcode_use_yn').val();
+
+                    // 파라미터 구성
+                    const param = _this.state.mode === 'create' ? {
+                        grpCd: grpCd,
+                        grpCdNm: grpCdNm,
+                        grpCdExpln: grpCdDesc,
+                        useYn: useYn
+                    } : {
+                        grpCdOid: groupCodeNo,
+                        grpCd: grpCd,
+                        grpCdNm: grpCdNm,
+                        grpCdExpln: grpCdDesc,
+                        useYn: useYn
+                    }
+
+                    // API 호출
+                    const result = _this.state.mode === 'create'
+                        ? await API.put('/api/admin/admin802/groupcode/insert', param)
+                        : await API.patch('/api/admin/admin802/groupcode/update', param);
+
+                    if (result >= 0) {
+                        const message = _this.state.mode === 'create'
+                            ? '그룹코드가 등록되었습니다.'
+                            : '그룹코드가 수정되었습니다.';
+                        uiCommon.fnShowAlertModal(message, () => _this.fnCloseModal());
+                    }
+                } catch (error) {
+                    let errorMessage = this.state.mode === 'edit' ? '수정에 실패했습니다.' : '등록에 실패했습니다.';
+                    if (error instanceof APIError) {
+                        // 중복값
+                        if (error.code === 'COMMON_004') {
+                            errorMessage = error.details;
+                            // 빈 값
+                        } else if (error.isValidationError()) {
+                            errorMessage = error.getUserMessage();
+                        }
+                    }
+                    uiCommon.fnShowAlertModal(errorMessage);
+                }
+            },
+
+            /**
+             * 모달 hide, 부모 페이지 리로드
+             */
+            fnCloseModal: function () {
+                uiCommon.fnHideModal('register_gcode');
+                uiCommon.fnHideAlertModal();
+                admin802.init();
+            }
+        };
+    </script>
+</th:block>

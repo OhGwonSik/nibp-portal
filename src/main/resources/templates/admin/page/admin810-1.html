@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 기관 관리 > 기관 등록/수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02">
+            <table>
+                <caption>기관 등록/수정</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row" class="point"><label for="instNm">기관명</label></th>
+                    <td colspan="3"><input type="text" id="instNm" title="기관명 입력" placeholder="기관명을 입력해주세요" class="w100" maxlength="200"></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point"><label for="bizRegNo">사업자등록번호</label></th>
+                    <td><input type="text" id="bizRegNo" title="사업자등록번호 입력" placeholder="000-00-00000" class="w100" maxlength="12"></td>
+                    <th scope="row" class="point"><label for="repNm">대표자명</label></th>
+                    <td><input type="text" id="repNm" title="대표자명 입력" placeholder="대표자명을 입력해주세요" class="w100" maxlength="100"></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point"><label for="telPfx">전화번호</label></th>
+                    <td><input type="text" id="telPfx" title="전화번호 앞자리 입력" placeholder="02" class="w30" maxlength="4"> - <input type="text" id="telMid" title="전화번호 중간자리 입력" placeholder="1234" class="w30" maxlength="4"> - <input type="text" id="telSfx" title="전화번호 뒷자리 입력" placeholder="5678" class="w30" maxlength="4"></td>
+                    <th scope="row"><label for="faxPfx">팩스번호</label></th>
+                    <td><input type="text" id="faxPfx" title="팩스번호 앞자리 입력" placeholder="02" class="w30" maxlength="4"> - <input type="text" id="faxMid" title="팩스번호 중간자리 입력" placeholder="1234" class="w30" maxlength="4"> - <input type="text" id="faxSfx" title="팩스번호 뒷자리 입력" placeholder="5678" class="w30" maxlength="4"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="zipCd">우편번호</label></th>
+                    <td><input type="text" id="zipCd" title="우편번호 입력" placeholder="12345" class="w30" maxlength="6"></td>
+                    <th scope="row"><label for="addr">주소</label></th>
+                    <td><input type="text" id="addr" title="주소 입력" placeholder="주소를 입력해주세요" class="w100" maxlength="500"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="addrDtl">상세주소</label></th>
+                    <td colspan="3"><input type="text" id="addrDtl" title="상세주소 입력" placeholder="상세주소를 입력해주세요" class="w100" maxlength="500"></td>
+                </tr>
+                <tr id="reg">
+                    <th scope="row"><label for="regUserId">등록자ID</label></th>
+                    <td><input type="text" id="regUserId" title="등록자ID" placeholder="자동입력" class="w100" readonly></td>
+                    <th scope="row"><label for="regDt">등록일시</label></th>
+                    <td><input type="text" id="regDt" title="등록일시" placeholder="자동입력" class="w100" readonly></td>
+                </tr>
+                <tr id="upd">
+                    <th scope="row"><label for="mdfcnId">수정자ID</label></th>
+                    <td><input type="text" id="mdfcnId" title="수정자ID" placeholder="자동입력" class="w100" readonly></td>
+                    <th scope="row"><label for="updDt">수정일시</label></th>
+                    <td><input type="text" id="updDt" title="수정일시" placeholder="자동입력" class="w100" readonly></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="btn_org_save" class="btn_basic bg_type01">저장</a>
+            <a href="javascript:;" id="btn_org_cancel" class="btn_basic line_type02">취소</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin810_1 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            isEdit: false,      // 수정 여부
+            instOid: null,        // 기관번호
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // URL 파라미터로 수정 여부 판단
+            const urlParams = new URLSearchParams(window.location.search);
+            this.state.instOid = urlParams.get('instOid');
+            this.state.isEdit = !!this.state.instOid;
+
+            // 페이지 타이틀 및 UI 변경
+            this.fnUpdatePageUI();
+
+            // 이벤트 바인딩
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            this.state.isEdit
+                    ? this.fnLoadData(this.state.instOid) // 수정이면 데이터 로드
+                    : this.initFormData();              // 등록이면 폼 초기화
+
+            // 사업자등록번호 자동 포맷
+            common.bindBizRegNo('bizRegNo');
+
+            // 전화번호, 팩스번호, 우편번호 숫자만 입력
+            common.bindNumericOnly('telPfx', 'telMid', 'telSfx', 'faxPfx', 'faxMid', 'faxSfx', 'zipCd');
+
+            // 저장 버튼 클릭
+            document.getElementById("btn_org_save").addEventListener("click", function (e) {
+                e.preventDefault();
+                if (_this.state.isEdit) {
+                    _this.fnUpdateData();
+                } else {
+                    _this.fnCreateData();
+                }
+            });
+
+            // 취소 버튼 클릭
+            document.getElementById("btn_org_cancel").addEventListener("click", function (e) {
+                e.preventDefault();
+                // 목록 페이지로 이동
+                _this.fnGoToListPage();
+            });
+        },
+
+        /**
+         * 페이지 UI 업데이트
+         */
+        fnUpdatePageUI: function () {
+            if (this.state.isEdit) {
+                document.getElementById('reg').style.display = 'table-row';
+                document.getElementById('upd').style.display = 'table-row';
+            } else {
+                document.getElementById('reg').style.display = 'none';
+                document.getElementById('upd').style.display = 'none';
+            }
+        },
+
+        /**
+         * 폼 입력값 초기화 - 등록
+         */
+        initFormData: function () {
+            document.getElementById('instNm').value = '';
+            document.getElementById('bizRegNo').value = '';
+            document.getElementById('repNm').value = '';
+            document.getElementById('telPfx').value = '';
+            document.getElementById('telMid').value = '';
+            document.getElementById('telSfx').value = '';
+            document.getElementById('faxPfx').value = '';
+            document.getElementById('faxMid').value = '';
+            document.getElementById('faxSfx').value = '';
+            document.getElementById('addr').value = '';
+            document.getElementById('addrDtl').value = '';
+            document.getElementById('zipCd').value = '';
+            document.getElementById('regUserId').value = '';
+            document.getElementById('regDt').value = '';
+        },
+
+        /**
+         * 폼 데이터 로드 - 수정
+         */
+        fnLoadData: async function (instOid) {
+            try {
+                const data = await API.get('/api/admin/admin810/org/select?instOid=' + instOid);
+
+                document.getElementById('instNm').value = data.instNm || '';
+                document.getElementById('bizRegNo').value = data.bizRegNo || '';
+                document.getElementById('repNm').value = data.repNm || '';
+                document.getElementById('telPfx').value = data.telPfx || '';
+                document.getElementById('telMid').value = data.telMid || '';
+                document.getElementById('telSfx').value = data.telSfx || '';
+                document.getElementById('faxPfx').value = data.faxPfx || '';
+                document.getElementById('faxMid').value = data.faxMid || '';
+                document.getElementById('faxSfx').value = data.faxSfx || '';
+                document.getElementById('addr').value = data.addr || '';
+                document.getElementById('addrDtl').value = data.addrDtl || '';
+                document.getElementById('zipCd').value = data.zipCd || '';
+                document.getElementById('regUserId').value = data.regUserId || '';
+                document.getElementById('regUserId').disabled = true;
+                document.getElementById('regDt').value = data.regDt || '';
+                document.getElementById('regDt').disabled = true;
+                document.getElementById('mdfcnId').value = data.mdfcnId || '';
+                document.getElementById('mdfcnId').disabled = true;
+                document.getElementById('updDt').value = data.updDt || '';
+                document.getElementById('updDt').disabled = true;
+
+            } catch (error) {
+                console.error(error);
+                uiCommon.fnShowAlertModal('데이터를 불러오는데 실패했습니다.', () => this.fnGoToListPage());
+            }
+        },
+
+        fnBuildParam: function () {
+            return {
+                instNm: document.getElementById('instNm').value.trim(),
+                bizRegNo: document.getElementById('bizRegNo').value.trim(),
+                repNm: document.getElementById('repNm').value.trim(),
+                telPfx: document.getElementById('telPfx').value.trim(),
+                telMid: document.getElementById('telMid').value.trim(),
+                telSfx: document.getElementById('telSfx').value.trim(),
+                faxPfx: document.getElementById('faxPfx').value.trim() || null,
+                faxMid: document.getElementById('faxMid').value.trim() || null,
+                faxSfx: document.getElementById('faxSfx').value.trim() || null,
+                addr: document.getElementById('addr').value.trim() || null,
+                addrDtl: document.getElementById('addrDtl').value.trim() || null,
+                zipCd: document.getElementById('zipCd').value.trim() || null
+            };
+        },
+
+        /**
+         * 기관 등록
+         */
+        fnCreateData: async function () {
+            const formData = this.fnBuildParam();
+
+            try {
+                await API.put('/api/admin/admin810/org/insert', formData);
+                uiCommon.fnShowAlertModal('등록되었습니다.', () => this.fnGoToListPage());
+            } catch (error) {
+                console.error('등록 실패:', error);
+
+                // APIError 객체에서 메시지 추출
+                let errorMessage = '등록에 실패했습니다.';
+                if (error instanceof APIError) {
+                    // 중복값
+                    if (error.code === 'COMMON_004') {
+                        errorMessage = error.details;
+                        // 빈 값
+                    } else if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        /**
+         * 기관 수정
+         */
+        fnUpdateData: async function () {
+            const formData = this.fnBuildParam();
+            formData.instOid = this.state.instOid;
+
+            try {
+                await API.patch('/api/admin/admin810/org/update', formData);
+                uiCommon.fnShowAlertModal('수정되었습니다.', () => this.fnGoToListPage());
+            } catch (error) {
+                console.error('수정 실패:', error);
+
+                // APIError 객체에서 메시지 추출
+                let errorMessage = '수정에 실패했습니다.';
+                if (error instanceof APIError) {
+                    // 중복값
+                    if (error.code === 'COMMON_004') {
+                        errorMessage = error.details;
+                        // 빈 값
+                    } else if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                }
+
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        /**
+         * 페이지 이동 - 기관 관리 목록
+         */
+        fnGoToListPage: function () {
+            window.location.href = contextPath + '/admin/page/admin810';
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        admin810_1.init();
+    });
+</script>
+</body>
+</html>

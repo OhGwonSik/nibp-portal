@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="egovframework.common.search.mapper.IntegratedSearchMapper">
+
+	<sql id="integratedSearchBase">
+        WITH RECURSIVE MenuHierarchy AS (
+            <!-- Root 메뉴 정의 -->
+            SELECT 
+                menu_oid, menu_nm, menu_cd, bbs_oid, up_menu_oid, menu_lv,
+                menu_oid AS root_menu_no, menu_nm AS root_menu_nm,
+                CAST(menu_nm AS CHAR(500)) as menu_path
+            FROM ${schema}.menu
+            WHERE menu_lv = 1 AND menu_type <![CDATA[ != ]]> 'HIDDEN'
+              AND menu_auth_lv = 'COMMON' AND use_yn = 'Y'
+            UNION ALL
+            <!-- 하위 메뉴 누적 -->
+            SELECT 
+                m.menu_oid, m.menu_nm, m.menu_cd, m.bbs_oid, m.up_menu_oid, m.menu_lv,
+                mh.root_menu_no, mh.root_menu_nm,
+                CONCAT(mh.menu_path, ' > ', m.menu_nm)
+            FROM ${schema}.menu m
+            INNER JOIN MenuHierarchy mh ON m.up_menu_oid = mh.menu_oid
+            WHERE m.use_yn = 'Y'
+        )
+        SELECT * FROM (
+            <!-- 공지사항 -->
+            SELECT 'NOTICE' AS bbs_se_cd, n.ntc_oid AS post_id, n.ntc_oid AS noticeNo, NULL AS bbsOid,
+                   'NOTICE' AS menuCd, mh.menu_nm AS menuNm, n.ntc_nm AS title, n.ntc_cn_txt AS content,
+                   n.reg_dt AS reg_date, n.inq_cnt AS view_count, mh.menu_path, mh.root_menu_no, mh.root_menu_nm,
+                   (MATCH(n.ntc_nm) AGAINST(#{ngramKeyword} IN BOOLEAN MODE) + MATCH(n.ntc_cn_txt) AGAINST(#{ngramKeyword} IN BOOLEAN MODE)) AS score
+            FROM ${schema}.ntc n
+            LEFT JOIN MenuHierarchy mh ON mh.menu_cd = 'NOTICE'
+            WHERE n.use_yn = 'Y' AND n.open_yn = 'Y'
+              AND (MATCH(n.ntc_nm) AGAINST(#{ngramKeyword} IN BOOLEAN MODE) OR MATCH(n.ntc_cn_txt) AGAINST(#{ngramKeyword} IN BOOLEAN MODE))
+            UNION ALL
+            <!-- 동적 게시글 -->
+            SELECT 'POST' AS bbs_se_cd, b.bbs_pst_oid AS post_id, NULL AS noticeNo, b.bbs_oid AS bbsOid,
+                   mh.menu_cd AS menuCd, mh.menu_nm AS menuNm, b.bbs_pst_ttl AS title, b.bbs_pst_cn_txt AS content,
+                   b.reg_dt AS reg_date, b.inq_cnt AS view_count, mh.menu_path, mh.root_menu_no, mh.root_menu_nm,
+                   (MATCH(b.bbs_pst_ttl) AGAINST(#{ngramKeyword} IN BOOLEAN MODE) + MATCH(b.bbs_pst_cn_txt) AGAINST(#{ngramKeyword} IN BOOLEAN MODE)) AS score
+            FROM ${schema}.bbs_pst b
+            INNER JOIN MenuHierarchy mh ON b.bbs_oid = mh.bbs_oid
+            WHERE b.del_yn = 'N' AND (b.prvt_pst_yn = 'N' OR b.prvt_pst_yn IS NULL) AND b.up_bbs_pst_oid IS NULL AND b.open_yn = 'Y'
+              AND (MATCH(b.bbs_pst_ttl) AGAINST(#{ngramKeyword} IN BOOLEAN MODE) OR MATCH(b.bbs_pst_cn_txt) AGAINST(#{ngramKeyword} IN BOOLEAN MODE))
+			UNION ALL
+			<!-- FAQ -->
+			SELECT 'FAQ' AS bbs_se_cd, f.faq_dtl_oid AS post_id, NULL AS noticeNo, NULL AS bbsOid,
+			       'FAQ' AS menuCd, mh.menu_nm AS menuNm, f.qstn_cn AS title, f.ans_cn_txt AS content,
+			       f.reg_dt AS reg_date, f.inq_cnt AS view_count, mh.menu_path,
+			       mh.root_menu_no, mh.root_menu_nm,
+			       (MATCH(f.qstn_cn) AGAINST(#{ngramKeyword} IN BOOLEAN MODE) + MATCH(f.ans_cn_txt) AGAINST(#{ngramKeyword} IN BOOLEAN MODE)) AS score
+			FROM ${schema}.faq_dtl f
+			INNER JOIN ${schema}.faq_ctgry fc ON f.faq_ctgry_oid = fc.faq_ctgry_oid AND fc.use_yn = 'Y'
+			LEFT JOIN MenuHierarchy mh ON mh.menu_cd = 'FAQ'
+			WHERE f.use_yn = 'Y' AND f.open_yn = 'Y'
+			  AND (MATCH(f.qstn_cn) AGAINST(#{ngramKeyword} IN BOOLEAN MODE) OR MATCH(f.ans_cn_txt) AGAINST(#{ngramKeyword} IN BOOLEAN MODE))
+	        UNION ALL
+	        <!-- QnA -->
+	        SELECT 'QNA' AS bbs_se_cd, q.qna_oid AS post_id, NULL AS noticeNo, NULL AS bbsOid,
+	               'QNA' AS menuCd, mh.menu_nm AS menuNm, q.qna_ttl AS title, q.qna_cn_txt AS content,
+	               q.reg_dt AS reg_date, q.inq_cnt AS view_count,
+	               mh.menu_path, mh.root_menu_no, mh.root_menu_nm,
+	               (MATCH(q.qna_ttl) AGAINST(#{ngramKeyword} IN BOOLEAN MODE) + MATCH(q.qna_cn_txt) AGAINST(#{ngramKeyword} IN BOOLEAN MODE)) AS score
+	        FROM ${schema}.qna q
+	        LEFT JOIN MenuHierarchy mh ON mh.menu_cd = 'QNA'
+	        WHERE q.use_yn = 'Y' AND prvt_pst_yn = 'N'
+	          AND q.up_qna_oid IS NULL
+	          AND (MATCH(q.qna_ttl) AGAINST(#{ngramKeyword} IN BOOLEAN MODE) OR MATCH(q.qna_cn_txt) AGAINST(#{ngramKeyword} IN BOOLEAN MODE))
+        ) AS results
+        WHERE score <![CDATA[ > ]]> 0
+    </sql>
+
+    <select id="selectInitialSearchList" resultType="egovframework.common.search.domain.IntegratedSearchResultDTO">
+        SELECT * FROM (
+            SELECT 
+                base.*,
+                <!-- 그룹별 순번 매김 -->
+                ROW_NUMBER() OVER(PARTITION BY root_menu_no 
+                                  ORDER BY 
+                                  <choose>
+                                      <when test="sort == 'accuracy'">reg_date DESC, score DESC, post_id DESC, bbs_se_cd ASC</when>
+                                      <otherwise>reg_date DESC, score DESC, post_id DESC, bbs_se_cd ASC</otherwise>
+                                  </choose>
+                                 ) as row_num,
+                <!-- 그룹별 전체 카운트 -->
+                COUNT(*) OVER(PARTITION BY root_menu_no) as group_total_cnt
+            FROM (
+                <include refid="integratedSearchBase" />
+            ) AS base
+        ) AS final
+        WHERE row_num <![CDATA[ <= ]]> 3
+        ORDER BY root_menu_no ASC, row_num ASC
+    </select>
+
+    <select id="selectMoreSearchList" resultType="egovframework.common.search.domain.IntegratedSearchResultDTO">
+        SELECT * FROM (
+            <include refid="integratedSearchBase" />
+        ) AS res
+        WHERE root_menu_no = #{rootMenuNo}
+        ORDER BY 
+        <choose>
+            <when test="sort == 'accuracy'">score DESC, reg_date DESC, post_id DESC, bbs_se_cd ASC</when>
+            <otherwise>reg_date DESC, score DESC, post_id DESC, bbs_se_cd ASC</otherwise>
+        </choose>
+    </select>
+</mapper>

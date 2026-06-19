@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>정보공개 > 공공데이터 의견수렴 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    
+    <div class="search_wrap">
+        <ul>
+            <li>
+                <label for="search_keyword">제목</label>
+                <input type="text" id="search_keyword" placeholder="제목을 입력하세요" title="제목 입력">
+            </li>
+            <li>
+                <label for="datepicker1">등록일</label>
+                <div class="flex_col">
+                    <span class="datepicker">
+                        <input type="text" value="시작일" id="datepicker1" class="datepick">
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                    </span>
+                    ~
+                    <span class="datepicker">
+                        <input type="text" value="종료일" id="datepicker2" class="datepick">
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                    </span>
+                </div>
+            </li>
+        </ul>
+        <div class="s_wrap">
+            <a class="btn_search" href="javascript:;" id="btn_search"><span>검색</span></a>
+        </div>
+    </div>
+    
+    <hr class="h_bg_type">
+    
+    <div class="sub_cont_wrap">
+        <div class="table_desc">
+            <p>총 <strong id="total_count">0</strong>건</p>
+        </div>
+        
+        <div class="table_layout02 list_type mb20">
+            <table>
+                <caption>공공데이터 의견수렴 목록</caption>
+                <colgroup>
+                    <col style="width: 80px;">
+                    <col style="width: auto;">
+                    <col style="width: 15%;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">No</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">등록일</th>
+                </tr>
+                </thead>
+                <tbody id="opinion_list_container"></tbody>
+            </table>
+        </div>
+        
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin201 = {
+
+        /**
+         * 상태 관리
+         */
+        state: {
+            list: [],       // 현재 페이지 목록
+            pageIndex: 1,
+            pageSize: 10,
+            total: 0,       // 총 개수
+            keyword: '',    // 검색어
+        },
+
+        /**
+         * 초기화
+         */
+        init: function () {
+            this.initDatepicker();
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin201', '.search_wrap');
+            if (saved) {
+                this.state.pageIndex = saved._extra.pageIndex || 1;
+            }
+
+            // 초기 목록 조회
+            this.fetchList().then(() => {
+                this.renderTable();
+                this.renderPagination();
+                this.initEvent();
+            });
+        },
+
+        /**
+         * Datepicker 초기화
+         */
+        initDatepicker: function() {
+            const _this = this;
+
+            uiCommon.datepicker.init('#datepicker1', {
+                onSelect: function(selectedDate) {
+                    $('#datepicker2').datepicker('option', 'minDate', selectedDate);
+                    _this.state.pageIndex = 1;
+                    _this.fetchList().then(() => {
+                        _this.renderTable();
+                        _this.renderPagination();
+                    });
+                }
+            });
+
+            uiCommon.datepicker.init('#datepicker2', {
+                onSelect: function(selectedDate) {
+                    $('#datepicker1').datepicker('option', 'maxDate', selectedDate);
+                    _this.state.pageIndex = 1;
+                    _this.fetchList().then(() => {
+                        _this.renderTable();
+                        _this.renderPagination();
+                    });
+                }
+            });
+
+            // 기본 1주일 전 세팅
+            const today = new Date();
+            const weekAgo = new Date();
+            weekAgo.setDate(today.getDate() - 7);
+
+            $('#datepicker1').datepicker('setDate', weekAgo);
+            $('#datepicker2').datepicker('setDate', today);
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼 클릭 이벤트
+            const btnSearch = document.getElementById("btn_search");
+            if (btnSearch) {
+                btnSearch.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    _this.state.pageIndex = 1; // 검색 시 1페이지로 초기화
+                    _this.fetchList().then(() => {
+                        _this.renderTable();
+                        _this.renderPagination();
+                    });
+                });
+            }
+
+            // 검색어 엔터키 이벤트
+            const searchInput = document.getElementById("search_keyword");
+            if (searchInput) {
+                searchInput.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") {
+                        if (btnSearch) btnSearch.click();
+                    }
+                });
+            }
+
+            // 목록 제목 클릭 이벤트 (이벤트 위임 사용)
+            const listContainer = document.getElementById("opinion_list_container");
+            if (listContainer) {
+                listContainer.addEventListener("click", function (e) {
+                    const target = e.target.closest(".opinion_title_link");
+                    
+                    if (target) {
+                        e.preventDefault();
+                        const pblDataOpnnOid = target.getAttribute("data-id");
+                        _this.fnGoToDetail(pblDataOpnnOid);
+                    }
+                });
+            }
+        },
+
+        /**
+         * 목록 데이터 조회
+         */
+        fetchList: async function () {
+            SearchState.saveForm('admin201', '.search_wrap', { pageIndex: this.state.pageIndex });
+
+            const keywordInput = document.getElementById("search_keyword");
+            const date1 = document.getElementById("datepicker1");
+            const date2 = document.getElementById("datepicker2");
+
+            const params = {
+                keyword: keywordInput ? keywordInput.value.trim() : "",
+                regDtFrom: date1 ? date1.value : "",
+                regDtTo: date2 ? date2.value : "",
+                pageIndex: this.state.pageIndex,
+                pageSize: this.state.pageSize
+            };
+
+            const query = new URLSearchParams();
+            if (params.keyword) query.append("keyword", params.keyword);
+            if (params.regDtFrom) query.append("regDtFrom", params.regDtFrom);
+            if (params.regDtTo) query.append("regDtTo", params.regDtTo);
+            query.append("pageIndex", params.pageIndex);
+            query.append("pageSize", params.pageSize);
+
+            try {
+                // API 호출
+                const resp = await API.get(`/api/admin/admin201/list/filter?${query.toString()}`);
+                const data = resp || {};
+
+                this.state.list = data.list || [];
+                this.state.total = data.total || 0;
+                this.state.pageIndex = data.pageIndex || params.pageIndex;
+                
+                return data;
+            } catch (error) {
+                console.error("목록 조회 실패", error);
+                this.state.list = [];
+                this.state.total = 0;
+            }
+        },
+
+        /**
+         * 테이블 렌더링
+         */
+        renderTable: function () {
+            const tbody = document.getElementById("opinion_list_container");
+            const totalCountEl = document.getElementById("total_count");
+            
+            // 기존 내용 초기화
+            if (tbody) tbody.innerHTML = "";
+
+            const list = this.state.list;
+
+            // 데이터가 없을 경우 처리
+            if (!list || list.length === 0) {
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td class="tac" colspan="3">조회된 결과가 없습니다.</td></tr>';
+                }
+                if (totalCountEl) totalCountEl.innerText = "0";
+                return;
+            }
+
+            // HTML 생성
+            let html = "";
+            list.forEach(item => {
+                const pblDataOpnnOid = item.pblDataOpnnOid || "";
+                const pblDataOpnnTtl = item.pblDataOpnnTtl || "";
+                const regUserId = item.regId || "-";
+                const regDt = common.formatDate(item.regDt); 
+
+                html += `
+                    <tr>
+                        <td class="tac">${pblDataOpnnOid}</td>
+                        <td class="tal">
+                            <a href="#" class="a_link opinion_title_link" data-id="${pblDataOpnnOid}">
+                                ${pblDataOpnnTtl}
+                            </a>
+                        </td>
+                        <td class="tac">${regDt}</td>
+                    </tr>
+                `;
+            });
+
+            if (tbody) tbody.innerHTML = html;
+            if (totalCountEl) totalCountEl.innerText = this.state.total;
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+            const totalPages = Math.ceil(_this.state.total / _this.state.pageSize);
+
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: totalPages,
+                onPageChange: function(page) {
+                    _this.state.pageIndex = page;
+                    _this.fetchList().then(() => {
+                        _this.renderTable();
+                        _this.renderPagination();
+                    });
+                }
+            });
+        },
+
+        /**
+         * 상세 페이지 이동
+         */
+        fnGoToDetail: function (pblDataOpnnOid) {
+            window.location.href = contextPath + `/admin/page/admin201-1?pblDataOpnnOid=${pblDataOpnnOid}`;
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+        admin201.init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin500.mapper.Admin501Mapper">
+
+	<select id="selectAdmin501List" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" resultType="egovframework.admin.admin500.domain.Admin501VO">
+		/* selectAdmin501List */
+		SELECT
+			ts.srvy_oid, ts.srvy_ttl, ts.srvy_bgng_dt, ts.srvy_end_dt, ts.srvy_type, tc2.cd_nm AS srvy_type_nm
+			,ts.srvy_trgt, tc.cd_nm AS srvyTgtNm
+			, tc1.cd_nm AS srvy_stts, ts.nm_clct_yn, ts.gndr_clct_yn, ts.inst_clct_yn
+			, ts.mpno_clct_yn, ts.eml_clct_yn, ts.addr_clct_yn
+			, ts.srvy_cn, ts.atch_file_use_yn, ts.atch1_file_ttl, ts.atch1_file_oid
+			, ts.atch2_file_ttl, ts.atch2_file_oid
+			, ts.rspns_cnt, ts.reg_id, ts.reg_dt, ts.mdfcn_id, ts.mdfcn_dt
+		FROM
+			${schema}.srvy ts
+		LEFT JOIN ${schema}.grp_cd tgc ON
+			 tgc.grp_cd = 'survey_tgt'
+			 AND tgc.use_yn = 'Y'
+		LEFT JOIN ${schema}.cd tc ON
+			tc.grp_cd_oid = tgc.grp_cd_oid
+			AND tc.cd_val = ts.srvy_trgt
+			AND tc.use_yn = 'Y'
+		LEFT JOIN ${schema}.grp_cd tgc1 ON
+			 tgc1.grp_cd = 'survey_stat'
+			 AND tgc1.use_yn = 'Y'
+		LEFT JOIN ${schema}.cd tc1 ON
+			tc1.grp_cd_oid = tgc1.grp_cd_oid
+			AND tc1.cd_val = ts.srvy_stts
+			AND tc1.use_yn = 'Y'
+		LEFT JOIN ${schema}.grp_cd tgc2 ON
+			 tgc2.grp_cd = 'survey_type'
+			 AND tgc2.use_yn = 'Y'
+		LEFT JOIN ${schema}.cd tc2 ON
+			tc2.grp_cd_oid = tgc2.grp_cd_oid
+			AND tc2.cd_val = ts.srvy_type
+			AND tc2.use_yn = 'Y'				
+		<where>
+            ts.srvy_stts <![CDATA[ <> ]]> 'DEL'
+			<if test='srvyOid != null and srvyOid !=""'>
+				AND ts.srvy_oid = #{srvyOid}
+			</if>
+			<if test='srvyTtl != null and srvyTtl !=""'>
+				AND ts.srvy_ttl like CONCAT('%',#{srvyTtl},'%')
+			</if>
+			<if test='srvyStts != null and srvyStts != ""'>
+				AND ts.srvy_stts = #{srvyStts}
+			</if>
+			<if test='srvyBgngDt != null and srvyBgngDt != ""'>
+				AND ts.reg_dt <![CDATA[ >= ]]> CONCAT(#{srvyBgngDt}, ' 23:59:59')
+			</if>
+			<if test='surveyEndtDt != null and surveyEndtDt != ""'>
+				AND ts.reg_dt <![CDATA[ <= ]]> CONCAT(#{surveyEndtDt}, ' 23:59:59')
+			</if>
+			<if test='regStartDt != null and regStartDt != ""'>
+				AND ts.reg_dt <![CDATA[ >= ]]> CONCAT(#{regStartDt}, ' 23:59:59')
+			</if>
+			<if test='regEndDt != null and regEndDt != ""'>
+				AND ts.reg_dt <![CDATA[ <= ]]> CONCAT(#{regEndDt}, ' 23:59:59')
+			</if>
+			<if test='srvyType != null and srvyType != ""'>
+				AND ts.srvy_type = #{srvyType}
+			</if>
+		</where>
+		ORDER BY
+			srvy_oid DESC
+	</select>
+
+	<select id="selectAdmin501Detail" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" resultType="egovframework.admin.admin500.domain.Admin501SurveyDTO">
+		/* selectAdmin501Detail */
+		SELECT
+			srvy_oid, srvy_ttl, srvy_bgng_dt, srvy_end_dt, srvy_type
+			, srvy_trgt, nm_clct_yn, gndr_clct_yn, inst_clct_yn
+			, mpno_clct_yn, eml_clct_yn, addr_clct_yn
+			, srvy_cn, atch_file_use_yn, atch1_file_ttl, atch1_file_oid
+			, atch2_file_ttl, atch2_file_oid
+			, CASE 
+				WHEN srvy_stts = 'DEL' THEN '미사용'
+				ELSE '사용'
+			  END AS srvy_stts
+			, rspns_cnt, reg_id, reg_dt, mdfcn_id, mdfcn_dt
+		FROM
+			${schema}.srvy
+		<where>
+			<if test='srvyOid != null and srvyOid !=""'>
+				AND srvy_oid = #{srvyOid}
+			</if>		
+		</where>
+		ORDER BY
+			srvy_oid DESC
+	</select>	
+	
+	<select id="selectAdmin501SurveyQstList" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" resultType="egovframework.admin.admin500.domain.SurveyQuestionDTO">
+		/* selectAdmin501SurveyQstList */
+		SELECT
+	        q.srvy_qitem_oid, q.srvy_oid, q.up_srvy_qitem_oid, q.srvy_qitem_seq
+	        , q.srvy_qitem_ttl, q.srvy_qitem_type, q.esntl_yn, q.plrl_chc_yn
+	        , q.lmt_yn, q.etc_add_yn, q.likert_min, q.likert_max
+	        , q.likert_min_lbl, q.likert_max_lbl, q.srvy_qitem_lmt
+	        , q.reg_id, q.mdfcn_id,
+	        CASE
+	            WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NULL THEN 0 WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NOT NULL THEN 1 WHEN p.srvy_qitem_type IS NULL THEN 1                                 ELSE 2                                                        END AS level,
+	        CASE
+	            WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NULL THEN CONCAT('CH', q.srvy_qitem_seq)
+	            WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NOT NULL THEN CAST(q.srvy_qitem_seq AS CHAR)
+	            WHEN p.up_srvy_qitem_oid IS NULL AND p.srvy_qitem_type IS NULL THEN CAST(q.srvy_qitem_seq AS CHAR)
+	            ELSE CONCAT(p.srvy_qitem_seq, '-', q.srvy_qitem_seq)
+	        END AS displayQNo,
+	        CASE
+	            WHEN q.up_srvy_qitem_oid IS NULL THEN NULL
+	            WHEN p.up_srvy_qitem_oid IS NULL AND p.srvy_qitem_type IS NULL THEN CONCAT('CH', p.srvy_qitem_seq)
+	            ELSE CAST(p.srvy_qitem_seq AS CHAR)
+	        END AS parentDisplayQNo
+	    FROM ${schema}.srvy_qitem q
+	    LEFT JOIN ${schema}.srvy_qitem p ON q.up_srvy_qitem_oid = p.srvy_qitem_oid
+	    LEFT JOIN ${schema}.srvy_qitem gp ON p.up_srvy_qitem_oid = gp.srvy_qitem_oid
+	    WHERE q.srvy_oid = #{srvyOid}
+	    ORDER BY
+	        /* 최상위 그룹핑 (Root Sequence) */
+	        /* 목적: 모든 항목을 '최상위 챕터 또는 독립 문항'의 순번으로 묶음 */
+	        CASE
+	            WHEN gp.srvy_qitem_oid IS NOT NULL THEN gp.srvy_qitem_seq   <!-- Lv.2 (조부모의 순번 사용) -->
+	            WHEN p.srvy_qitem_oid IS NOT NULL  THEN p.srvy_qitem_seq    <!-- Lv.1 (부모의 순번 사용) -->
+	            ELSE q.srvy_qitem_seq                               <!-- Lv.0 또는 독립 Lv.1 (내 순번 사용) -->
+	        END ASC,
+	        /* 그룹 내 상위 문항 정렬 (Parent Sequence) */
+	        /* 목적: 챕터(Lv.0)를 가장 위로 올리고, 그 다음 Lv.1 문항들을 정렬함 */
+	        CASE
+	            WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NULL THEN 0 <!-- Lv.0 (챕터) -->
+	            WHEN gp.srvy_qitem_oid IS NOT NULL THEN p.srvy_qitem_seq                 <!-- Lv.2 (부모 문항의 순번 따라감) -->
+	            ELSE q.srvy_qitem_seq                                            <!-- Lv.1 (내 순번 사용) -->
+	        END ASC,
+	        /* 하위 문항 정렬 (Leaf Sequence) */
+	        /* 목적: 같은 부모 문항을 가진 Lv.2 항목들끼리의 최종 순서를 결정 */
+	        CASE
+	            WHEN gp.srvy_qitem_oid IS NOT NULL THEN q.srvy_qitem_seq <!-- Lv.2 (내 순번으로 정렬) -->
+	            ELSE 0
+	        END ASC
+	</select>
+
+	<select id="selectAdmin501OptList" parameterType="list" resultType="egovframework.admin.admin500.domain.SurveyOptionDTO">
+		/* selectAdmin501OptList */
+	    SELECT
+			srvy_qitem_opt_oid, srvy_qitem_oid, srvy_qitem_opt_seq, srvy_qitem_opt_txt
+			, srvy_qitem_opt_img_file_oid, etc_opt_yn, rspns_cnt
+			, reg_id, reg_dt, mdfcn_id, mdfcn_dt
+	    FROM ${schema}.srvy_qitem_opt
+	    WHERE srvy_qitem_oid IN
+	    <foreach collection="srvyQitemOidList" item="srvyQitemOid" open="(" separator="," close=")">
+	        #{srvyQitemOid}
+	    </foreach>
+	    ORDER BY srvy_qitem_opt_seq
+	</select>
+
+	<!-- srvy 저장 -->
+	<insert id="insertAdmin501Survey" parameterType="egovframework.admin.admin500.domain.SurveySaveDTO" useGeneratedKeys="true" keyProperty="srvyOid">
+		/* insertAdmin501Survey */
+		INSERT INTO ${schema}.srvy(
+	          srvy_ttl, srvy_bgng_dt, srvy_end_dt, srvy_trgt, srvy_type
+	        , srvy_cn, nm_clct_yn, gndr_clct_yn
+	        , inst_clct_yn, mpno_clct_yn
+	        , eml_clct_yn, addr_clct_yn
+	        , srvy_stts, reg_id, reg_dt, mdfcn_id, mdfcn_dt
+	    )
+	    VALUES (
+	          #{srvyTtl}, #{srvyBgngDt}, #{srvyEndDt}, #{srvyTrgt}, #{srvyType}
+	        , #{srvyCn} , #{nmClctYn} , #{gndrClctYn}
+	        , #{instClctYn}, #{mpnoClctYn}
+	        , #{emlClctYn}, #{addrClctYn}
+		    , #{srvyStts}, #{regId}, NOW(),#{mdfcnId}, NOW()
+	    )
+	</insert>
+
+	<!-- srvy_qitem 저장 -->
+	<insert id="insertAdmin501SurveyQst" parameterType="egovframework.admin.admin500.domain.SurveyQuestionDTO" useGeneratedKeys="true" keyProperty="srvyQitemOid">
+	    /* insertAdmin501SurveyQst */
+	    INSERT INTO ${schema}.srvy_qitem (
+	          srvy_oid , up_srvy_qitem_oid , srvy_qitem_seq
+	        , srvy_qitem_ttl , srvy_qitem_type , esntl_yn , plrl_chc_yn
+	        , lmt_yn , srvy_qitem_lmt , etc_add_yn , likert_min
+	        , likert_max , likert_min_lbl , likert_max_lbl
+	        , reg_id , reg_dt, mdfcn_id , mdfcn_dt
+	    )
+	    VALUES (
+	          #{srvyOid}, #{upSrvyQitemOid}, #{srvyQitemSeq}
+	        , #{srvyQitemTtl}, #{srvyQitemType}, #{esntlYn}, #{plrlChcYn}
+	        , #{lmtYn}, #{srvyQitemLmt}, #{etcAddYn}, #{likertMin}
+	        , #{likertMax}, #{likertMinLbl}, #{likertMaxLbl}
+	        , #{regId}, NOW(), #{mdfcnId}, NOW()
+	    )
+	</insert>
+
+	<!-- srvy_qitem_opt 저장 -->
+	<insert id="insertAdmin501SurveyOpt" parameterType="egovframework.admin.admin500.domain.SurveyOptionDTO" useGeneratedKeys="true" keyProperty="srvyQitemOptOid">
+	    /* insertAdmin501SurveyOpt */
+	    INSERT INTO ${schema}.srvy_qitem_opt (
+	          srvy_qitem_oid , srvy_qitem_opt_seq , srvy_qitem_opt_txt
+	        , srvy_qitem_opt_img_file_oid, etc_opt_yn
+	        , reg_id, reg_dt, mdfcn_id, mdfcn_dt
+	    )
+	    VALUES (
+	          #{srvyQitemOid}, #{srvyQitemOptSeq}, #{srvyQitemOptTxt}
+	        , #{srvyQitemOptImgFileOid}, #{etcOptYn}
+	        , #{regId}, NOW(), #{mdfcnId}, NOW()
+	    )
+	</insert>
+
+	<!-- srvy 복사 -->
+	<insert id="insertSurveyCopy" parameterType="egovframework.admin.admin500.domain.Admin501SurveyCopyDTO" useGeneratedKeys="true" keyProperty="newSrvyOid">
+		/* insertSurveyCopy */
+	    INSERT INTO ${schema}.srvy (
+	        srvy_ttl
+	        , srvy_bgng_dt, srvy_end_dt
+	        , srvy_type
+	        , srvy_trgt, nm_clct_yn, gndr_clct_yn
+	        , inst_clct_yn, mpno_clct_yn, eml_clct_yn
+	        , addr_clct_yn, srvy_cn, atch_file_use_yn
+	        , atch1_file_ttl, atch1_file_oid
+	        , atch2_file_ttl, atch2_file_oid
+	        , srvy_stts
+	        , reg_id, reg_dt
+	    )
+	    SELECT
+	        #{newSrvyTtl}
+			,
+	        <choose>
+	            <when test="srvyBgngDt != null and srvyBgngDt != ''">
+	                #{srvyBgngDt}
+	            </when>
+	            <otherwise>
+	                srvy_bgng_dt
+	            </otherwise>
+	        </choose>
+	        ,
+	        <choose>
+	            <when test="srvyEndDt != null and srvyEndDt != ''">
+	                #{srvyEndDt}
+	            </when>
+	            <otherwise>
+	                srvy_end_dt
+	            </otherwise>
+	        </choose>
+	        , srvy_type
+	        , srvy_trgt, nm_clct_yn, gndr_clct_yn
+	        , inst_clct_yn, mpno_clct_yn, eml_clct_yn
+	        , addr_clct_yn, srvy_cn, atch_file_use_yn
+	        , atch1_file_ttl, atch1_file_oid
+	        , atch2_file_ttl, atch2_file_oid
+	        , 'PROG'
+	        , #{userId}, NOW()
+	    FROM ${schema}.srvy
+	    WHERE srvy_oid = #{oldSrvyOid}
+	</insert>
+
+	<!-- srvy_qitem 복사 -->
+	<insert id="insertQuestionCopy" parameterType="egovframework.admin.admin500.domain.Admin501SurveyCopyDTO">
+		/* insertQuestionCopy */
+	    INSERT INTO ${schema}.srvy_qitem (
+	        srvy_oid
+	        , up_srvy_qitem_oid, srvy_qitem_seq, srvy_qitem_ttl
+	        , srvy_qitem_type, esntl_yn, plrl_chc_yn, lmt_yn
+	        , srvy_qitem_lmt, etc_add_yn
+	        , likert_min, likert_max, likert_min_lbl, likert_max_lbl
+	        , reg_id, reg_dt
+	    )
+	    SELECT
+	        #{newSrvyOid}
+	        , up_srvy_qitem_oid , srvy_qitem_seq, srvy_qitem_ttl
+	        , srvy_qitem_type, esntl_yn, plrl_chc_yn, lmt_yn
+	        , srvy_qitem_lmt, etc_add_yn
+	        , likert_min, likert_max, likert_min_lbl, likert_max_lbl
+	        , #{userId}, NOW()
+	    FROM ${schema}.srvy_qitem
+	    WHERE srvy_oid = #{oldSrvyOid}
+	    ORDER BY srvy_qitem_oid
+	</insert>
+
+	<!-- 선택지 복사 -->
+	<insert id="insertOptionCopy" parameterType="egovframework.admin.admin500.domain.Admin501OptDTO">
+	    /* insertOptionCopy */
+	    INSERT INTO ${schema}.srvy_qitem_opt (
+	        srvy_qitem_oid,
+	        srvy_qitem_opt_seq,
+	        srvy_qitem_opt_txt,
+	        srvy_qitem_opt_img_file_oid,
+	        etc_opt_yn,
+	        reg_id,
+	        reg_dt
+	    )
+	    VALUES (
+	        #{srvyQitemOid},
+	        #{srvyQitemOptSeq},
+	        #{srvyQitemOptTxt},
+	        #{srvyQitemOptImgFileOid},
+	        #{etcOptYn},
+	        #{regId},
+	        NOW()
+	    )
+	</insert>
+
+	<!-- 복사 전 문항 목록(old) / 복사 후 문항 목록(new) 조회 -->
+	<select id="selectQstList" parameterType="long" resultType="egovframework.admin.admin500.domain.Admin501QstDTO">
+	    /* selectQstList */
+	    SELECT
+	        srvy_qitem_oid,
+	        up_srvy_qitem_oid
+	    FROM ${schema}.srvy_qitem
+	    WHERE srvy_oid = #{srvyOid}
+	    ORDER BY srvy_qitem_oid
+	</select>
+
+	<!-- up_srvy_qitem_oid 매핑 업데이트 -->
+	<update id="updateParentQst">
+	    /* updateParentQst */
+	    UPDATE ${schema}.srvy_qitem
+	    SET up_srvy_qitem_oid = #{upSrvyQitemOid}
+	    WHERE srvy_qitem_oid = #{srvyQitemOid}
+	</update>
+
+	<!-- 선택지 조회(old) -->
+	<select id="selectOptList" parameterType="long" resultType="egovframework.admin.admin500.domain.Admin501OptDTO">
+	    /* selectOptList */
+	    SELECT
+	        srvy_qitem_opt_oid,
+	        srvy_qitem_oid,
+	        srvy_qitem_opt_seq,
+	        srvy_qitem_opt_txt,
+	        srvy_qitem_opt_img_file_oid,
+	        etc_opt_yn
+	    FROM ${schema}.srvy_qitem_opt
+	    WHERE srvy_qitem_oid IN (
+	        SELECT srvy_qitem_oid
+	        FROM ${schema}.srvy_qitem
+	        WHERE srvy_oid = #{srvyOid}
+	    )
+	    ORDER BY srvy_qitem_oid, srvy_qitem_opt_seq
+	</select>
+
+	<!-- 설문 삭제 soft delete -->
+	<update id="updateAdmin501Stat" parameterType="egovframework.admin.admin500.domain.Admin501VO">
+		/* updateAdmin501Stat */
+		UPDATE ${schema}.srvy
+			SET srvy_stts = #{srvyStts}
+				, mdfcn_id = #{mdfcnId}
+				, mdfcn_dt = now()
+		WHERE
+			srvy_oid = #{srvyOid}
+	</update>
+
+
+	<update id="updateAdmin501SurveyBase" parameterType="egovframework.admin.admin500.domain.SurveySaveDTO">
+		/* updateAdmin501SurveyBase */
+	    UPDATE ${schema}.srvy
+		    SET
+		        srvy_ttl = #{srvyTtl},
+		        srvy_bgng_dt = #{srvyBgngDt},
+		        srvy_end_dt = #{srvyEndDt},
+		        srvy_trgt = #{srvyTrgt},
+		        srvy_type = #{srvyType},
+		        srvy_stts = #{srvyStts},
+		        nm_clct_yn = #{nmClctYn},
+		        gndr_clct_yn = #{gndrClctYn},
+		        inst_clct_yn = #{instClctYn},
+		        mpno_clct_yn = #{mpnoClctYn},
+		        eml_clct_yn = #{emlClctYn},
+		        addr_clct_yn = #{addrClctYn},
+		        srvy_cn = #{srvyCn},
+		        mdfcn_id = #{mdfcnId},
+		        mdfcn_dt = NOW()
+		    WHERE
+		        srvy_oid = #{srvyOid}
+	</update>
+
+	<!-- 문항 생성 및 수정 update 모드 -->
+	<insert id="upsertAdmin501SurveyQst" parameterType="egovframework.admin.admin500.domain.SurveyQuestionDTO" useGeneratedKeys="true" keyProperty="srvyQitemOid">
+		/* upsertAdmin501SurveyQst */
+	    INSERT INTO ${schema}.srvy_qitem (
+	        srvy_qitem_oid, srvy_oid, up_srvy_qitem_oid, srvy_qitem_seq, srvy_qitem_ttl, srvy_qitem_type, esntl_yn,
+	        plrl_chc_yn, lmt_yn, srvy_qitem_lmt, etc_add_yn, likert_min, likert_max,
+	        likert_min_lbl, likert_max_lbl, reg_id, mdfcn_id
+	    ) VALUES (
+	        #{srvyQitemOid}, #{srvyOid}, #{upSrvyQitemOid}, #{srvyQitemSeq}, #{srvyQitemTtl}, #{srvyQitemType}, #{esntlYn},
+	        #{plrlChcYn}, #{lmtYn}, #{srvyQitemLmt}, #{etcAddYn}, #{likertMin}, #{likertMax},
+	        #{likertMinLbl}, #{likertMaxLbl}, #{regId}, #{mdfcnId}
+	    )
+	    ON DUPLICATE KEY UPDATE
+	        up_srvy_qitem_oid = #{upSrvyQitemOid},
+	        srvy_qitem_seq = #{srvyQitemSeq},
+	        srvy_qitem_ttl = #{srvyQitemTtl},
+	        srvy_qitem_type = #{srvyQitemType},
+	        esntl_yn = #{esntlYn},
+	        plrl_chc_yn = #{plrlChcYn},
+	        lmt_yn = #{lmtYn},
+	        srvy_qitem_lmt = #{srvyQitemLmt},
+	        etc_add_yn = #{etcAddYn},
+	        likert_min = #{likertMin},
+	        likert_max = #{likertMax},
+	        likert_min_lbl = #{likertMinLbl},
+	        likert_max_lbl = #{likertMaxLbl},
+	        mdfcn_id = #{mdfcnId},
+	        mdfcn_dt = NOW()
+	</insert>
+
+	<insert id="upsertAdmin501SurveyOpt" parameterType="egovframework.admin.admin500.domain.SurveyOptionDTO" useGeneratedKeys="true" keyProperty="srvyQitemOptOid">
+		/* upsertAdmin501SurveyOpt */
+	    INSERT INTO ${schema}.srvy_qitem_opt (
+	        srvy_qitem_opt_oid, srvy_qitem_oid, srvy_qitem_opt_seq, srvy_qitem_opt_txt, srvy_qitem_opt_img_file_oid, etc_opt_yn, reg_id, mdfcn_id
+	    ) VALUES (
+	        #{srvyQitemOptOid}, #{srvyQitemOid}, #{srvyQitemOptSeq}, #{srvyQitemOptTxt}, #{srvyQitemOptImgFileOid}, #{etcOptYn}, #{regId}, #{mdfcnId}
+	    )
+	    ON DUPLICATE KEY UPDATE
+	        srvy_qitem_oid = #{srvyQitemOid},
+	        srvy_qitem_opt_seq = #{srvyQitemOptSeq},
+	        srvy_qitem_opt_txt = #{srvyQitemOptTxt},
+	        srvy_qitem_opt_img_file_oid = #{srvyQitemOptImgFileOid},
+	        etc_opt_yn = #{etcOptYn},
+	        mdfcn_id = #{mdfcnId},
+	        mdfcn_dt = NOW()
+	</insert>
+
+	<delete id="deleteAdmin501SurveyQstList" parameterType="java.util.List">
+		/* deleteAdmin501SurveyQstList */
+	    DELETE FROM ${schema}.srvy_qitem
+	    WHERE srvy_qitem_oid IN
+	    <foreach item="item" index="index" collection="srvyQitemOidList" open="(" separator="," close=")">
+	        #{item}
+	    </foreach>
+	</delete>
+
+	<delete id="deleteAdmin501SurveyOptList" parameterType="java.util.List">
+		/* deleteAdmin501SurveyOptList */
+	    DELETE FROM ${schema}.srvy_qitem_opt
+	    WHERE srvy_qitem_opt_oid IN
+	    <foreach item="item" index="index" collection="optNoList" open="(" separator="," close=")">
+	        #{item}
+	    </foreach>
+	</delete>
+
+	<update id="updateUpSrvyQitemOid" parameterType="map">
+	    UPDATE ${schema}.srvy_qitem
+	    SET up_srvy_qitem_oid = #{upSrvyQitemOid}
+	      , mdfcn_id = #{mdfcnId}
+	      , mdfcn_dt = NOW()
+	    WHERE srvy_qitem_oid = #{srvyQitemOid}
+	</update>
+</mapper>

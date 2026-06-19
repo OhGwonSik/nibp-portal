@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소개 > 조직구성</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Level 2 컨테이너 스타일 */
+        .level02_container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding-bottom: 50px;
+            flex-wrap: wrap;
+        }
+
+        .level02_wrapper {
+            flex: 1;
+            max-width: 400px;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 반응형: 태블릿 */
+        @media screen and (max-width: 1024px) {
+            .level02_container {
+                gap: 30px;
+            }
+
+            .level02_wrapper {
+                max-width: 350px;
+                min-width: 280px;
+            }
+
+            .organization_wrap > div > strong {
+                font-size: 15px;
+                padding: 12px;
+                max-width: 200px;
+            }
+
+            .department_wrap ul li {
+                min-width: 280px;
+            }
+        }
+
+        /* 반응형: 모바일 */
+        @media screen and (max-width: 768px) {
+            .level02_container {
+                flex-direction: column;
+                gap: 20px;
+                align-items: center;
+            }
+
+            .level02_wrapper {
+                max-width: 100%;
+                min-width: 100%;
+                width: 100%;
+            }
+
+            .organization_wrap > div > strong {
+                font-size: 14px;
+                padding: 10px;
+                max-width: 180px;
+            }
+
+            .department_wrap {
+                width: 100%;
+            }
+
+            .department_wrap ul {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .department_wrap ul li {
+                min-width: 100%;
+                width: 100%;
+            }
+        }
+
+        /* 반응형: 작은 모바일 */
+        @media screen and (max-width: 480px) {
+            .organization_wrap > div > strong {
+                font-size: 13px;
+                padding: 8px;
+                max-width: 150px;
+            }
+
+            .level02_container {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">조직구성</h3>
+    <div class="bg_box">
+        ※ 부서명을 클릭하시면 해당 부서의 정보를 볼 수 있습니다.<br>※ 국가생명윤리정책원 <b class="color_01">02-737-8970</b>
+    </div>
+    <div class="organization_wrap" id="organization_container">
+        <!-- 동적으로 조직도가 렌더링됩니다 -->
+    </div>
+</div>
+
+<th:block layout:fragment="main_modal">
+    <th:block th:replace="~{portal/modal/dept_info :: dept_info}"></th:block>
+</th:block>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal105 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            orgData: null
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+            _this.loadOrgData();
+        },
+
+        /**
+         * 조직도 데이터 로드
+         */
+        loadOrgData: async function () {
+            try {
+                const response = await API.get('/api/common/organization/tree');
+                this.state.orgData = response;
+                this.renderOrgChart(response);
+            } catch (error) {
+                console.error('조직도 로드 실패:', error);
+                document.getElementById('organization_container').innerHTML =
+                    '<p class="error_msg">조직도 데이터를 불러올 수 없습니다.</p>';
+            }
+        },
+
+        /**
+         * 조직도 렌더링
+         */
+        renderOrgChart: function (orgData) {
+            const container = document.getElementById('organization_container');
+
+            if (!orgData || orgData.length === 0) {
+                container.innerHTML = '<p>조직도 데이터가 없습니다.</p>';
+                return;
+            }
+
+            let html = '';
+
+            // 최상위 부서들 렌더링
+            orgData.forEach((topDept, index) => {
+                // Level 1 (최상위)
+                html += `<div class="level01"><strong>${topDept.deptNm}</strong></div>`;
+
+                // Level 2 이하 렌더링
+                if (topDept.children && topDept.children.length > 0) {
+                    const level2Depts = topDept.children;
+
+                    // Level 2가 여러 개인 경우 가로 배치
+                    if (level2Depts.length > 1) {
+                        html += '<div class="level02_container">';
+                    }
+
+                    level2Depts.forEach((level2Dept, idx) => {
+                        // Level 2 컨테이너 시작
+                        if (level2Depts.length > 1) {
+                            html += `<div class="level02_wrapper">`;
+                        }
+
+                        // Level 2 (원장급)
+                        html += `<div class="level02"><strong><a href="javascript:;" data-dept-id="${level2Dept.deptOid}">${level2Dept.deptNm}</a></strong></div>`;
+
+                        if (level2Dept.children && level2Dept.children.length > 0) {
+                            // Level 3과 Level 4 분리
+                            const level3Depts = level2Dept.children.filter(dept => !this.hasChildren(dept));
+                            const level4Depts = level2Dept.children.filter(dept => this.hasChildren(dept));
+
+                            // Level 3 (감사실 등 - 하위부서 없음)
+                            if (level3Depts.length > 0) {
+                                level3Depts.forEach(dept => {
+                                    html += `<div class="level03"><strong><a href="javascript:;" data-dept-id="${dept.deptOid}">${dept.deptNm}</a></strong></div>`;
+                                });
+                            }
+
+                            // Level 4 (본부급 - 하위부서 있음)
+                            if (level4Depts.length > 0) {
+                                html += '<div class="department_wrap"><ul>';
+
+                                level4Depts.forEach(dept => {
+                                    html += `
+                                        <li>
+                                            <div class="department_inner">
+                                                <strong><a href="javascript:;" data-dept-id="${dept.deptOid}">${dept.deptNm}</a></strong>
+                                    `;
+
+                                    // Level 5 (팀급)
+                                    if (dept.children && dept.children.length > 0) {
+                                        html += '<ul>';
+                                        dept.children.forEach(team => {
+                                            html += `<li><a href="javascript:;" data-dept-id="${team.deptOid}">${team.deptNm}</a></li>`;
+                                        });
+                                        html += '</ul>';
+                                    }
+
+                                    html += `
+                                            </div>
+                                        </li>
+                                    `;
+                                });
+
+                                html += '</ul></div>';
+                            }
+                        }
+
+                        // Level 2 컨테이너 종료
+                        if (level2Depts.length > 1) {
+                            html += '</div>';
+                        }
+                    });
+
+                    // level02_container 종료
+                    if (level2Depts.length > 1) {
+                        html += '</div>';
+                    }
+                }
+            });
+
+            container.innerHTML = html;
+            this.attachDeptClickEvents();
+        },
+
+        /**
+         * 하위 부서가 있는지 확인
+         */
+        hasChildren: function (dept) {
+            return dept.children && dept.children.length > 0;
+        },
+
+        /**
+         * 부서 클릭 이벤트 등록
+         */
+        attachDeptClickEvents: function () {
+            const _this = this;
+            const deptLinks = document.querySelectorAll('.organization_wrap a[data-dept-id]');
+
+            deptLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const deptOid = this.getAttribute('data-dept-id');
+                    _this.showDeptInfo(deptOid);
+                });
+            });
+        },
+
+        /**
+         * 부서 정보 모달 표시
+         */
+        showDeptInfo: function (deptOid) {
+            const dept = this.findDeptById(this.state.orgData, deptOid);
+
+            if (dept && typeof dept_info !== "undefined" && dept_info.initModal) {
+                // 모달에 부서 정보 전달
+                dept_info.initModal(dept);
+            }
+        },
+
+        /**
+         * 부서 ID로 부서 찾기 (재귀)
+         */
+        findDeptById: function (depts, deptOid) {
+            if (!depts) return null;
+
+            for (let dept of depts) {
+                if (dept.deptOid == deptOid) {
+                    return dept;
+                }
+                if (dept.children) {
+                    const found = this.findDeptById(dept.children, deptOid);
+                    if (found) return found;
+                }
+            }
+            return null;
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            // 추가 이벤트가 필요하면 여기에 작성
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        portal105.init();
+    });
+</script>
+</body>
+</html>

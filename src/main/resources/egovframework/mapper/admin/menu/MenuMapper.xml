@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.menu.mapper.MenuMapper">
+
+	<!-- 메뉴 넘버 조회(코드) -->
+	<select id="selectMenuNoByMenuCode" parameterType="String">
+		SELECT
+			menu_oid
+		FROM
+			${schema}.menu
+		WHERE
+			menu_cd = #{menuCd}
+			AND use_yn = 'Y'
+	</select>
+
+	<!-- 메뉴 넘버 조회(페이지) -->
+	<select id="selectMenusByMenuPage" parameterType="String" resultType="egovframework.admin.menu.domain.MenuDto">
+		SELECT
+			menu_oid,
+			menu_nm,
+			menu_cd,
+			menu_url,
+			up_menu_oid,
+			menu_auth_lv,
+			menu_lv,
+			menu_seq,
+			menu_type,
+			use_yn,
+			icon_nm,
+			menu_expln,
+			prvc_use_yn,
+			reg_id,
+			reg_dt,
+			mdfcn_id,
+			mdfcn_dt
+		FROM
+			${schema}.menu
+		WHERE
+			menu_page = #{menuPage}
+			AND use_yn = 'Y'
+	</select>
+</mapper>

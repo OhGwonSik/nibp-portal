@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 조직도 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style layout:fragment="main_style">
+        /* 구성원 테이블 편집 관련 */
+        .editable-cell {
+            cursor: pointer;
+            min-height: 20px;
+            padding: 5px;
+        }
+
+        .editable-cell:hover {
+            background-color: #f0f0f0;
+        }
+
+        .editing {
+            background-color: #fff8dc;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <h3 class="stit">조직도 관리</h3>
+        <div class="organization_wrap" id="organization_container"></div>
+    </div>
+
+    <hr class="h_bg_type">
+
+    <!-- 선택된 부서의 구성원 목록 -->
+    <div class="sub_cont_wrap">
+        <h4 id="selected_dept_nm">부서를 선택하세요</h4>
+        <div class="table_desc">
+            <p>총 <strong id="member_count">0</strong>건</p>
+            <div class="table_top_btn">
+                <a id="btn_save" href="javascript:;" class="btn_basic bg_type01">저장</a>
+                <a id="btn_add" href="javascript:;" class="btn_basic bg_type01">추가</a>
+                <a id="btn_delete" href="javascript:;" class="btn_basic bg_type02">삭제</a>
+            </div>
+        </div>
+        <div class="table_layout02 list_type mb20">
+            <table id="member_table">
+                <caption>구성원 목록</caption>
+                <colgroup>
+                    <col style="width: 60px;">
+                    <col style="width: 80px;">
+                    <col style="width: 150px;">
+                    <col style="width: 150px;">
+                    <col style="width: 200px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col"><input type="checkbox" id="all_check"></th>
+                    <th scope="col">순서</th>
+                    <th scope="col">직책</th>
+                    <th scope="col">이름</th>
+                    <th scope="col">전화번호</th>
+                    <th scope="col">담당 업무</th>
+                </tr>
+                </thead>
+                <tbody id="member_tbody">
+                <tr>
+                    <td colspan="6" class="tac">부서를 선택하세요</td>
+                </tr>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin1002 = {
+        state: {
+            selectedDeptOid: null,
+            selectedDeptNm: '',
+            members: [],
+            orgData: null,
+            editingCell: null,
+            changedRows: new Set()
+        },
+
+        init: function () {
+            this.initEvent();
+            this.loadOrgData();
+        },
+
+        initEvent: function () {
+            const _this = this;
+
+            // 저장 버튼
+            document.getElementById("btn_save").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnSaveAll();
+            });
+
+            // 추가 버튼
+            document.getElementById("btn_add").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnAddRow();
+            });
+
+            // 삭제 버튼
+            document.getElementById("btn_delete").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnDeleteSelected();
+            });
+
+            // 전체 선택 체크박스
+            document.getElementById("all_check").addEventListener("change", function () {
+                const isChecked = this.checked;
+                document.querySelectorAll(".row_check").forEach(function (checkbox) {
+                    checkbox.checked = isChecked;
+                });
+            });
+
+            // 셀 더블클릭 → 편집 모드
+            document.getElementById("member_tbody").addEventListener("dblclick", function (e) {
+                const cell = e.target.closest(".editable-cell");
+                if (cell) {
+                    _this.fnEditCell(cell);
+                }
+            });
+        },
+
+        /**
+         * 조직도 데이터 로드
+         */
+        loadOrgData: async function () {
+            try {
+                const response = await API.get('/api/common/organization/tree');
+                this.state.orgData = response;
+                this.renderOrgChart(response);
+            } catch (error) {
+                console.error('조직도 로드 실패:', error);
+                document.getElementById('organization_container').innerHTML =
+                    '<p>조직도 데이터를 불러올 수 없습니다.</p>';
+            }
+        },
+
+        /**
+         * 조직도 렌더링 (portal105 로직과 동일하게 수정)
+         */
+        renderOrgChart: function (orgData) {
+            const container = document.getElementById('organization_container');
+
+            if (!orgData || orgData.length === 0) {
+                container.innerHTML = '<p>조직도 데이터가 없습니다.</p>';
+                return;
+            }
+
+            let html = '';
+
+            // 최상위 부서들 렌더링
+            orgData.forEach((topDept, index) => {
+                // Level 1 (최상위) - Portal105와 동일하게 <a> 태그 없음
+                html += `<div class="level01"><strong>${topDept.deptNm}</strong></div>`;
+
+                // Level 2 이하 렌더링
+                if (topDept.children && topDept.children.length > 0) {
+                    const level2Depts = topDept.children;
+
+                    // Level 2가 여러 개인 경우 가로 배치
+                    if (level2Depts.length > 1) {
+                        html += '<div class="level02_container">';
+                    }
+
+                    level2Depts.forEach((level2Dept, idx) => {
+                        // Level 2 컨테이너 시작
+                        if (level2Depts.length > 1) {
+                            html += `<div class="level02_wrapper">`;
+                        }
+
+                        // Level 2 (원장급)
+                        html += `<div class="level02"><strong><a href="javascript:;" data-dept-oid="${level2Dept.deptOid}">${level2Dept.deptNm}</a></strong></div>`;
+
+                        if (level2Dept.children && level2Dept.children.length > 0) {
+                            // Level 3과 Level 4 분리
+                            const level3Depts = level2Dept.children.filter(dept => !this.hasChildren(dept));
+                            const level4Depts = level2Dept.children.filter(dept => this.hasChildren(dept));
+
+                            // Level 3 (감사실 등 - 하위부서 없음)
+                            if (level3Depts.length > 0) {
+                                level3Depts.forEach(dept => {
+                                    html += `<div class="level03"><strong><a href="javascript:;" data-dept-oid="${dept.deptOid}">${dept.deptNm}</a></strong></div>`;
+                                });
+                            }
+
+                            // Level 4 (본부급 - 하위부서 있음)
+                            if (level4Depts.length > 0) {
+                                html += '<div class="department_wrap"><ul>';
+
+                                level4Depts.forEach(dept => {
+                                    html += `
+                                        <li>
+                                            <div class="department_inner">
+                                                <strong><a href="javascript:;" data-dept-oid="${dept.deptOid}">${dept.deptNm}</a></strong>
+                                    `;
+
+                                    // Level 5 (팀급)
+                                    if (dept.children && dept.children.length > 0) {
+                                        html += '<ul>';
+                                        dept.children.forEach(team => {
+                                            html += `<li><a href="javascript:;" data-dept-oid="${team.deptOid}">${team.deptNm}</a></li>`;
+                                        });
+                                        html += '</ul>';
+                                    }
+
+                                    html += `
+                                            </div>
+                                        </li>
+                                    `;
+                                });
+
+                                html += '</ul></div>';
+                            }
+                        }
+
+                        // Level 2 컨테이너 종료
+                        if (level2Depts.length > 1) {
+                            html += '</div>';
+                        }
+                    });
+
+                    // level02_container 종료
+                    if (level2Depts.length > 1) {
+                        html += '</div>';
+                    }
+                }
+            });
+
+            container.innerHTML = html;
+            this.attachDeptClickEvents();
+        },
+
+        /**
+         * 하위 부서가 있는지 확인
+         */
+        hasChildren: function (dept) {
+            return dept.children && dept.children.length > 0;
+        },
+
+        /**
+         * 부서 클릭 이벤트 등록
+         */
+        attachDeptClickEvents: function () {
+            const _this = this;
+            const deptLinks = document.querySelectorAll('.organization_wrap a[data-dept-oid]');
+
+            deptLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const deptOid = parseInt(this.getAttribute('data-dept-oid'));
+                    const deptNm = this.textContent.trim();
+                    _this.fnSelectDept(deptOid, deptNm);
+                });
+            });
+        },
+
+        fnSelectDept: async function (deptOid, deptNm) {
+            this.state.selectedDeptOid = deptOid;
+            this.state.selectedDeptNm = deptNm;
+            this.state.changedRows.clear();
+
+            // 활성 부서 표시
+            document.querySelectorAll('.organization_wrap a').forEach(a => a.classList.remove('active'));
+            document.querySelector(`.organization_wrap a[data-dept-oid="${deptOid}"]`)?.classList.add('active');
+
+            document.getElementById('selected_dept_nm').textContent = deptNm;
+
+            await this.loadMembers();
+        },
+
+        loadMembers: async function () {
+            try {
+                const param = {
+                    page: 1,
+                    size: 100,
+                    deptOid: this.state.selectedDeptOid
+                };
+
+                const response = await API.post('/api/admin/admin1002/list/filter', param);
+                this.state.members = response.list || [];
+                this.renderMemberTable();
+            } catch (error) {
+                console.error('구성원 조회 실패:', error);
+                this.state.members = [];
+                this.renderMemberTable();
+            }
+        },
+
+        renderMemberTable: function () {
+            const tbody = document.getElementById('member_tbody');
+            tbody.innerHTML = '';
+
+            if (this.state.members.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="tac">구성원이 없습니다</td></tr>';
+                document.getElementById('member_count').textContent = '0';
+                return;
+            }
+
+            this.state.members.forEach((member, index) => {
+                const row = this.createMemberRow(member, index);
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('member_count').textContent = this.state.members.length;
+        },
+
+        createMemberRow: function (member, index) {
+            const tr = document.createElement('tr');
+            tr.dataset.index = index;
+            if (member.deptMmbrOid) {
+                tr.dataset.deptMmbrOid = member.deptMmbrOid;
+            }
+
+            tr.innerHTML = `
+                <td class="tac"><input type="checkbox" class="row_check"></td>
+                <td class="tac editable-cell" data-field="indctSeq">${member.indctSeq || 0}</td>
+                <td class="tac editable-cell" data-field="jbgd">${member.jbgd || ''}</td>
+                <td class="tac editable-cell" data-field="userNm">${member.userNm || ''}</td>
+                <td class="tac editable-cell" data-field="telno">${member.telno || ''}</td>
+                <td class="tac editable-cell" data-field="chrgJob">${member.chrgJob || ''}</td>
+            `;
+
+            return tr;
+        },
+
+        fnEditCell: function (cell) {
+            if (this.state.editingCell) {
+                this.fnSaveCell(this.state.editingCell);
+            }
+
+            const field = cell.dataset.field;
+            const currentValue = this.getCellValue(cell, field);
+
+            cell.classList.add('editing');
+
+            const inputType = field === 'indctSeq' ? 'number' : 'text';
+            cell.innerHTML = `<input type="${inputType}" class="edit-input" value="${currentValue || ''}" style="width: 100%;">`;
+
+            const input = cell.querySelector('.edit-input');
+            input.focus();
+
+            input.addEventListener('blur', () => {
+                this.fnSaveCell(cell);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    this.fnSaveCell(cell);
+                }
+                if (e.key === 'Escape') {
+                    this.fnCancelEdit(cell, currentValue);
+                }
+            });
+
+            this.state.editingCell = cell;
+        },
+
+        getCellValue: function (cell, field) {
+            const row = cell.closest('tr');
+            const index = parseInt(row.dataset.index);
+            const member = this.state.members[index];
+
+            return member[field];
+        },
+
+        fnSaveCell: function (cell) {
+            const input = cell.querySelector('.edit-input');
+            if (!input) return;
+
+            const field = cell.dataset.field;
+            const row = cell.closest('tr');
+            const index = parseInt(row.dataset.index);
+            let newValue = input.value;
+
+            if (field === 'indctSeq') {
+                newValue = parseInt(newValue) || 0;
+                this.state.members[index][field] = newValue;
+                cell.textContent = newValue;
+            } else {
+                this.state.members[index][field] = newValue;
+                cell.textContent = newValue;
+            }
+
+            cell.classList.remove('editing');
+            this.state.editingCell = null;
+            this.state.changedRows.add(index);
+        },
+
+        fnCancelEdit: function (cell, originalValue) {
+            cell.classList.remove('editing');
+            cell.textContent = originalValue || '';
+            this.state.editingCell = null;
+        },
+
+        fnAddRow: function () {
+            if (!this.state.selectedDeptOid) {
+                uiCommon.fnShowAlertModal('부서를 먼저 선택해주세요.');
+                return;
+            }
+
+            const newMember = {
+                deptOid: this.state.selectedDeptOid,
+                indctSeq: this.state.members.length,
+                jbgd: '',
+                userNm: '',
+                telno: '',
+                chrgJob: ''
+            };
+
+            this.state.members.push(newMember);
+            this.state.changedRows.add(this.state.members.length - 1);
+            this.renderMemberTable();
+        },
+
+        fnDeleteSelected: async function () {
+            const checkedBoxes = document.querySelectorAll('.row_check:checked');
+            if (checkedBoxes.length === 0) {
+                uiCommon.fnShowAlertModal('삭제할 구성원을 선택해주세요.');
+                return;
+            }
+
+            const _this = this;
+            uiCommon.fnShowConfirmModal(`선택한 ${checkedBoxes.length}명을 삭제하시겠습니까?`, async function () {
+                uiCommon.fnHideConfirmModal();
+
+                try {
+                    const deptMmbrOids = [];
+                    checkedBoxes.forEach(checkbox => {
+                        const row = checkbox.closest('tr');
+                        const deptMmbrOid = row.dataset.deptMmbrOid;
+                        if (deptMmbrOid) {
+                            deptMmbrOids.push(parseInt(deptMmbrOid));
+                        }
+                    });
+
+                    // 매핑ID가 있는 경우만 서버에서 삭제
+                    if (deptMmbrOids.length > 0) {
+                        await API.post('/api/admin/admin1002/delete', {
+                            deptMmbrOids: deptMmbrOids
+                        });
+                    }
+
+                    uiCommon.fnShowAlertModal('삭제되었습니다.', () => {
+                        _this.loadMembers();
+                    });
+
+                } catch (error) {
+                    console.error('삭제 실패:', error);
+                    uiCommon.fnShowAlertModal(error.message || '삭제에 실패했습니다.');
+                }
+            });
+        },
+
+        fnSaveAll: async function () {
+            if (!this.state.selectedDeptOid) {
+                uiCommon.fnShowAlertModal('부서를 선택해주세요.');
+                return;
+            }
+
+            try {
+                // 변경/추가
+                for (const index of this.state.changedRows) {
+                    const member = this.state.members[index];
+
+                    // 유효성 검사
+                    if (!member.userNm || member.userNm.trim() === '') {
+                        uiCommon.fnShowAlertModal(`${index + 1}번째 행의 이름을 입력해주세요.`);
+                        return;
+                    }
+
+                    const dto = {
+                        deptOid: this.state.selectedDeptOid,
+                        userNm: member.userNm,
+                        telno: member.telno || null,
+                        jbgd: member.jbgd || null,
+                        indctSeq: member.indctSeq || 0,
+                        chrgJob: member.chrgJob || null
+                    };
+
+                    if (member.deptMmbrOid) {
+                        dto.deptMmbrOid = member.deptMmbrOid;
+                        await API.patch('/api/admin/admin1002/update', dto);
+                    } else {
+                        await API.put('/api/admin/admin1002/insert', dto);
+                    }
+                }
+
+                uiCommon.fnShowAlertModal('저장되었습니다.', () => {
+                    this.state.changedRows.clear();
+                    this.loadMembers();
+                });
+
+            } catch (error) {
+                console.error('저장 실패:', error);
+                uiCommon.fnShowAlertModal(error.message || '저장에 실패했습니다.');
+            }
+        }
+    };
+
+    $(document).ready(function () {
+        admin1002.init();
+    });
+</script>
+</body>
+</html>

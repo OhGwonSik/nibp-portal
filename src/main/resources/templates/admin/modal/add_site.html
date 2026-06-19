@@ -1,0 +1,269 @@
+<th:block th:fragment="add_site" xmlns:th="http://www.thymeleaf.org">
+    <div id="add_site" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap">
+                <h1 class="p_tit">사용자 선택</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <div class="table_layout02 mb10">
+                                <table>
+                                    <caption>사용자 선택</caption>
+                                    <colgroup>
+                                        <col style="width: 150px;">
+                                        <col style="width: auto;">
+                                        <col style="width: 60px;">
+                                    </colgroup>
+                                    <tbody>
+                                    <tr>
+                                        <th scope="row"><label for="search_keyword_p">이름</label></th>
+                                        <td>
+                                            <input type="text" name="" id="search_keyword_p" class="w100">
+                                        </td>
+                                        <td>
+                                            <a href="javascript:;" id="btn_search_p" class="s_btn_basic bg_type01">검색</a>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="table_desc mt10">
+                            <p>총 <strong id="addSiteTotalCount">0</strong>건</p>
+                        </div>
+                        <div class="table_layout02 list_type mb20 o_h_300">
+                            <table>
+                                <caption>사용자 선택</caption>
+                                <colgroup>
+                                    <col style="width: 33%;">
+                                    <col style="width: auto">
+                                    <col style="width:100px">
+                                </colgroup>
+                                <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">이름</th>
+                                    <th scope="col">선택</th>
+                                </tr>
+                                </thead>
+                                <tbody id="list_site_tbody"></tbody>
+                            </table>
+                            <span class="scroll_img">스크롤</span>
+                        </div>
+                        <div id="paging_wrap_p" class="paging_wrap">
+                            <a href="javascript:" class="first page_first">첫 페이지</a>
+                            <a href="javascript:" class="previous page_prev">전 페이지</a>
+                            <div class="namber pagination_container"></div>
+                            <a href="javascript:" class="next page_next">다음 페이지</a>
+                            <a href="javascript:" class="last page_last">끝 페이지</a>
+                        </div>
+                        <div class="btn_wrap mt30">
+                            <a href="javascript:;" class="btn_basic bg_type02 btn_close_site_pop">닫기</a>
+                        </div>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close btn_close_site_pop">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        let add_site = {
+
+            /**
+             * 상태
+             */
+            state: {
+                all: [],        // 전체 목록
+                courseNo : 0,
+                //pageInfo(페이징)
+                page: 1,  // 현재 페이지 번호
+                size: 10, // 한 페이지당 표시할 데이터 개수
+                total: 0, // 전체 데이터 총 개수
+                pages: 0 // 전체 페이지 수 (total / size)    
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function (data) {
+                uiCommon.fnShowModal('add_site');
+                this.init(data);
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function (data) {
+            	
+				this.state.courseNo = data.courseNo;
+				this.state.page = 1;
+				
+				this.searchAddCourseUser(); 
+
+                // 이벤트 바인딩
+                this.initEvent();
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function (){
+                const _this = this;
+
+                // 검색 버튼 클릭
+                $("#btn_search_p").off("click").on("click", function (e) {
+                    e.preventDefault();
+
+                    _this.state.page = 1;
+                    _this.searchAddCourseUser();
+                })
+
+                // 닫기/취소 버튼 클릭
+                $(".btn_close_site_pop").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    add_site.resetState();
+                    uiCommon.fnHideModal('add_site');
+                });
+            },
+            
+            /**
+             * 초기화
+             */
+			resetState: function () {
+				this.state.all = [];
+				this.state.page = 1;
+				this.state.total = 0;
+				this.state.pages = 0;
+			
+				$("#search_keyword_p").val(""); // 검색 input도 초기화
+				$("#list_site_tbody").empty();  // 테이블 초기화
+				$("#total_count_p").text(0);    // 카운트 초기화
+			},            
+
+            /**
+             * 페이지네이션 렌더링
+             */
+            renderPagination: function () {
+                const _this = this;
+
+                // 공통 페이지네이션 함수 호출
+                uiCommon.pagination.render({
+                    currentPage: _this.state.page,
+                    totalPages: _this.state.pages,
+                    containerSelector: '#add_site #paging_wrap_p',
+                    onPageChange: function(page) {
+                    	_this.state.page = page;
+                    	_this.searchAddCourseUser();
+                    }
+                });
+            },
+
+            /**
+             * 메인 테이블 렌더링
+             */
+            renderTable: function () {
+                const tbody = document.querySelector("#list_site_tbody");
+                tbody.innerHTML = "";
+
+                const list = this.state.all;
+
+                if (list.length === 0) {
+                    tbody.insertAdjacentHTML("beforeend",
+                        `<tr><td colspan="3" class="tac">조회된 결과가 없습니다.</td></tr>`
+                    );
+                    return;
+                }
+
+                let html = '';
+                list.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item.userId}</td>
+                            <td>${item.userNm}</td>
+                            <td>
+                                <a href="javascript:;"
+                                   class="s_btn_basic bg_type01 btnApplyUser"
+                                   data-user-id="${item.userId}"
+                                   data-user-nm="${item.userNm}">
+                                   선택
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+
+                this.bindSelectButtons();
+
+                document.querySelector("#addSiteTotalCount").textContent = this.state.total;
+            },
+            bindSelectButtons: function () {
+                const selectBtns = document.querySelectorAll(".btnApplyUser");
+
+                selectBtns.forEach(btn => {
+                    btn.onclick = async (e) => {
+                        e.preventDefault();
+
+                        const userId = btn.dataset.userId;
+                        const userNm = btn.dataset.userNm;
+                        const courseNo = this.state.courseNo;
+
+                        uiCommon.fnShowConfirmModal(
+                            `${userNm} 님을 등록하시겠습니까?`,
+                            async () => {
+                                uiCommon.fnHideConfirmModal();
+
+                                try {
+                                    const payload = [{
+                                        userId: userId,
+                                        courseNo: courseNo
+                                    }];
+
+                                    const response = await API.put(
+                                        "/api/admin/admin202/course/user/register",
+                                        payload
+                                    );
+
+                                    if (response) {
+                                        uiCommon.fnShowAlertModal("등록이 완료되었습니다.");
+                                        uiCommon.fnHideModal("add_site");
+                                        await admin202_1.searchCourseDetail(courseNo);
+                                        await admin202_1.searchCourseUserList();
+                                    } else {
+                                        uiCommon.fnShowAlertModal("등록 중 오류가 발생했습니다.");
+                                    }
+                                } catch (error) {
+                                    uiCommon.fnShowAlertModal("[error] : " + error);
+                                }
+                            }
+                        );
+                    };
+                });
+            },
+            
+            searchAddCourseUser: async function () {
+                const userNm = document.querySelector("#add_site #search_keyword_p").value.trim();
+
+                const params = {
+                    courseNo: this.state.courseNo,
+                    userNm: userNm,
+                    page: this.state.page,
+                    size: this.state.size
+                };
+
+                const queryString = new URLSearchParams(
+                    Object.entries(params).filter(([k, v]) => v !== "")
+                ).toString();
+
+                const data = await API.get(`/api/admin/admin202/course/user/available?${queryString}`);
+
+                this.state.all = data.list;
+                this.state.total = data.total;
+                this.state.pages = data.pages;
+				
+                await this.renderTable();
+                await this.renderPagination();
+            }
+        };
+    </script>
+</th:block>

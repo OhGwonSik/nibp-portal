@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>인증 콜백</title>
+</head>
+<body>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var result = {
+        name     : /*[[${name}]]*/,
+        birth    : /*[[${birth}]]*/,
+        mobileNo : /*[[${mobileNo}]]*/
+    };
+
+    try {
+        if (window.opener && !window.opener.closed
+            && window.opener.signup
+            && typeof window.opener.signup.onNiceAuthSuccess === "function") {
+
+            window.opener.signup.onNiceAuthSuccess(result);
+        }
+    } catch (e) {
+        console.error("parent callback error:", e);
+    }
+
+    window.close();
+    /*]]>*/
+</script>
+</body>
+</html>

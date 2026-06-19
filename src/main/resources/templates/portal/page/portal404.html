@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>정보공개 > 공공데이터 의견수렴</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">공공데이터 의견수렴</h3>
+    <div class="bg_box mb40">
+        <ul class="text_list">
+            <li>「공공데이터 수요자 의견수렴 게시판」은 정책원 공공데이터 개방 및 활용성을 높이기 위한 사용자의 의견 수렴을 위해 운영하는 게시판입니다.</li>
+            <li>공공데이터 개방, 활용개선 등에 대한 의견을 주시면 검토하여 적극적으로 반영할 수 있도록 노력 하겠습니다.</li>
+            <li>이 게시판은 개인정보를 수집하지 않고 별도의 회신을 하지 않으므로 의견 제출 시 개인정보가 포함되어 노출되지 않도록 작성에 유의하여 주시기 바랍니다.</li>
+            <li>신청하신 공공데이터는 공공데이터법 제4조, 제17조제1항, 제26조 제3항 등에 따라 제공되지 않을 수 있음을 사전에 안내드립니다.</li>
+        </ul>
+    </div>
+    
+    <div class="table_layout t_tal">
+        <table>
+            <caption>공공데이터 의견수렴 테이블</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row" class="point">
+                    <label for="opinion_title">제목</label>
+                    <i class="hidden">필수입력</i>
+                </th>
+                <td>
+                    <input type="text" id="opinion_title" title="제목 입력" class="w100" placeholder="제목을 입력해 주세요 (최대 100자)">
+                    <p class="mt5 tar">최대 100자 이내로 작성하시오. (<em class="c_red" id="title_char_cnt">0</em>/100)</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="opinion_content">내용</label></th>
+                <td>
+                    <textarea title="내용 입력" placeholder="내용을 입력해 주세요" id="opinion_content" style="width:100%; height:300px;"></textarea>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_wrap mt30">
+        <a href="javascript:;" id="btn_reset" class="btn_basic bg_gray">초기화</a>
+        <a href="javascript:;" id="btn_submit" class="btn_basic">의견제출</a>
+    </div>
+</div>
+
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal404 = {
+        
+        state: {
+            isSubmitting: false,
+            editorFiles: [],      // 사용자가 에디터에 올린 파일 목록
+            uploadTargetId: null  // 임시 업로드 식별값
+        },
+
+        init: function () {
+            this.initUploaderTarget();
+            this.initEditor();
+            this.initEvent();
+        },
+
+        // 임시 식별자 생성
+        initUploaderTarget: function() {
+            this.state.uploadTargetId = 'temp-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8);
+        },
+
+        // 에디터 초기화
+        initEditor: function () {
+            const _this = this;
+            CommonCKEditor.init({
+                editorId: 'opinion_content',
+                content: '',
+                removePlugins: '', 
+                chunkUpload: {
+                    enabled: true,
+                    chunkUrl: '/api/common/file/tmp/ck-image/chunk',
+                    chunkSize: 2 * 1024 * 1024,
+                    onUploadComplete: function(payload) {
+                        _this.handleEditorUploadComplete(payload);
+                    }
+                }
+            });
+        },
+
+        // 이벤트 바인딩
+        initEvent: function () {
+            const _this = this;
+            
+            // 제목 글자수
+            const titleInput = document.getElementById('opinion_title');
+            const charCnt = document.getElementById('title_char_cnt');
+
+            if (titleInput) {
+                titleInput.addEventListener('input', function() {
+                    const maxLen = 100;
+                    let val = this.value;
+                    if (val.length > maxLen) {
+                        val = val.substring(0, maxLen);
+                        this.value = val;
+                    }
+                    if (charCnt) charCnt.innerText = val.length;
+                });
+            }
+
+            // 초기화
+            const btnReset = document.getElementById('btn_reset');
+            if (btnReset) {
+                btnReset.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    uiCommon.fnShowConfirmModal('작성 내용을 초기화하시겠습니까?', function () {
+                        if (titleInput) titleInput.value = '';
+                        if (charCnt) charCnt.innerText = '0';
+                        
+                        CommonCKEditor.setContent('opinion_content', '');
+                        _this.state.editorFiles = []; // 파일 목록 초기화
+                        _this.initUploaderTarget();   // 식별자 재발급
+                        
+                        uiCommon.fnHideConfirmModal();
+                    });
+                });
+            }
+
+            // 제출
+            const btnSubmit = document.getElementById('btn_submit');
+            if (btnSubmit) {
+                btnSubmit.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    _this.fnRegist();
+                });
+            }
+        },
+
+        // 업로드 완료 시 state에 저장
+        handleEditorUploadComplete: function (payload) {
+            if (!payload || !payload.filePath || !payload.fileName) return;
+
+            const meta = {
+                originalStrgFileNm: payload.originalStrgFileNm || payload.strgFileNm,
+                storedStrgFileNm: payload.strgFileNm,
+                strgFilePath: payload.strgFilePath,
+                strgFileCpct: payload.strgFileCpct || null,
+                fileTypeNm: payload.fileTypeNm || this.extractFileExtension(payload.originalStrgFileNm || payload.strgFileNm)
+            };
+            
+            // 본문 비교용 키 생성
+            meta.key = this.buildEditorFileKey(meta.filePath, meta.storedStrgFileNm);
+            
+            // 중복 방지 (같은 파일을 다시 드래그 했을 경우 덮어쓰기)
+            const idx = this.state.editorFiles.findIndex(function(item) {
+                return item.key === meta.key;
+            });
+
+            if (idx > -1) {
+                this.state.editorFiles[idx] = meta;
+            } else {
+                this.state.editorFiles.push(meta);
+            }
+        },
+
+        extractFileExtension: function (fileName) {
+            if (!fileName) return '';
+            const pos = fileName.lastIndexOf('.');
+            return pos > -1 ? fileName.substring(pos + 1).toLowerCase() : '';
+        },
+
+        buildEditorFileKey: function (filePath, storedStrgFileNm) {
+            const normalizedPath = (filePath || '').replace(/^\/+/, '').replace(/\\/g, '/');
+            return normalizedPath + '__' + storedStrgFileNm;
+        },
+
+        // 현재 본문에 실제 존재하는 이미지 키 추출
+        extractImageKeysFromHtml: function (html) {
+            if (!html) return [];
+            const container = document.createElement('div');
+            container.innerHTML = html;
+            
+            const results = [];
+            const imgs = container.querySelectorAll('img[src]');
+            const uniqueCheck = {};
+
+            for (let i = 0; i < imgs.length; i++) {
+                const parsed = this.normalizeImageSrc(imgs[i].getAttribute('src'));
+                if (parsed && !uniqueCheck[parsed.key]) {
+                    uniqueCheck[parsed.key] = true;
+                    results.push(parsed.key);
+                }
+            }
+            return results;
+        },
+
+        normalizeImageSrc: function (src) {
+            if (!src) return null;
+            let cleaned = src.trim().split('?')[0].split('#')[0];
+
+            // 도메인 제거
+            const origin = window.location.origin;
+            if (cleaned.startsWith(origin)) {
+                cleaned = cleaned.substring(origin.length);
+            }
+
+            const prefix = '/files/';
+            const uploadsIdx = cleaned.indexOf(prefix);
+
+            if (uploadsIdx === -1) {
+                return null;
+            }
+
+            const relative = cleaned.substring(uploadsIdx + prefix.length);
+            return this.parsePathAndName(relative);
+        },
+        
+        parsePathAndName: function(relativePath) {
+            // 앞뒤 슬래시 제거 및 정규화
+            relativePath = relativePath.replace(/^\/+/, ''); 
+            
+            const lastSlash = relativePath.lastIndexOf('/');
+            if (lastSlash === -1) return null;
+
+            const filePath = relativePath.substring(0, lastSlash);
+            const fileName = relativePath.substring(lastSlash + 1);
+
+            return { key: this.buildEditorFileKey(filePath, fileName) };
+        },        
+
+        // 업로드 목록 중 본문에 살아있는 것만 필터링
+        filterActiveEditorFiles: function (content) {
+            const activeKeys = this.extractImageKeysFromHtml(content);
+            const activeKeySet = new Set(activeKeys);
+            
+            return this.state.editorFiles.filter(function(file) {
+                return activeKeySet.has(file.key);
+            });
+        },
+
+        // 공공데이터 의견 등록
+        fnRegist: function () {
+            const _this = this;
+            if (_this.state.isSubmitting) return;
+
+            const titleInput = document.getElementById('opinion_title');
+            const title = titleInput ? titleInput.value.trim() : '';
+            const content = CommonCKEditor.getContent('opinion_content');
+
+            // 유효성 검사
+            if (!title) {
+                uiCommon.fnShowAlertModal('제목을 입력해 주세요.');
+                return;
+            }
+
+            const plainText = content.replace(/<[^>]*>/g, '').trim();
+            // 내용도 없고 사진도 없으면 차단
+            if (plainText.length === 0 && _this.state.editorFiles.length === 0) {
+                 uiCommon.fnShowAlertModal('내용을 입력해 주세요.');
+                 return;
+            }
+
+            uiCommon.fnShowConfirmModal('작성하신 의견을 제출하시겠습니까?', async function () {
+            	uiCommon.fnHideConfirmModal();
+                _this.state.isSubmitting = true;
+
+                const finalFiles = _this.filterActiveEditorFiles(content);
+
+                const params = {
+                	pblDataOpnnTtl: title,
+                	pblDataOpnnCn: content,
+                    editorFiles: finalFiles, // 살아있는 파일 정보만 전송
+                    targetId: _this.state.uploadTargetId 
+                };
+
+                try {
+                    await API.post('/api/common/opinion/insert', params);
+                    
+                    uiCommon.fnShowAlertModal('소중한 의견이 제출되었습니다.', function () {
+                        location.href = contextPath + '/main';
+                    });
+                } catch (error) {
+                    console.error(error);
+                    uiCommon.fnHideAlertModal();
+                    const msg = (error && error.message) ? error.message : '의견 제출 중 오류가 발생했습니다.';
+                    uiCommon.fnShowAlertModal(msg);
+                } finally {
+                    _this.state.isSubmitting = false;
+                }
+            });
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        portal404.init();
+    });
+</script>
+</body>
+</html>

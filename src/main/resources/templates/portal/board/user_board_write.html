@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${boardInfo.bbsNm} + ' > 글쓰기'">게시판 글쓰기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit" th:text="${boardInfo.bbsNm}">게시판</h3>
+    
+    <p class="btn_wrap_right mb10"><em class="point"></em>표시는 필수 입력 항목입니다.</p>
+    
+    <div class="table_layout t_tal">
+        <table>
+            <caption>게시글 등록</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+                <tr th:if="${boardInfo.ctgryYn == 'Y' and boardInfo.ctgryList != null}">
+                    <th scope="row" class="point"><label for="post_category">분류</label></th>
+                    <td>
+                        <select title="분류선택" class="wp200" id="post_category">
+                            <option value="">선택</option>
+                            <option th:each="cat : ${#strings.arraySplit(#strings.replace(#strings.replace(#strings.replace(boardInfo.ctgryList, '(', ''), ')', ''), '''', ''), ',')}" 
+                                    th:value="${#strings.trim(cat)}" 
+                                    th:text="${#strings.trim(cat)}">
+                            </option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row" class="point"><label for="post_title">제목</label></th>
+                    <td><input type="text" id="post_title" title="제목 입력" placeholder="제목을 입력해 주세요"></td>
+                </tr>
+				<tr>
+				    <th scope="row" class="point">비밀글</th>
+				    <td>
+				        <span class="radio-box" style="display: inline-block; margin-right: 20px;">
+				            <input type="radio" id="unsecreted" name="prvtPstYn" value="N" checked>
+				            <label for="unsecreted">공개</label>
+				        </span>
+				
+				        <span class="radio-box" style="display: inline-block;">
+				            <input type="radio" id="secreted" name="prvtPstYn" value="Y">
+				            <label for="secreted">비공개</label>
+				        </span>
+				    </td>
+				</tr>
+                <tr>
+                    <th scope="row" class="point"><label for="writer_nm">작성자명</label></th>
+                    <td>
+                        <input type="text" id="writer_nm" title="작성자명 입력" placeholder="작성자명을 입력해 주세요" class="wp200">
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row" class="point"><label for="board_editor">내용</label></th>
+                    <td>
+                        <textarea name="board_editor" id="board_editor" rows="30"></textarea>
+                    </td>
+                </tr>
+				<tr th:if="${boardInfo.fileUldCnt > 0}">
+				    <th scope="row">파일첨부</th>
+				    <td colspan="3">
+				        <div class="flex_col file_list" id="board_file_list" style="margin-bottom: 10px;"></div>
+				        
+				        <div class="file_upload" id="board_file_upload_box">
+				            <label for="board_file_input" class="btn_basic_s bg_gray" style="cursor: pointer;">
+				                <span>파일찾기</span>
+				            </label>
+				            <input type="file" id="board_file_input" multiple="multiple" style="display:none;">
+				            
+				            <span class="file_txt" id="file_upload_guide" style="margin-left: 10px; color: #666; font-size: 13px;">
+				                <i class="ico_info"></i>
+				                최대 <strong th:text="${boardInfo.fileUldCnt}"></strong>개, 
+				                개당 <strong th:text="${boardInfo.fileUldSize}"></strong>MB 이하만 등록 가능합니다.
+				            </span>
+				        </div>
+				    </td>
+				</tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_wrap mt20">
+        <a href="javascript:;" id="btn_submit" class="btn_basic">확인</a>
+        <a href="javascript:;" id="btn_cancel" class="btn_basic bg_gray">취소</a>
+    </div>
+</div>
+
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const user_board_write = {
+        // 상태값 관리
+        state: {
+            config: /*[[${boardInfo}]]*/ {},       
+            reqDto: /*[[${boardRequestDto}]]*/ {},
+            
+            // 실제 파일 객체를 담을 배열 (업로드 전)
+            files: [], 
+            
+            fileConfig: {
+                maxCnt: /*[[${boardInfo.fileUldCnt}]]*/ 3,   
+                maxSize: /*[[${boardInfo.fileUldSize}]]*/ 10 
+            }
+        },
+
+        // 초기화
+        init: function () {
+            this.initCkEditor();
+            this.initEvent();
+            
+            if (this.state.fileConfig.maxCnt > 0) {
+                this.initFileEvent();
+            }
+        },
+
+        // 에디터 설정
+        initCkEditor: function () {
+            if (typeof CommonCKEditor !== 'undefined') {
+                CommonCKEditor.destroy('board_editor');
+                document.getElementById('board_editor').style.display = 'block';
+
+                CommonCKEditor.init({
+                    editorId: 'board_editor',
+                    content: '',
+                    // 에디터 내부 이미지는 별도로 처리되므로 유지
+                    uploadUrl: "/api/common/file/tmp/ck-image?responseType=json"
+                });
+            }
+        },
+
+        // 버튼 이벤트
+        initEvent: function () {
+            const _this = this;
+
+            // 저장 버튼 클릭
+            document.getElementById('btn_submit').addEventListener('click', function (e) {
+                e.preventDefault();
+                _this.fnSubmit();
+            });
+
+            // 취소 버튼 클릭
+            document.getElementById('btn_cancel').addEventListener('click', function (e) {
+                e.preventDefault();
+                uiCommon.fnShowConfirmModal('작성을 취소하고 목록으로 이동하시겠습니까?', function () {
+                    uiCommon.fnHideConfirmModal(); 
+                    _this.fnGoList(); 
+                });
+            });
+        },
+        
+        // 파일 이벤트 연결
+        initFileEvent: function() {
+            const _this = this;
+            const fileInput = document.getElementById('board_file_input');
+            
+            if(fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    _this.fnHandleFileSelect(e);
+                });
+            }
+        },
+
+        // 파일 선택 핸들러
+        fnHandleFileSelect: function(e) {
+            const _this = this;
+            const selectedFiles = Array.from(e.target.files || []);
+            const currentFiles = _this.state.files;
+            const config = _this.state.fileConfig;
+
+            // 개수 체크
+            if (currentFiles.length + selectedFiles.length > config.maxCnt) {
+                uiCommon.fnShowAlertModal('파일은 최대 ' + config.maxCnt + '개까지만 첨부할 수 있습니다.');
+                e.target.value = ''; 
+                return;
+            }
+
+            // 파일 추가
+            for (const file of selectedFiles) {
+                // 용량 체크
+                if (file.size > config.maxSize * 1024 * 1024) {
+                    uiCommon.fnShowAlertModal(file.name + ' 파일 용량이 너무 큽니다. (' + config.maxSize + 'MB 제한)');
+                    continue; 
+                }
+                
+                // 중복 체크
+                const isDuplicate = currentFiles.some(f => f.name === file.name && f.size === file.size);
+                if (isDuplicate) continue;
+
+                // 파일 객체를 배열에 저장 (메모리)
+                _this.state.files.push(file);
+                
+            }
+
+            _this.fnRenderFileList();
+            _this.updateUploadGuide();
+            
+            // 입력창 초기화
+            e.target.value = ''; 
+        },
+
+        // 파일 목록 그리기
+        fnRenderFileList: function() {
+            const listEl = document.getElementById('board_file_list');
+            listEl.innerHTML = ''; 
+
+            this.state.files.forEach((file, index) => {
+                let sizeStr = '';
+                const size = file.size || 0;
+                
+                if (size > 1024 * 1024) {
+                    sizeStr = (size / 1024 / 1024).toFixed(2) + ' MB';
+                } else {
+                    sizeStr = (size / 1024).toFixed(2) + ' KB';
+                }
+
+                const p = document.createElement('p');
+                p.innerHTML = `
+                    ${file.name} (${sizeStr})
+                    <a class="icon_del" href="javascript:;" onclick="user_board_write.fnDeleteFile(${index})">파일삭제</a>
+                `;
+                listEl.appendChild(p);
+            });
+        },
+
+        // 파일 삭제
+        fnDeleteFile: function(index) {
+            this.state.files.splice(index, 1);
+            this.fnRenderFileList();
+            this.updateUploadGuide();
+        },
+        
+        // 안내 문구 업데이트
+        updateUploadGuide: function() {
+            const guide = document.getElementById('file_upload_guide');
+            const config = this.state.fileConfig;
+            if(guide) {
+                guide.innerHTML = `<i class="ico_info"></i> 최대 <strong>${config.maxCnt}</strong>개, 개당 <strong>${config.maxSize}</strong>MB 이하만 등록 가능합니다.`;
+                guide.style.color = '#666';
+            }
+        },
+
+        // 데이터 전송 (완벽한 검증 포함)
+        fnSubmit: async function () {
+            // 분류 체크
+            const categoryEl = document.getElementById('post_category');
+            if (categoryEl && !categoryEl.value) {
+                uiCommon.fnShowAlertModal('분류를 선택해 주세요.', function() {
+                    categoryEl.focus();
+                });
+                return;
+            }
+
+            // 제목 체크
+            const titleEl = document.getElementById('post_title');
+            if (!titleEl.value.trim()) {
+                uiCommon.fnShowAlertModal('제목을 입력해 주세요.', function() {
+                    titleEl.focus();
+                });
+                return;
+            }
+
+            // 비밀글 여부 체크 (필수)
+            const secretEl = document.querySelector('input[name="prvtPstYn"]:checked');
+            if (!secretEl) {
+                uiCommon.fnShowAlertModal('비밀글 여부(공개/비공개)를 선택해 주세요.');
+                return;
+            }
+
+            // 작성자명 체크
+            const writerEl = document.getElementById('writer_nm');
+            if (!writerEl.value.trim()) {
+                uiCommon.fnShowAlertModal('작성자명을 입력해 주세요.', function() {
+                    writerEl.focus();
+                });
+                return;
+            }
+
+            // 내용 체크
+            const content = CommonCKEditor.getContent('board_editor');
+            if (!content || content.trim().length === 0) {
+                uiCommon.fnShowAlertModal('내용을 입력해 주세요.');
+                return;
+            }
+
+            // 전송 시작
+            uiCommon.fnShowConfirmModal('게시글을 등록하시겠습니까?', async () => {
+                uiCommon.fnHideConfirmModal(); 
+                
+                const formData = new FormData();
+
+                // DTO 구성
+                const dto = {
+                    bbsOid: this.state.config.bbsOid,
+                    bbsPstTtl: titleEl.value.trim(),
+                    wrtrNm: writerEl.value.trim(),
+                    bbsPstCn: content,
+                    prvtPstYn: secretEl.value,
+                    ctgry: categoryEl ? categoryEl.value : null,
+                    menuCd: this.state.reqDto.menuCd
+                };
+
+                formData.append("data", new Blob([JSON.stringify(dto)], { type: "application/json" }));
+
+                if (this.state.files.length > 0) {
+                    this.state.files.forEach(file => {
+                        formData.append("files", file);
+                    });
+                }
+
+                try {
+                   
+                    await API.upload('/api/common/board/post/insert', formData);
+                    
+                    uiCommon.fnShowAlertModal('게시글이 등록되었습니다.', () => {
+                        this.fnGoList();
+                    });
+                } catch (error) {
+                    console.error(error);
+                    const msg = error.message || '오류가 발생했습니다.';
+                    uiCommon.fnShowAlertModal('등록 실패: ' + msg);
+                }
+            });
+        },
+
+        // 목록 이동
+        fnGoList: function () {
+            const menuCd = this.state.reqDto.menuCd;
+            window.location.href = contextPath + '/board?menuCd=' + menuCd + '&bbsOid=' + this.state.config.bbsOid;
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        user_board_write.init();
+    });
+</script>
+</body>
+</html>

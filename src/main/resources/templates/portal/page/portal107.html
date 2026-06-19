@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소개 > 고객헌장 > 고객서비스헌장</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">고객서비스헌장</h3>
+    <div class="outline_wrap">
+        <div class="outline_inner">
+            <h4 class="outline_tit">국가생명윤리정책원 고객 서비스 헌장</h4>
+            <p class="outline_text">우리는 현재 과학의 빠른 발전으로 가장 눈부신 발전을 이루고 있는 세상에서 살고 있습니다. 생명과학과 의학기술 또한 빠른 속도로 발전하고 있으나, 생명에 대한 과학기술의 인위적 개입이 초래할 수 있는 문제 상황도 현실적 과제로 등장하고 있습니다.<br><br>국가생명윤리정책원은 국가생명윤리 정책의 수립과 집행 과정에서 생명의 존엄과 윤리의 중요성을 지킬 수 있는 기준을 확립하여 이러한 문제를 해결하며, 이를 위해 다음과 같이 다짐 및 실천하겠습니다.</p>
+            <ul class="outline_ul">
+                <li><em>하나</em>
+                    <p>우리는 생명윤리 인식 개선 및 확산을 위해 정책수립 지원을 위한 연구와, 국내외 네트워크 활성화, 관련 정보 허브 구축 등 전문성 강화를 위한 활동에 최선을 다하겠습니다.</p>
+                </li>
+                <li><em>하나</em>
+                    <p>공용기관생명윤리위원회의 적절한 운영 및 관리를 통해 연구 대상자의 권리와 안전 및 복지를 위해 최선을 다하겠습니다.</p>
+                </li>
+                <li><em>하나</em>
+                    <p>기관생명윤리위원회 및 DTC 유전자검사기관에 대한 평가, 인증 업무에 있어 친절하고 공정, 신속, 정확하게 처리하겠습니다.</p>
+                </li>
+                <li><em>하나</em>
+                    <p>연명의료와 관련된 국민의 최선의 이익을 보장하고 자기결정을 존중하기 위해 등록기관 및 의료기관 관리, 대국민 홍보, 제도 관련 조사 연구 등 성실히 수행하겠습니다.</p>
+                </li>
+                <li><em>하나</em>
+                    <p>이러한 일련의 과정에서 금품, 향응 등을 받지도 요구하지도 않겠습니다.</p>
+                </li>
+                <li><em>하나</em>
+                    <p>불친절, 불만족 서비스에 대하여는 즉시 시정하며, 서비스의 질적 수준을 지속적으로 개선해 나가겠습니다.</p>
+                </li>
+                <li><em>하나</em>
+                    <p>이상과 같이 전문성 강화 및 최선의 서비스를 제공할 수 있도록 최선을 다하겠습니다.</p>
+                </li>
+            </ul>
+            <p class="tac"><img th:src="@{/portal/images/logo03.png}" alt="국가생명윤리정책원 로고"></p>
+        </div>
+        <em class="o_line t_left"></em>
+        <em class="o_line t_right"></em>
+        <em class="o_line l_bottom"></em>
+        <em class="o_line r_bottom"></em>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal107 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal107.init();
+    });
+</script>
+</body>
+</html>

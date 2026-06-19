@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.portal.periodical.mapper.Portal502Mapper">
+
+    <!-- 정기발간자료 목록 조회 -->
+    <select id="selectPeriodicalList"
+            parameterType="egovframework.portal.periodical.dto.Portal502Filter"
+            resultType="egovframework.portal.periodical.dto.Portal502VO">
+        SELECT
+            p.fxtm_pbls_data_oid,
+            p.fxtm_pbls_data_ttl,
+            p.aut,
+            p.page_num,
+            p.pblcn_dt,
+            p.inq_cnt,
+            p.cvr_img1_oid,
+            f1.strg_file_path AS cover_file_path,
+            f1.strg_file_nm AS cover_file_name,
+            f1.orgnl_file_nm AS cover_origin_file_name,
+            p.cvr_img2_oid,
+            f2.strg_file_path AS full_file_path,
+            f2.strg_file_nm AS full_file_name,
+            f2.orgnl_file_nm AS full_origin_file_name,
+            f2.file_type_nm AS full_file_ext
+        FROM ${schema}.fxtm_pbls_data p
+             LEFT JOIN ${schema}.file f1 ON p.cvr_img1_oid = f1.file_oid AND f1.use_yn = 'Y'
+             LEFT JOIN ${schema}.file f2 ON p.cvr_img2_oid = f2.file_oid AND f2.use_yn = 'Y'
+        <where>
+            p.use_yn = 'Y'
+            AND p.open_yn = 'Y'
+            <if test="searchKeyword != null and searchKeyword != ''">
+                <choose>
+                    <when test="searchType == 'bbstitle'">
+                        AND p.fxtm_pbls_data_ttl LIKE CONCAT('%', #{searchKeyword}, '%')
+                    </when>
+                    <when test="searchType == 'bbsconts'">
+                        AND p.aut LIKE CONCAT('%', #{searchKeyword}, '%')
+                    </when>
+                    <otherwise>
+                        AND (p.fxtm_pbls_data_ttl LIKE CONCAT('%', #{searchKeyword}, '%')
+                             OR p.aut LIKE CONCAT('%', #{searchKeyword}, '%'))
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+        ORDER BY p.pblcn_dt DESC, p.fxtm_pbls_data_oid DESC
+    </select>
+
+    <!-- 정기발간자료 상세 조회 -->
+    <select id="selectPeriodicalDetail"
+            parameterType="Long"
+            resultType="egovframework.portal.periodical.dto.Portal502DetailDTO">
+        SELECT
+            p.fxtm_pbls_data_oid,
+            p.fxtm_pbls_data_ttl,
+            p.aut,
+            p.page_num,
+            p.pblcn_dt,
+            p.inq_cnt,
+            p.cvr_img1_oid,
+            f.strg_file_path AS cover_file_path,
+            f.strg_file_nm AS cover_file_name,
+            f.orgnl_file_nm AS cover_origin_file_name
+        FROM ${schema}.fxtm_pbls_data p
+             LEFT JOIN ${schema}.file f ON p.cvr_img1_oid = f.file_oid AND f.use_yn = 'Y'
+        WHERE p.fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+          AND p.use_yn = 'Y'
+          AND p.open_yn = 'Y'
+    </select>
+
+    <!-- 정기발간자료 첨부파일 목록 조회 (표지 + 총권 파일) -->
+    <select id="selectPeriodicalFiles"
+            parameterType="Long"
+            resultType="egovframework.portal.periodical.dto.Portal502FileDTO">
+        SELECT
+            f.file_oid,
+            f.strg_file_path,
+            f.strg_file_nm,
+            f.orgnl_file_nm,
+            f.file_type_nm,
+            f.strg_file_cpct,
+            f.dwnld_cnt,
+            'COVER' AS file_type
+        FROM ${schema}.fxtm_pbls_data p
+             INNER JOIN ${schema}.file f ON p.cvr_img1_oid = f.file_oid AND f.use_yn = 'Y'
+        WHERE p.fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+          AND p.use_yn = 'Y'
+          AND p.open_yn = 'Y'
+          AND p.cvr_img1_oid IS NOT NULL
+
+        UNION ALL
+
+        SELECT
+            f.file_oid,
+            f.strg_file_path,
+            f.strg_file_nm,
+            f.orgnl_file_nm,
+            f.file_type_nm,
+            f.strg_file_cpct,
+            f.dwnld_cnt,
+            'FULL' AS file_type
+        FROM ${schema}.fxtm_pbls_data p
+             INNER JOIN ${schema}.file f ON p.cvr_img2_oid = f.file_oid AND f.use_yn = 'Y'
+        WHERE p.fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+          AND p.use_yn = 'Y'
+          AND p.open_yn = 'Y'
+          AND p.cvr_img2_oid IS NOT NULL
+
+        ORDER BY file_type DESC
+    </select>
+
+    <!-- 정기발간자료 섹션 목록 조회 -->
+    <select id="selectPeriodicalSections"
+            parameterType="Long"
+            resultType="egovframework.portal.periodical.dto.Portal502SectionDTO">
+        SELECT
+            fxtm_pbls_sect_oid,
+            fxtm_pbls_sect_type,
+            fxtm_pbls_sect_ttl
+        FROM ${schema}.fxtm_pbls_sect
+        WHERE fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+        ORDER BY sort_seq, fxtm_pbls_sect_oid
+    </select>
+
+    <!-- 정기발간자료 아이템 목록 조회 -->
+    <select id="selectPeriodicalItems"
+            parameterType="Long"
+            resultType="egovframework.portal.periodical.dto.Portal502ItemDTO">
+        SELECT
+            i.fxtm_pbls_item_ttl,
+            i.aut,
+            i.page_num,
+            i.atch_file_oid,
+            f.strg_file_path AS attach_file_path,
+            f.strg_file_nm AS attach_file_name,
+            f.orgnl_file_nm AS attach_origin_file_name
+        FROM ${schema}.fxtm_pbls_item i
+             LEFT JOIN ${schema}.file f ON i.atch_file_oid = f.file_oid AND f.use_yn = 'Y'
+        WHERE i.fxtm_pbls_sect_oid = #{fxtmPblsSectOid}
+        ORDER BY i.sort_seq, i.fxtm_pbls_item_oid
+    </select>
+
+    <!-- 이전글 조회 -->
+    <select id="selectPrevPost" 
+            parameterType="Long" 
+            resultType="egovframework.portal.periodical.dto.Portal502NavDTO">
+        SELECT
+            fxtm_pbls_data_oid,
+            fxtm_pbls_data_ttl
+        FROM ${schema}.fxtm_pbls_data
+        WHERE use_yn = 'Y'
+          AND open_yn = 'Y'
+          AND fxtm_pbls_data_oid <![CDATA[<]]> #{fxtmPblsDataOid}
+        ORDER BY fxtm_pbls_data_oid DESC
+        LIMIT 1
+    </select>
+
+    <!-- 다음글 조회 -->
+    <select id="selectNextPost" 
+            parameterType="Long" 
+            resultType="egovframework.portal.periodical.dto.Portal502NavDTO">
+        SELECT
+            fxtm_pbls_data_oid,
+            fxtm_pbls_data_ttl
+        FROM ${schema}.fxtm_pbls_data
+        WHERE use_yn = 'Y'
+          AND open_yn = 'Y'
+          AND fxtm_pbls_data_oid <![CDATA[>]]> #{fxtmPblsDataOid}
+        ORDER BY fxtm_pbls_data_oid ASC
+        LIMIT 1
+    </select>
+
+    <!-- 조회수 증가 -->
+    <update id="updateViewCnt" parameterType="Long">
+        UPDATE ${schema}.fxtm_pbls_data
+        SET inq_cnt = inq_cnt + 1,
+            mdfcn_dt = NOW()
+        WHERE fxtm_pbls_data_oid = #{fxtmPblsDataOid}
+    </update>
+
+</mapper>

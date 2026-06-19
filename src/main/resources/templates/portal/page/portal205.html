@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>제도 관리(DTC 인증제 등) 및 지원</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <div class="content_wrap">
+        <h3 class="stit">제도 관리(DTC 인증제 등) 및 지원</h3>
+        <div class="bg_box">
+            <ul class="text_list">
+                <li>DTC 유전자 검사 서비스 관련 인증제 관리체계 운영 및 고도화</li>
+                <li>인증기관 대상 실태평가, 인증기관 간담회 등 환류</li>
+                <li>건강한 생태계 조성 및 제도적 환경 조성을 위한 지원</li>
+                <li>생명윤리 관련 제도 신규 개발 및 평가 등 개선 지원</li>
+            </ul>
+        </div>
+        <h4 class="sstit">개요</h4>
+        <ul class="text_list">
+            <li>생명윤리법 제49조의2에 따른 소비자 대상 직접 시행 유전자검사 서비스의 질 관리를 위해 소비자 대상 직접 시행(DTC) 유전자검사 역량인증처리기관으로 지정받아 DTC 유전자검사기관 검사역량 평가·인증제도를 `22년부터 운영 중에 있습니다.</li>
+        </ul>
+        <h4 class="sstit">시행 근거</h4>
+        <ul class="text_list">
+            <li>법 제49조의2(유전자검사기관의 평가 및 인증) 제2항 및 시행규칙 제49조의3, 제49조의4, 제49조의5</li>
+            <li>보건복지부 고시 제2022-99호(소비자 대상 직접 시행 유전자검사기관의 검사역량 인증에 관한 규정)</li>
+            <li>보건복지부 고시 제2022-35호(소비자 대상 직접 시행 유전자 검사역량인증처리기관 지정)</li>
+        </ul>
+        <h4 class="sstit">인증기준</h4>
+        <ul class="text_list">
+            <li>「생명윤리 및 안전에 관한 법률」 시행규칙 제49조의3(유전자검사기관의 검사역량 인증) 제4항에 따라 검사역량인증처리기관은 다음의 사항을 검토하여 인증·재인증 여부를 결정하여야 합니다.
+                <ol>
+                    <li>1. 유전자검사기관 시설 및 장비 등에 대한 운영체계의 적절성</li>
+                    <li>2. 유전자검사기관 인력의 전문성</li>
+                    <li>3. 유전자검사목적별 유전자검사항목의 적절성</li>
+                    <li>4. 유전자검사서비스 홍보 내용 및 판매 방법 등의 적절성</li>
+                    <li>5. 유전자검사서비스 관리계획의 적절성</li>
+                    <li>6. 유전자검사 결과의 정확성</li>
+                    <li>7. 검사대상자의 개인정보보호 및 처리 계획 적절성</li>
+                    <li>8. 그 밖에 보건복지부장관이 검사역량 인증ㆍ재인증을 위해 필요하다고 인정하는 사항</li>
+                </ol>
+            </li>
+        </ul>
+        <h4 class="sstit">평가‧인증 절차 및 방법</h4>
+        <p class="img_wrap">
+            <img th:src="@{/portal/images/procedure.svg}" alt="그림 설명 하단 숨김 텍스트 참고">
+        </p>
+    <div class="hidden">
+        <h1 id="processTitle">평가 및 인증 절차</h1>
+
+        <!-- 전체 절차(이미지 흐름 그대로: 위에서 아래로) -->
+        <ol class="process__steps" aria-label="평가 및 인증 절차 단계">
+
+            <!-- 공고 -->
+            <li class="process__step">
+                <section class="step" aria-labelledby="s1-title">
+                    <h2 id="s1-title">공고</h2>
+                    <ul>
+                        <li>웹페이지에 평가기준을 계획 공고</li>
+                        <li>신청기간 및 방법, 평가기준 및 절차 등 안내</li>
+                    </ul>
+                </section>
+            </li>
+
+            <!-- 평가기준 신청 -->
+            <li class="process__step">
+                <section class="step" aria-labelledby="s2-title">
+                    <h2 id="s2-title">평가기준 신청</h2>
+                    <ul>
+                        <li>평가·인증에 대한 대상기관의 참여신청 및 평가자료 제출</li>
+                        <li>신청기관 내 웹페이지를 통해 제출</li>
+                    </ul>
+                </section>
+            </li>
+
+            <!-- 평가자료 확인 및 접수 -->
+            <li class="process__step">
+                <section class="step" aria-labelledby="s3-title">
+                    <h2 id="s3-title">평가자료 확인 및 접수</h2>
+                    <ul>
+                        <li>평가자료 제출 내용 확인 및 접수 완료</li>
+                        <li>대상기관 특성 및 이해상충 고려 담당자 및 평가자 배정</li>
+                    </ul>
+                </section>
+            </li>
+
+            <!-- 서류평가 -->
+            <li class="process__step">
+                <section class="step" aria-labelledby="s4-title" aria-describedby="s4-desc">
+                    <h2 id="s4-title">서류평가</h2>
+                    <p id="s4-desc" class="sr-only">
+                        서류평가 단계는 평가, 인증심사위원회 심의, 결과 통보로 구성됩니다.
+                    </p>
+
+                    <ol class="substeps" aria-label="서류평가 세부 절차">
+                        <li>
+                            <h3>평가</h3>
+                            <ul>
+                                <li>평가 시행 및 평가 작성</li>
+                                <li>평가보고서 작성</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h3>인증심사위원회 심의</h3>
+                            <ul>
+                                <li>평가 결과 심의·확정:Pass/Fail</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h3>결과 통보</h3>
+                            <ul>
+                                <li>서류평가 결과통보</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <!-- 이의신청(통보일 기준 7일이내) -->
+                    <aside class="callout" aria-label="이의신청 안내">
+                        <h3 class="callout__title">이의신청(통보일 기준 7일이내)</h3>
+                        <p class="callout__text">
+                            결과통보일로부터 7일이내 이의신청 가능하며, 평가결과 '부적합(Fail)'일 경우 탈락<br>
+                            (보완 후 다음에 다시 신청)처리
+                        </p>
+                    </aside>
+                </section>
+            </li>
+
+            <!-- 현장평가 / 외부정도관리 평가 -->
+            <li class="process__step">
+                <section class="step" aria-labelledby="s5-title" aria-describedby="s5-desc">
+                    <h2 id="s5-title">현장평가 및 외부정도관리 평가</h2>
+                    <p id="s5-desc" class="sr-only">서류평가 이후 현장평가와 외부정도관리 평가가 진행됩니다.</p>
+
+                    <div class="grid" role="group" aria-label="현장평가 및 외부정도관리 평가">
+                        <!-- 현장평가 -->
+                        <article class="panel" aria-labelledby="s5a-title">
+                            <h3 id="s5a-title">현장평가</h3>
+                            <ul>
+                                <li>서류평가 모두 PASS 한 기관</li>
+                                <li>현장평가 시행 안내 및 일정 조율</li>
+                                <li>현장 확인 및 인터뷰 등을 통해 검사 역량 평가</li>
+                                <li>현장평가 결과보고서 작성 및 제출</li>
+                                <li>★현장 필수 기준 모두 'Pass' 및 정성평가 중 '하' 없어야 함</li>
+                            </ul>
+                        </article>
+
+                        <!-- 외부정도관리 평가 -->
+                        <article class="panel" aria-labelledby="s5b-title">
+                            <h3 id="s5b-title">외부정도관리 평가</h3>
+                            <ul>
+                                <li>서류평가를 통과한 기관이 신청한 검수항목</li>
+                                <li>항목 및 미기재 정확도 평가(위탁 운영 예정)</li>
+                                <li>기관별 외부정도관리 평가보고서로 작성 및 제출</li>
+                                <li>★정확도 98% 이상 확인된 경우 'Pass'로 작성 및 제출</li>
+                            </ul>
+                        </article>
+                    </div>
+                </section>
+            </li>
+
+            <!-- 종합평가 -->
+            <li class="process__step">
+                <section class="step" aria-labelledby="s6-title" aria-describedby="s6-desc">
+                    <h2 id="s6-title">종합평가</h2>
+                    <p id="s6-desc" class="sr-only">
+                        종합평가 단계는 평가, 인증심사위원회 심의, 결과 통보로 구성됩니다.
+                    </p>
+
+                    <ol class="substeps" aria-label="종합평가 세부 절차">
+                        <li>
+                            <h3>평가</h3>
+                            <ul>
+                                <li>외부정도관리 및 현장평가 결과 종합</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h3>인증심사위원회 심의</h3>
+                            <ul>
+                                <li>평가 결과 심의·확정:Pass/Fail</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h3>결과 통보</h3>
+                            <ul>
+                                <li>종합평가 결과통보</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <!-- 이의신청/보완제출 -->
+                    <aside class="callout" aria-label="이의신청 및 보완제출 안내">
+                        <h3 class="callout__title">
+                            이의신청(통보일 기준 7일이내)<br>
+                            보완제출(통보일 기준 14일이내)
+                        </h3>
+                        <p class="callout__text">
+                            결과통보일로부터 7일이내 이의신청 가능하며,<br>
+                            정성평가기준'하'가 포함된 기관은<br>
+                            14일이내 보완완료 제출 시 재평가 가능
+                        </p>
+                    </aside>
+                </section>
+            </li>
+
+            <!-- 보건복지부 승인 -->
+            <li class="process__step">
+                <section class="step" aria-labelledby="s7-title">
+                    <h2 id="s7-title">보건복지부 승인</h2>
+                </section>
+            </li>
+
+            <!-- 인증결과 공표 + 우측 설명 -->
+            <li class="process__step">
+                <section class="step" aria-labelledby="s8-title" aria-describedby="s8-desc">
+                    <h2 id="s8-title">인증결과 공표</h2>
+                    <p id="s8-desc">인증결과는 인증 및 확인용으로 구분하여 신청기관에 통보</p>
+                </section>
+            </li>
+
+            <!-- 실태평가 -->
+            <li class="process__step">
+                <section class="step" aria-labelledby="s9-title">
+                    <h2 id="s9-title">실태평가</h2>
+                    <ul>
+                        <li>인증을 받은 기관을 대상</li>
+                        <li>세부평가기준에 대해 매년 수시 실태평가 수행</li>
+                        <li>기관별 실태평가서 작성 및 제출</li>
+                        <li>★실태평가 기준 모두 'Fail' 및 '하' 없어야 함</li>
+                    </ul>
+                </section>
+
+                <!-- 좌측 재인증 신청(이미지의 좌측 박스) -->
+                <aside class="callout" aria-label="재인증 신청 안내">
+                    <h3 class="callout__title">재인증 신청(인증유효 기간 3년 내)</h3>
+                    <p class="callout__text">실태평가 결과에 따라, 서류 또는 현장평가 일부 면제 가능</p>
+                </aside>
+            </li>
+
+        </ol>
+    </div>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal205 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal205.init();
+    });
+</script>
+</body>
+</html>

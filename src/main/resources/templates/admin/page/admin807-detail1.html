@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_board_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 동적 게시판 > 게시판 상세보기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style layout:fragment="style">
+        .search_wrap {display: none;}
+    </style>
+</head>
+<body>
+<div layout:fragment="admin_board_content" class="sub_cont_wrap">
+    <div class="table_layout02 has_editor">
+        <table>
+            <caption>게시글 상세</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row">등록일시</th>
+                <td th:text="${post.regDt != null ? #temporals.format(post.regDt, 'yyyy-MM-dd HH:mm:ss') : '-'}"></td>
+
+                <th scope="row">작성자</th>
+                <td th:text="${post.wrtrNm != null ? post.wrtrNm : '-'}"></td>
+            </tr>
+            <tr>
+                <th scope="row">제목</th>
+                <td th:text="${post.bbsPstTtl != null ? post.bbsPstTtl : '-'}"></td>
+
+                <th scope="row">분류</th>
+                <td th:text="${post.ctgry != null ? post.ctgry : '-'}"></td>
+            </tr>
+
+            <tr>
+                <th scope="row">상단고정 기간</th>
+                <td colspan="3">
+                    <span th:if="${post.bgngDt != null}"
+                          th:text="${#temporals.format(post.bgngDt, 'yyyy-MM-dd')}"></span>
+                    <span th:if="${post.bgngDt != null and post.endDt != null}"> ~ </span>
+                    <span th:if="${post.endDt != null}"
+                          th:text="${#temporals.format(post.endDt, 'yyyy-MM-dd')}"></span>
+                    <span th:if="${post.bgngDt == null and post.endDt == null}">-</span>
+                </td>
+            </tr>
+
+            <!--일반게시판, 사용자게시판일 경우 s-->
+            <tr th:if="${post.ansCn == null}">
+                <th scope="row">내용</th>
+                <td colspan="3" class="post-content"
+                    th:utext="${post.bbsPstCn != null ? post.bbsPstCn : '-'}">
+                </td>
+            </tr>
+            <!--일반게시판, 사용자게시판일 경우 e-->
+
+            <!--Faq일 경우 s-->
+            <tr th:if="${post.ansCn != null}">
+                <th scope="row">질문 내용</th>
+                <td colspan="3"
+                    th:utext="${post.bbsPstCn != null ? post.bbsPstCn : '-'}">
+                </td>
+            </tr>
+            <tr th:if="${post.ansCn != null}">
+                <th scope="row">답변 내용</th>
+                <td colspan="3" class="post-content"
+                    th:utext="${post.ansCn != null ? post.ansCn : '-'}">
+                </td>
+            </tr>
+            <!--Faq일 경우 e-->
+
+            <!-- 첨부파일 있을 때 s -->
+            <tr th:if="${fileList != null and !fileList.isEmpty()}">
+                <th scope="row">파일첨부</th>
+                <td colspan="3">
+                    <th:block th:each="file : ${fileList}">
+                        <a th:href="@{|${basicFilePath}${file.smallFilePath}/${file.smallFileName}|}"
+                           th:text="${file.originFileName != null ? file.originFileName : '파일명 없음'}"
+                           class="a_link" download></a>
+                    </th:block>
+                </td>
+            </tr>
+            <!-- 첨부파일 있을 때 e -->
+
+            <!-- 첨부파일 없을 때 s -->
+            <tr th:if="${fileList == null or fileList.isEmpty()}">
+                <th scope="row">파일첨부</th>
+                <td colspan="3">첨부파일 없음</td>
+            </tr>
+            <!-- 첨부파일 없을 때 e -->
+            </tbody>
+        </table>
+    </div>
+
+    <div th:if="${boardInfo.cmntPsbltyYn != 'N'}" class="comment_wrap mt30">
+
+        <h4>댓글 <span th:text="${commentList != null ? commentList.size() : 0}" style="color:#e60000; font-size:0.8em;"></span></h4>
+
+        <div class="comment_write">
+            <div class="top_area">
+                <input type="text" id="cmt_writer" placeholder="작성자 (관리자)" maxlength="20" value="관리자">
+                <button type="button" class="btn_basic_s bg_blue" onclick="admin807_detail1.fnRegistComment()">등록</button>
+            </div>
+            <textarea id="comment_content" placeholder="댓글 내용을 입력해주세요."></textarea>
+        </div>
+
+        <div class="comment_list">
+            <ul th:if="${commentList != null and !commentList.isEmpty()}">
+                <li th:each="cmt : ${commentList}">
+                    <div style="width: 100%;">
+                        <div class="info">
+                            <strong th:text="${cmt.wrtrNm}">작성자</strong>
+                            <span class="date" th:text="${#temporals.format(cmt.regDt, 'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+
+                        <div class="txt post-content" th:text="${cmt.commentContent}"></div>
+                    </div>
+
+                    <div>
+                        <a href="javascript:;" th:onclick="|admin807_detail1.fnDeleteComment(${cmt.bbsCmntOid})|" class="btn_del" style="color:#dc3545; font-weight:bold; cursor:pointer;">❌ 삭제</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="btn_wrap">
+        <a href="javascript:;" id="admin807_list_btn" class="btn_basic bg_type01">목록</a>
+        <a href="javascript:;" id="admin807_detail1_btn_update" class="btn_basic bg_type02">수정</a>
+    </div>
+</div>
+<script layout:fragment="board_scripts" th:inline="javascript" type="text/javascript">
+    const admin807_detail1 = {
+        state: {
+            post: /*[[${post}]]*/ {},
+            boardInfo: /*[[${boardInfo}]]*/ {},
+            fileList: /*[[${fileList}]]*/ {},
+            menuCd: ''
+        },
+
+        init: function() {
+           	const params = new URLSearchParams(window.location.search);
+        	const menuCd = params.get("menuCd");
+        	this.state.menuCd = menuCd;
+        	
+            this.initEvent();
+        },
+
+        initEvent: function(){
+            const _this = this;
+            // 수정 버튼 클릭
+            document.querySelector('#admin807_detail1_btn_update').addEventListener('click', function(){
+                _this.fnGoUpdatePage();
+            });
+
+            // 목록 버튼 클릭
+            document.querySelector('#admin807_list_btn').addEventListener('click', function(){
+                _this.fnGoListPage();
+            });
+
+        },
+
+        fnGoListPage: function(){
+            const menuCd = this.state.menuCd;
+            const targetTemplate = 'admin807-list1';
+            location.href = `${contextPath}/admin/board/${targetTemplate}?menuCd=${menuCd}&bbsOid=${this.state.boardInfo.bbsOid}`;
+
+        },
+
+        // [수정 페이지 이동]
+        fnGoUpdatePage: function() {
+            const boardType = this.state.boardInfo.bbsSeCd;
+            const menuCd = this.state.menuCd;
+            let targetTemplate = 'admin807-write_common';
+
+            // 포토/썸네일 게시판
+            if (['PHOTO', 'THUMBNAIL'].includes(boardType)) {
+                targetTemplate = 'admin807-write_images';
+            }
+            // 질문과답변 (Q&A)
+            else if (['QNA'].includes(boardType)) {
+                targetTemplate = 'admin807-write_qna';
+            }
+
+            location.href = `${contextPath}/admin/board/write/${targetTemplate}?menuCd=${menuCd}&bbsOid=${this.state.boardInfo.bbsOid}&bbsPstOid=${this.state.post.bbsPstOid}`;
+        },
+
+        // [댓글 등록]
+        fnRegistComment: function() {
+            const _this = this;
+            const writerEl = document.getElementById('cmt_writer');
+            const contentEl = document.getElementById('comment_content');
+
+            // 유효성 검사
+            if (!writerEl || !writerEl.value.trim()) {
+                return uiCommon.fnShowAlertModal('작성자를 입력해주세요.', () => writerEl.focus());
+            }
+            if (!contentEl || !contentEl.value.trim()) {
+                return uiCommon.fnShowAlertModal('내용을 입력해주세요.', () => contentEl.focus());
+            }
+
+            const params = {
+                bbsOid: _this.state.boardInfo.bbsOid,
+                bbsPstOid: _this.state.post.bbsPstOid,
+                wrtrNm: writerEl.value.trim(),
+                commentContent: contentEl.value.trim(),
+                menuCd: _this.state.menuCd
+            };
+
+            uiCommon.fnShowConfirmModal('댓글을 등록하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    await API.put('/api/common/board/comment/insert', params);
+
+                    uiCommon.fnShowAlertModal('등록되었습니다.', function(){
+                        location.reload();
+                    });
+                } catch (error) {
+                    console.error('댓글 등록 실패:', error);
+                    uiCommon.fnShowAlertModal('등록 중 오류가 발생했습니다.',error);
+                }
+            });
+        },
+
+        // [댓글 삭제]
+        fnDeleteComment: function(bbsCmntOid) {
+            if (!bbsCmntOid) return;
+            const _this = this;
+
+            uiCommon.fnShowConfirmModal('정말 삭제하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    const param = {
+                        bbsCmntOid : bbsCmntOid,
+                        menuCd: _this.state.menuCd
+                    }
+
+                    await API.patch(`/api/common/board/comment/delete`,param);
+
+                    uiCommon.fnShowAlertModal('삭제되었습니다.', function(){
+                        location.reload();
+                    });
+                } catch (error) {
+                    console.error('댓글 삭제 실패:', error);
+                    uiCommon.fnShowAlertModal('삭제 중 오류가 발생했습니다.');
+                }
+            });
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        admin807_detail1.init();
+    });
+</script>
+</body>
+</html>

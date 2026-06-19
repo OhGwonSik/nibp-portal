@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > 팝업존목록 > 팝업존 등록/수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="sub_cont_wrap">
+    <div class="table_layout02 mb10">
+        <table>
+            <caption>팝업존 등록/수정</caption>
+            <colgroup>
+                <col style="width: 100px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row"><label for="admin618_1_popup_zone_nm">제목</label></th>
+                <td><input type="text" id="admin618_1_popup_zone_nm" class="w100" placeholder="제목을 입력하세요"></td>
+            </tr>
+            <tr>
+                <th scope="row">공개여부</th>
+                <td>
+                    <span class="radio-box"><input type="radio" id="admin618_1_open_yn_y" name="admin618_1_open_yn" value="Y" checked><label for="admin618_1_open_yn_y">공개</label></span>
+                    <span class="radio-box"><input type="radio" id="admin618_1_open_yn_n" name="admin618_1_open_yn" value="N"><label for="admin618_1_open_yn_n">비공개</label></span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="admin618_1_content">내용</label></th>
+                <td>
+                    <textarea class="bor1ddd" name="admin618_1_content" id="admin618_1_content" rows="30" placeholder="내용을 입력하세요"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">썸네일</th>
+                <td>
+                    <div id="admin618_1_thumbnail_file" class="file_list_with_alt"></div>
+                    <div class="file_upload">
+                        <label for="admin618_1_thumbnail"><span>파일찾기</span></label>
+                        <input type="file" id="admin618_1_thumbnail" accept="image/*" th:attr="data-allowed-ext=${allowedExtensions}">
+                        <span id="admin618_1_thumbnail_txt" class="file_txt">이미지 파일을 첨부해주세요</span>
+                    </div>
+                    <div id="admin618_1_thumbnail_alt_container" style="display: none; margin-top: 10px;">
+                        <label for="admin618_1_thumbnail_alt_text" style="display: block; margin-bottom: 5px; font-weight: bold;">썸네일 대체 텍스트 <span style="color: red;">*</span></label>
+                        <input type="text"
+                               id="admin618_1_thumbnail_alt_text"
+                               class="w100"
+                               placeholder="썸네일 이미지 대체 텍스트를 입력하세요 (필수)"
+                               style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+							   th:accept="${#strings.substringBefore(allowedExtensions, ',') == allowedExtensions ? '.' + allowedExtensions : '.' + #strings.replace(allowedExtensions, ',', ',.')}"
+							   th:attr="data-allowed-ext=${allowedExtensions}">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="admin618_1_popup_zone_link">링크</label></th>
+                <td>
+                    <input type="text" id="admin618_1_popup_zone_link" class="w100" placeholder="링크 URL을 입력하세요 (예: https://example.com 또는 www.example.com)">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="btn_wrap mt20">
+        <a id="admin618_1_btn_save" href="javascript:;" class="btn_basic bg_type01">저장</a>
+        <a id="admin618_1_btn_cancel" href="javascript:;" class="btn_basic line_type02">취소</a>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin618_1 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            isEdit: false,                    // 수정 여부
+            popupZoneOid: null,                // 팝업존번호
+            deletedAttachNos: [],             // 삭제할 첨부파일 번호 목록 (썸네일용)
+            thmbPath: null,              // 썸네일 경로
+            thumbnailOriginFileName: null,    // 썸네일 원본 파일명
+            thumbnailAttachNo: null,          // 썸네일 첨부파일 번호 (삭제 시 사용)
+            thumbnailAltText: '',             // 썸네일 대체 텍스트
+            maxFileSize: /*[[${maxFileSize}]]*/ 10,
+            allowedExtensions: /*[[${allowedExtensions}]]*/ ''
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // URL 파라미터로 수정 여부 판단
+            const urlParams = new URLSearchParams(window.location.search);
+            this.state.popupZoneOid = parseInt(urlParams.get('popupZoneOid'));
+            this.state.isEdit = !!this.state.popupZoneOid;
+
+            // 이벤트 바인딩
+            this.initEvent();
+
+            this.state.isEdit
+                    ? this.fnLoadData(this.state.popupZoneOid)  // 수정이면 데이터 로드
+                    : this.initFormData();                     // 등록이면 폼 초기화
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 저장 버튼 클릭
+            document.getElementById("admin618_1_btn_save").addEventListener("click", function (e) {
+                e.preventDefault();
+                if (_this.state.isEdit) {
+                    _this.fnUpdateData();
+                } else {
+                    _this.fnCreateData();
+                }
+            });
+
+            // 취소 버튼 클릭
+            document.getElementById("admin618_1_btn_cancel").addEventListener("click", function (e) {
+                e.preventDefault();
+                uiCommon.fnShowConfirmModal('목록으로 이동하시겠습니까?', async function () {
+                    _this.fnGoToListPage();
+                })
+            });
+
+            // 썸네일 선택 시
+            document.getElementById("admin618_1_thumbnail").addEventListener("change", function (e) {
+                _this.fnHandleThumbnailSelect(e);
+            });
+        },
+
+        /**
+         * 폼 입력값 초기화 - 등록
+         */
+        initFormData: function () {
+            document.getElementById('admin618_1_popup_zone_nm').value = '';
+            document.getElementById('admin618_1_open_yn_y').checked = true;
+            document.getElementById('admin618_1_content').value = '';
+            document.getElementById('admin618_1_popup_zone_link').value = '';
+            document.getElementById('admin618_1_thumbnail').value = '';
+            document.getElementById('admin618_1_thumbnail_txt').textContent = '이미지 파일을 첨부해주세요';
+            document.getElementById('admin618_1_thumbnail_alt_text').value = '';
+            document.getElementById('admin618_1_thumbnail_alt_container').style.display = 'none';
+        },
+
+        /**
+         * 폼 데이터 로드 - 수정
+         */
+        fnLoadData: async function (popupZoneOid) {
+            const _this = this;
+            try {
+                const data = await API.get('/api/admin/admin618/select?popupZoneOid=' + popupZoneOid);
+
+                document.getElementById('admin618_1_popup_zone_nm').value = data.popupZoneNm || '';    // 제목
+                document.getElementById('admin618_1_content').value = data.smry || '';              // 내용
+                document.getElementById('admin618_1_popup_zone_link').value = data.popupZoneLink || '';               // 링크
+
+                // 공개여부
+                if (data.openYn === 'Y') {
+                    document.getElementById('admin618_1_open_yn_y').checked = true;
+                } else {
+                    document.getElementById('admin618_1_open_yn_n').checked = true;
+                }
+
+                // 썸네일 정보 표시
+                if (data.files && data.files.length > 0 && data.thmbPath) {
+                    _this.state.thmbPath = data.thmbPath;
+
+                    // 썸네일 파일의 fileOid 찾기
+                    const thumbnailFile = data.files.find(file => {
+                        return file.thmbYn === 'Y';
+                    });
+
+                    if (thumbnailFile) {
+                        _this.state.thumbnailAttachNo = thumbnailFile.fileOid;
+                        _this.state.thumbnailOriginFileName = thumbnailFile.orgnlFileNm;
+                        _this.state.thumbnailAltText = thumbnailFile.imgSbstTxtCn || '';
+                    }
+
+                    _this.fnRenderThumbnail();
+                }
+
+            } catch (error) {
+                console.error(error);
+                uiCommon.fnShowAlertModal('데이터를 불러오는데 실패했습니다.', () => _this.fnGoToListPage());
+            }
+        },
+
+        /**
+         * 파라미터 생성
+         */
+        fnBuildParam: function () {
+            const formData = new FormData();
+
+            // 썸네일 파일 경로 저장
+            let thumbnailPath = '';
+            const thumbnailInput = document.getElementById('admin618_1_thumbnail');
+            if (thumbnailInput.files.length > 0) {
+                const thumbnailFile = thumbnailInput.files[0];
+                thumbnailPath = 'admin/popupzone' + common.fnGetDatePath() + thumbnailFile.name;
+                formData.append('thumbnailFile', thumbnailFile);
+            } else if (this.state.thmbPath) {
+                // 기존 썸네일 경로 유지
+                thumbnailPath = this.state.thmbPath;
+            }
+
+            // 썸네일 대체 텍스트
+            const thumbnailAltText = document.getElementById('admin618_1_thumbnail_alt_text').value.trim();
+
+            // 데이터 객체 생성
+            const data = {
+                popupZoneNm: document.getElementById('admin618_1_popup_zone_nm').value.trim(),
+                smry: document.getElementById('admin618_1_content').value.trim(),
+                popupZoneLink: document.getElementById('admin618_1_popup_zone_link').value.trim(),
+                openYn: document.querySelector('input[name="admin618_1_open_yn"]:checked').value,
+                thmbPath: thumbnailPath,
+                thumbnailAltText: thumbnailAltText
+            };
+
+            // 수정 모드일 경우 popupZoneNo와 삭제할 파일 번호 목록 추가
+            if (this.state.isEdit) {
+                data.popupZoneOid = this.state.popupZoneOid;
+                // 삭제할 파일 번호 목록 추가 (썸네일 삭제용)
+                if (this.state.deletedAttachNos.length > 0) {
+                    data.deletedAttachNos = this.state.deletedAttachNos;
+                }
+                // 기존 썸네일 파일 번호 (altText 업데이트용)
+                if (this.state.thumbnailAttachNo) {
+                    data.thumbnailAttachNo = this.state.thumbnailAttachNo;
+                }
+            }
+
+            // JSON 데이터를 Blob으로 변환하여 추가
+            formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
+
+            return formData;
+        },
+
+        /**
+         * 팝업존 등록
+         */
+        fnCreateData: async function () {
+            const formData = this.fnBuildParam();
+
+            try {
+                await API.upload(contextPath + '/api/admin/admin618/insert', formData, { method: 'PUT' });
+                uiCommon.fnShowAlertModal('등록되었습니다.', () => this.fnGoToListPage());
+            } catch (error) {
+                console.error('등록 실패:', error);
+
+                let errorMessage = '등록에 실패했습니다.';
+                if (error instanceof APIError) {
+                    if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        /**
+         * 팝업존 수정
+         */
+        fnUpdateData: async function () {
+            const formData = this.fnBuildParam();
+
+            try {
+                await API.upload(contextPath + '/api/admin/admin618/update', formData, { method: 'PATCH' });
+                uiCommon.fnShowAlertModal('수정되었습니다.', () => this.fnGoToListPage());
+            } catch (error) {
+                console.error('수정 실패:', error);
+
+                let errorMessage = '수정에 실패했습니다.';
+                if (error instanceof APIError) {
+                    if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        /**
+         * 썸네일 선택 처리
+         */
+        fnHandleThumbnailSelect: function (e) {
+       	    const _this = this;
+       	    const fileInput = e.target;
+       	    const file = fileInput.files[0];
+
+       	    if (!file) return;
+
+       	    // 파일 유효성 검사
+       	    const maxMb = _this.state.maxFileSize;
+       	    const maxSize = maxMb * 1024 * 1024;
+       	    const fileExt = file.name.split('.').pop().toLowerCase();
+       	    const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+
+       	    let reason = "";
+       	    if (!imgExts.includes(fileExt)) {
+       	        reason = "허용되지 않는 형식입니다.";
+       	    } else if (file.size > maxSize) {
+       	        reason = "최대 " + maxMb + "MB까지만 업로드 가능합니다.";
+       	    }
+
+       	    if (reason) {
+       	        uiCommon.fnShowAlertModal(reason);
+       	        fileInput.value = '';
+       	        return;
+       	    }
+
+       	    this.state.thmbPath = 'admin/popupzone' + common.fnGetDatePath() + file.name;
+       	    this.state.thumbnailOriginFileName = file.name;
+       	    this.fnRenderThumbnail();
+
+       	    document.getElementById('admin618_1_thumbnail_alt_container').style.display = 'block';
+       	},
+
+        /**
+         * 썸네일 렌더링
+         */
+        fnRenderThumbnail: function () {
+            const thumbnailListContainer = document.getElementById('admin618_1_thumbnail_file');
+            thumbnailListContainer.innerHTML = '';
+
+            if (this.state.thmbPath) {
+                const fileItem = document.createElement('div');
+                fileItem.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;';
+
+                // 썸네일 원본 명
+                const strgFileNm = this.state.thumbnailOriginFileName;
+
+                fileItem.innerHTML = `
+                    <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${strgFileNm}">
+                        ${strgFileNm}
+                    </div>
+                    <div style="flex: 0 0 auto;">
+                        <a class="btn_basic line_type02" href="javascript:;" id="admin618_1_thumbnail_del" style="padding: 5px 10px; font-size: 12px;">삭제</a>
+                    </div>
+                `;
+
+                // 삭제 버튼 이벤트 바인딩
+                const deleteBtn = fileItem.querySelector('#admin618_1_thumbnail_del');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.fnDeleteThumbnail();
+                });
+
+                thumbnailListContainer.appendChild(fileItem);
+
+                // 대체 텍스트 입력란 표시 및 값 설정
+                const altContainer = document.getElementById('admin618_1_thumbnail_alt_container');
+                const altInput = document.getElementById('admin618_1_thumbnail_alt_text');
+                altContainer.style.display = 'block';
+                altInput.value = this.state.thumbnailAltText || '';
+
+                // 대체 텍스트 입력 이벤트
+                altInput.addEventListener('input', (e) => {
+                    this.state.thumbnailAltText = e.target.value;
+                });
+            }
+        },
+
+        /**
+         * 썸네일 삭제
+         */
+        fnDeleteThumbnail: function () {
+            // 기존 썸네일 파일인 경우 삭제 목록에 추가
+            if (this.state.thumbnailAttachNo) {
+                this.state.deletedAttachNos.push(this.state.thumbnailAttachNo);
+                this.state.thumbnailAttachNo = null;
+            }
+
+            this.state.thmbPath = null;
+            this.state.thumbnailAltText = '';
+            document.getElementById('admin618_1_thumbnail').value = '';
+            document.getElementById('admin618_1_thumbnail_alt_text').value = '';
+            document.getElementById('admin618_1_thumbnail_alt_container').style.display = 'none';
+            this.fnRenderThumbnail();
+        },
+
+        /**
+         * 페이지 이동 - 팝업존 목록
+         */
+        fnGoToListPage: function () {
+            window.location.href = contextPath + '/admin/page/admin618';
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        admin618_1.init();
+    });
+</script>
+</body>
+</html>

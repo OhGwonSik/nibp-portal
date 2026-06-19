@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림 > 공지사항</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">공지사항</h3>
+    <div class="board_search mb10">
+        <p class="count">총 <strong class="color_01" id="notice_total_count" th:text="${NoticePostList.total}">0</strong> 건</p>
+        <fieldset>
+            <legend>공지사항 검색</legend>
+            <select id="notice_search_type" title="검색 옵션 선택" class="wp100">
+                <option value="ntcNm">제목</option>
+                <option value="ntcCn">내용</option>
+                <option value="all">제목+내용</option>
+            </select>
+            <input type="text" id="notice_keyword" title="검색어를 입력해주세요." class="wp200">
+            <button id="notice_board_btn_search" class="btn_basic_ss">검색</button>
+        </fieldset>
+    </div>
+    <div class="table_layout">
+        <table>
+            <caption>공지사항 리스트 테이블</caption>
+            <colgroup>
+                <col style="width: 90px">
+                <col style="width: auto">
+                <col style="width: 124px;">
+                <col style="width: 111px;">
+                <col style="width: 90px">
+            </colgroup>
+            <thead>
+            <tr>
+                <th scope="col">번호</th>
+                <th scope="col">제목</th>
+                <th scope="col">등록일</th>
+                <th scope="col">조회수</th>
+                <th scope="col">첨부파일</th>
+            </tr>
+            </thead>
+            <tbody id="notice_board_tbody">
+            <tr th:if="${#lists.isEmpty(NoticePostList.list)}">
+                <td class="tac" colspan="5">조회된 결과가 없습니다.</td>
+            </tr>
+
+            <tr th:each="item : ${NoticePostList.list}">
+                <td>
+                    <em th:if="${item.upendFixYn == 'Y'}" class="notice">공지</em>
+                    <span th:if="${item.upendFixYn != 'Y'}" th:text="${item.ntcOid}"></span>
+                </td>
+                <td class="tal">
+                    <a href="javascript:" class="link notice_link" th:data-id="${item.ntcOid}" th:text="${item.ntcNm}"></a>
+                </td>
+                <td th:text="${#temporals.format(item.regDt, 'yyyy-MM-dd')}"></td>
+                <td th:text="${item.inqCnt}"></td>
+                <td>
+                    <!-- 첨부파일이 없으면 - 표시 -->
+                    <span th:if="${item.attachments == null or #lists.isEmpty(item.attachments)}">-</span>
+
+                    <!-- 첨부파일이 있으면 확장자별 아이콘 표시 (종류별 1개씩만) -->
+                    <th:block th:if="${item.attachments != null and !#lists.isEmpty(item.attachments)}"
+                              th:with="exts=${item.attachments.![#strings.toLowerCase(fileTypeNm)]},
+                                           hasImage=${#lists.contains(exts, 'jpg') or #lists.contains(exts, 'jpeg') or #lists.contains(exts, 'png') or #lists.contains(exts, 'gif') or #lists.contains(exts, 'bmp')},
+                                           hasHwp=${#lists.contains(exts, 'hwp') or #lists.contains(exts, 'hwpx')},
+                                           hasExcel=${#lists.contains(exts, 'xls') or #lists.contains(exts, 'xlsx')},
+                                           hasWord=${#lists.contains(exts, 'doc') or #lists.contains(exts, 'docx')},
+                                           hasPdf=${#lists.contains(exts, 'pdf')}">
+                        <!-- 이미지 파일 -->
+                        <i th:if="${hasImage}" class="ico_file img">이미지</i>
+                        <!-- HWP 파일 -->
+                        <i th:if="${hasHwp}" class="ico_file hwp">한글</i>
+                        <!-- Excel 파일 -->
+                        <i th:if="${hasExcel}" class="ico_file exel">엑셀</i>
+                        <!-- Word 파일 -->
+                        <i th:if="${hasWord}" class="ico_file word">워드</i>
+                        <!-- PDF 파일 -->
+                        <i th:if="${hasPdf}" class="ico_file pdf">PDF</i>
+                        <!-- 기타 파일: 알려진 확장자가 전혀 없을 때만 표시 -->
+                        <i th:if="${!hasImage and !hasHwp and !hasExcel and !hasWord and !hasPdf}" class="ico_file">파일</i>
+                    </th:block>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+    <div id="paging_wrap" class="paging_wrap">
+        <a href="javascript:" class="first page_first">첫 페이지</a>
+        <a href="javascript:" class="previous page_prev">전 페이지</a>
+        <div class="namber pagination_container"></div>
+        <a href="javascript:" class="next page_next">다음 페이지</a>
+        <a href="javascript:" class="last page_last">끝 페이지</a>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const notice = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: /*[[${NoticePostList}]]*/ '',
+            pageIndex: 1,
+            pageCnt: 15
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+
+            // 검색조건 복원
+            _this.fnRestoreState();
+
+            _this.renderPagination();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼 클릭
+            document.getElementById("notice_board_btn_search").addEventListener('click', function () {
+                _this.state.pageIndex = 1;
+                _this.getListData();
+            });
+
+            // 제목 클릭
+            document.querySelector("#notice_board_tbody").addEventListener("click", function (e) {
+                const link = e.target.closest(".notice_link");
+                if (!link) return;
+                e.preventDefault();
+
+                const id = Number(link.dataset.id);
+                _this.fnGoToDetail(id);
+            });
+            
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("notice_keyword").addEventListener('keydown', e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                }
+            });              
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            if (!_this.state.all) {
+                return;
+            }
+
+            const totalPages = _this.state.all.pages;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: totalPages,
+                onPageChange: function(page) {
+                    _this.state.pageIndex = page;
+                    _this.getListData();
+                }
+            });
+        },
+
+        /**
+         * 목록 데이터 조회
+         */
+        getListData: async function () {
+            SearchState.saveForm('portal_notice', '.board_search', { pageIndex: this.state.pageIndex });
+
+            const param = new URLSearchParams({
+                page: this.state.pageIndex,
+                size: this.state.pageCnt,
+                keyword: document.getElementById('notice_keyword').value.trim() || '',
+                searchType: document.getElementById('notice_search_type').value.trim() || ''
+            });
+
+            SearchState.updateUrl(param);
+
+            try {
+                const response = await API.get('/api/common/notice/list/filter?' + param);
+
+                // 페이지 데이터에 저장
+                this.state.all = response;
+                this.renderTable();
+                this.renderPagination();
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('목록 조회에 실패했습니다.');
+            }
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+            const tbody = document.getElementById("notice_board_tbody");
+            tbody.innerHTML = '';
+
+            // 총 건수 업데이트
+            const totalCountEl = document.getElementById("notice_total_count");
+            if (totalCountEl) {
+                totalCountEl.textContent = this.state.all ? this.state.all.total : 0;
+            }
+
+            if (!this.state.all || !this.state.all.list || this.state.all.list.length === 0) {
+                tbody.innerHTML = '<tr><td class="tac" colspan="5">조회된 결과가 없습니다.</td></tr>';
+                return;
+            }
+
+            const list = this.state.all.list;
+            let html = '';
+            list.forEach(function (item) {
+                const ntcOid = item.upendFixYn === 'Y'
+                    ? '<em class="notice">공지</em>'
+                    : item.ntcOid;
+
+                // 첨부파일 아이콘 생성(파일 종류별로 아이콘 1개씩만 표시)
+                let attachmentIcons = '-';
+                if (item.attachments && item.attachments.length > 0) {
+                    const iconSet = new Set();
+                    item.attachments.forEach(file => {
+                        const ext = (file.fileTypeNm || '').toLowerCase();
+                        if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) {
+                            iconSet.add('img');
+                        } else if (['hwp', 'hwpx'].includes(ext)) {
+                            iconSet.add('hwp');
+                        } else if (['xls', 'xlsx'].includes(ext)) {
+                            iconSet.add('exel');
+                        } else if (['doc', 'docx'].includes(ext)) {
+                            iconSet.add('word');
+                        } else if (ext === 'pdf') {
+                            iconSet.add('pdf');
+                        } else {
+                            iconSet.add('etc');
+                        }
+                    });
+                    const iconMap = {
+                        'img': '<i class="ico_file img">이미지</i>',
+                        'hwp': '<i class="ico_file hwp">한글</i>',
+                        'exel': '<i class="ico_file exel">엑셀</i>',
+                        'word': '<i class="ico_file word">워드</i>',
+                        'pdf': '<i class="ico_file pdf">PDF</i>',
+                        'etc': '<i class="ico_file">파일</i>'
+                    };
+                    attachmentIcons = Array.from(iconSet).map(type => iconMap[type]).join(' ');
+                }
+
+                html += `
+                    <tr>
+                        <td>${ntcOid}</td>
+                        <td class="tal"><a href="javascript:" class="link notice_link" data-id="${item.ntcOid}">${item.ntcNm}</a></td>
+                        <td>${common.formatDate(item.regDt)}</td>
+                        <td>${item.inqCnt}</td>
+                        <td>${attachmentIcons}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        },
+
+        /**
+         * 페이지 이동 - 공지사항 상세
+         */
+        fnGoToDetail: async function (noticeId) {
+            const targetNoticeId = this.state.all.list.find(item => item.ntcOid === noticeId);
+            if (!targetNoticeId) {
+                uiCommon.fnShowAlertModal('상세 정보를 찾을 수 없습니다.');
+                return;
+            }
+
+            // 조회수 증가
+            await this.fnUpdateInqCnt(Number(targetNoticeId.ntcOid));
+
+            // 상세 페이지로 이동
+            window.location.href = contextPath + '/board/notice/post?ntcOid=' + targetNoticeId.ntcOid;
+        },
+
+        /**
+         * 조회수 증가
+         */
+        fnUpdateInqCnt: async function (ntcOid) {
+            try {
+                const param = {
+                    ntcOid: ntcOid
+                }
+
+                await API.patch('/api/common/notice/update/inq-cnt', param);
+            } catch (error) {
+                console.error('조회수 증가 실패:', error);
+            }
+        },
+
+        /**
+         * 검색조건 복원
+         */
+        fnRestoreState: function () {
+            const _this = this;
+
+            // 1. URL 파라미터로 복원
+            const _fieldMap = { keyword: 'notice_keyword', searchType: 'notice_search_type' };
+            const urlPage = SearchState.restoreFromUrl(_fieldMap);
+            if (urlPage !== null) {
+                _this.state.pageIndex = urlPage;
+            } else {
+                // 2. sessionStorage 로 복원
+                const saved = SearchState.restoreForm('portal_notice', '.board_search');
+                if (saved) {
+                    _this.state.pageIndex = saved._extra.pageIndex || 1;
+                }
+            }
+
+            // 3. 뒤로가기 / 앞으로가기 시
+            SearchState.handlePopState(_fieldMap, 'page', function(page) {
+                _this.state.pageIndex = page;
+                _this.getListData();
+            });
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        notice.init();
+    });
+</script>
+</body>
+</html>

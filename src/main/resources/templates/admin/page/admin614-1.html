@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > 안내(팝업)관리 > 안내(팝업) 등록/수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="sub_cont_wrap">
+    <div class="table_layout02 mb10">
+        <table>
+            <caption>안내(팝업) 등록/수정</caption>
+            <colgroup>
+                <col style="width: 100px;">
+                <col style="width: 100px;">
+                <col style="width: auto;">
+                <col style="width: 100px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row"><label for="admin614_1_popupNm">제목</label></th>
+                <td colspan="4">
+                    <input type="text" name="" id="admin614_1_popupNm" class="w100">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="admin614_1_startDt">기간</label></th>
+                <td colspan="4">
+                    <div class="flex_col"><span class="datepicker"><input type="text" id="admin614_1_startDt" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span> ~ <span class="datepicker"><input type="text" id="admin614_1_endDt" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span></div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">공개상태</th>
+                <td colspan="4">
+                    <span class="radio-box"><input type="radio" id="admin614_1_openYn_wait" name="admin614_1_openYn" value="N" checked=""><label for="admin614_1_openYn_wait">대기</label></span>
+                    <span class="radio-box"><input type="radio" id="admin614_1_openYn_open" name="admin614_1_openYn" value="Y"><label for="admin614_1_openYn_open">게재</label></span>
+                    <span class="radio-box"><input type="radio" id="admin614_1_openYn_close" name="admin614_1_openYn" value="N"><label for="admin614_1_openYn_close">게재 종료</label></span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">작성방식</th>
+                <td colspan="4">
+                    <span class="radio-box"><input type="radio" id="admin614_1_popupType_img" class="img_input_radio" name="admin614_1_popupType" value="I" checked=""><label for="admin614_1_popupType_img">이미지 등록</label></span>
+                    <span class="radio-box"><input type="radio" id="admin614_1_popupType_html" class="text_input_radio" name="admin614_1_popupType" value="H"><label for="admin614_1_popupType_html">텍스트 입력(직접작성)</label></span>
+                </td>
+            </tr>
+            <tr id="popup_attach_row">
+                <th scope="row">팝업첨부</th>
+                <td colspan="4">
+                    <div class="file_upload">
+                        <label for="admin614_1_file"><span>파일찾기</span></label>
+                        <input type="file" id="admin614_1_file" accept="image/*">
+                        <span id="admin614_1_file_txt" class="file_txt">파일을 첨부해주세요</span>
+                    </div>
+                </td>
+            </tr>
+            <tr id="popup_link_row">
+                <th scope="row"><label for="admin614_1_linkUrl">링크</label></th>
+                <td colspan="4">
+                    <input type="text" name="" id="admin614_1_linkUrl" class="w100">
+                </td>
+            </tr>
+            <tr id="content_row" style="display: none;">
+                <th scope="row"><label for="pop_editor">내용</label></th>
+                <td colspan="4">
+                    <textarea name="pop_editor" id="pop_editor" rows="30"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row" rowspan="2">위치/크기</th>
+                <th scope="row">X 좌표</th>
+                <td>
+                    <input type="text" name="" id="admin614_1_positionX">
+                </td>
+                <th scope="row">Y 좌표</th>
+                <td>
+                    <input type="text" name="" id="admin614_1_positionY">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">가로 크기(W)</th>
+                <td>
+                    <input type="text" name="" id="admin614_1_width">
+                </td>
+                <th scope="row">세로 크기(H)</th>
+                <td>
+                    <input type="text" name="" id="admin614_1_height">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="btn_wrap">
+        <a href="javascript:" id="admin614_1_btn_save" class="btn_basic bg_type01">저장</a>
+        <a href="javascript:" id="admin614_1_btn_cancel" class="btn_basic line_type02">취소</a>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin614_1 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            isEdit: false,
+            popupOid: null,
+            popupFile: null,
+            existingFile: null,  // 기존 파일 정보 저장
+            // CKEditor 이미지 관리
+            editorFiles: [],
+            existingEditorFileKeys: [],
+            deleteEditorAttachNos: []
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            // URL 파라미터로 수정 여부 판단
+            const urlParams = new URLSearchParams(window.location.search);
+            this.state.popupOid = urlParams.get('popupOid');
+            this.state.isEdit = !!this.state.popupOid;
+
+            // 이벤트 바인딩
+            this.initEvent();
+
+            // CK Editor 초기화 (완료 대기)
+            await this.initCkEditor();
+
+            this.state.isEdit
+                    ? this.fnLoadData(this.state.popupOid)  // 수정이면 데이터 로드
+                    : this.initFormData();                  // 등록이면 폼 초기화
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 이미지 등록 라디오 버튼 클릭 시
+            document.getElementById("admin614_1_popupType_img").addEventListener('change', function() {
+                if (this.checked) {
+                    document.getElementById('popup_attach_row').style.display = 'table-row';
+                    document.getElementById('popup_link_row').style.display = 'table-row';
+                    document.getElementById('content_row').style.display = 'none';
+                }
+            });
+
+            // 텍스트 입력 라디오 버튼 클릭 시
+            document.getElementById("admin614_1_popupType_html").addEventListener('change', function() {
+                if (this.checked) {
+                    document.getElementById('popup_attach_row').style.display = 'none';
+                    document.getElementById('popup_link_row').style.display = 'none';
+                    document.getElementById('content_row').style.display = 'table-row';
+                }
+            });
+
+            // 저장 버튼 클릭
+            document.getElementById("admin614_1_btn_save").addEventListener("click", function (e) {
+                e.preventDefault();
+                // HTML 타입일 때 CKEditor 컨텐츠 검증
+                var popupType = document.querySelector('input[name="admin614_1_popupType"]:checked').value;
+                if (popupType === 'H') {
+                    var editorValidation = CommonCKEditor.validate('pop_editor', { required: true, maxHtmlLength: 10000 });
+                    if (!editorValidation.valid) {
+                        uiCommon.fnShowAlertModal(editorValidation.message);
+                        return;
+                    }
+                }
+                if (_this.state.isEdit) {
+                    _this.fnUpdateData();
+                } else {
+                    _this.fnCreateData();
+                }
+            });
+
+            // 취소 버튼 클릭
+            document.getElementById("admin614_1_btn_cancel").addEventListener("click", function (e) {
+                e.preventDefault();
+                uiCommon.fnShowConfirmModal('목록으로 이동하시겠습니까?', async function () {
+                    _this.fnGoToListPage();
+                })
+            });
+
+            // 파일 선택 시
+            document.getElementById("admin614_1_file").addEventListener("change", function (e) {
+                _this.fnHandleFileSelect(e);
+            });
+        },
+
+        /**
+         * CK Editor 초기화
+         */
+        initCkEditor: function () {
+            const _this = this;
+
+            // CKEditor 초기화
+            CommonCKEditor.destroy('pop_editor');
+            document.getElementById('pop_editor').style.display = 'block';
+            document.getElementById('pop_editor').style.visibility = 'visible';
+
+            // CKEditor 생성 (Promise 반환)
+            return CommonCKEditor.init({
+                editorId: 'pop_editor',
+                content: '',
+                config: {
+                    height: 300,
+                    allowedContent: true,
+                    removePlugins: "image",
+                    image2_alignClasses: [ 'image-left', 'image-center', 'image-right' ],
+                    image2_disableResizer: false,
+                    uploadImage_supportedTypes: /(jpeg|jpg|png|gif)$/i,
+                    uploadImage_maxSize: 52428800
+                },
+                chunkUpload: {
+                    enabled: true,
+                    chunkUrl: '/api/common/file/tmp/ck-image/chunk',
+                    chunkSize: 2 * 1024 * 1024,
+                    thresholdBytes: 5 * 1024 * 1024,
+                    onUploadComplete: function(payload) {
+                        _this.handleEditorUploadComplete(payload);
+                    }
+                },
+                onReady: function(editor) {
+                }
+            });
+        },
+
+        /**
+         * 폼 입력값 초기화 - 등록
+         */
+        initFormData: function () {
+            document.getElementById('admin614_1_popupNm').value = '';
+            document.getElementById('admin614_1_startDt').value = '';
+            document.getElementById('admin614_1_endDt').value = '';
+            document.getElementById('admin614_1_openYn_wait').checked = true;
+            document.getElementById('admin614_1_popupType_img').checked = true;
+            document.getElementById('admin614_1_file').value = '';
+            document.getElementById('admin614_1_file_txt').textContent = '파일을 첨부해주세요';
+            document.getElementById('admin614_1_linkUrl').value = '';
+            document.getElementById('admin614_1_positionX').value = '';
+            document.getElementById('admin614_1_positionY').value = '';
+            document.getElementById('admin614_1_width').value = '';
+            document.getElementById('admin614_1_height').value = '';
+
+            this.state.popupFile = null;
+            this.state.existingFile = null;
+            this.state.editorFiles = [];
+            this.state.existingEditorFileKeys = [];
+            this.state.deleteEditorAttachNos = [];
+
+            // 초기 상태: 이미지 등록 선택
+            document.getElementById('popup_attach_row').style.display = 'table-row';
+            document.getElementById('popup_link_row').style.display = 'table-row';
+            document.getElementById('content_row').style.display = 'none';
+        },
+
+        /**
+         * 폼 데이터 로드 - 수정
+         */
+        fnLoadData: async function (popupOid) {
+            try {
+                const data = await API.get('/api/admin/admin614/select?popupOid=' + popupOid);
+
+                // 에디터 관련 상태 초기화
+                this.state.editorFiles = [];
+                this.state.existingEditorFileKeys = [];
+                this.state.deleteEditorAttachNos = [];
+
+                document.getElementById('admin614_1_popupNm').value = data.popupTtl || '';
+                document.getElementById('admin614_1_startDt').value = data.popupBgngDt || '';
+                document.getElementById('admin614_1_endDt').value = data.popupEndDt || '';
+
+                // 공개상태
+                /*if (data.openYn === 'Y') {
+                    document.getElementById('admin614_1_openYn_open').checked = true;
+                } else {
+                    document.getElementById('admin614_1_openYn_wait').checked = true;
+                }*/
+
+                if (data.popupType === 'I') {
+                    document.getElementById('admin614_1_popupType_img').checked = true;
+                    document.getElementById('popup_attach_row').style.display = 'table-row';
+                    document.getElementById('popup_link_row').style.display = 'table-row';
+                    document.getElementById('content_row').style.display = 'none';
+
+                    // 이미지 파일 정보 표시
+                    if (data.files) {
+                        this.state.existingFile = data.files;
+                        const strgFileNm = data.files.orgnlFileNm || data.files.strgFileNm || '';
+                        document.getElementById('admin614_1_file_txt').textContent = strgFileNm || '파일을 첨부해주세요';
+                    }
+
+                    // 링크 URL 표시
+                    document.getElementById('admin614_1_linkUrl').value = data.popupUrlAddr || '';
+                } else if (data.popupType === 'H') {
+                    document.getElementById('admin614_1_popupType_html').checked = true;
+                    document.getElementById('popup_attach_row').style.display = 'none';
+                    document.getElementById('popup_link_row').style.display = 'none';
+                    document.getElementById('content_row').style.display = 'table-row';
+                    CommonCKEditor.setContent('pop_editor', data.popupCn || '');
+
+                    // 기존 CKEditor 이미지 동기화
+                    this.syncExistingEditorImages(data.popupCn, data.popupCkEditorAttachList || []);
+                }
+
+                document.getElementById('admin614_1_positionX').value = data.pstnX ?? '';
+                document.getElementById('admin614_1_positionY').value = data.pstnY ?? '';
+                document.getElementById('admin614_1_width').value = data.sizeW ?? '';
+                document.getElementById('admin614_1_height').value = data.sizeH ?? '';
+
+            } catch (error) {
+                console.error(error);
+                uiCommon.fnShowAlertModal('데이터를 불러오는데 실패했습니다.', () => this.fnGoToListPage());
+            }
+        },
+
+        /**
+         * 파라미터 생성
+         */
+        fnBuildParam: function () {
+            const popupType = document.querySelector('input[name="admin614_1_popupType"]:checked').value;
+            const param = {
+                popupTtl: document.getElementById('admin614_1_popupNm').value.trim(),
+                popupBgngDt: document.getElementById('admin614_1_startDt').value.trim(),
+                popupEndDt: document.getElementById('admin614_1_endDt').value.trim() || null,
+                openYn: 'Y',
+                popupType: popupType,
+                pstnX: parseInt(document.getElementById('admin614_1_positionX').value.trim()) || 0,
+                pstnY: parseInt(document.getElementById('admin614_1_positionY').value.trim()) || 0,
+                sizeW: parseInt(document.getElementById('admin614_1_width').value.trim()) || 0,
+                sizeH: parseInt(document.getElementById('admin614_1_height').value.trim()) || 0,
+            };
+
+            if (popupType === 'H') {
+                param.popupCn = CommonCKEditor.getContent('pop_editor');
+            } else if (popupType === 'I') {
+                // 신규 등록 시에는 파일 필수, 수정 시에는 기존 파일이 있으면 선택사항
+                if (!this.state.isEdit && !this.state.popupFile) {
+                    throw new Error('파일을 첨부해주세요.');
+                }
+                // 수정 모드이지만 기존 파일도 없고 새 파일도 선택하지 않은 경우
+                if (this.state.isEdit && !this.state.popupFile && !this.state.existingFile) {
+                    throw new Error('파일을 첨부해주세요.');
+                }
+                // 링크 URL
+                param.popupUrlAddr = document.getElementById('admin614_1_linkUrl').value.trim() || null;
+            }
+
+            return param;
+        },
+
+        /**
+         * 팝업 등록
+         */
+        fnCreateData: async function () {
+            try {
+                const param = this.fnBuildParam();
+                const formData = new FormData();
+
+                const jsonData = {
+                    popupTtl: param.popupTtl,
+                    popupBgngDt: param.popupBgngDt,
+                    popupEndDt: param.popupEndDt,
+                    openYn: param.openYn,
+                    popupType: param.popupType,
+                    pstnX: param.pstnX,
+                    pstnY: param.pstnY,
+                    sizeW: param.sizeW,
+                    sizeH: param.sizeH,
+                    popupCn: param.popupCn,
+                    popupUrlAddr: param.popupUrlAddr
+                };
+
+                // HTML 타입인 경우 에디터 파일 정보 추가
+                if (param.popupType === 'H') {
+                    jsonData.editorFiles = this.state.editorFiles;
+                }
+
+                formData.append("data", new Blob([JSON.stringify(jsonData)], { type: "application/json" }));
+
+                if (param.popupType === 'I' && this.state.popupFile) {
+                    formData.append("popupFile", this.state.popupFile);
+                }
+
+                await API.upload('/api/admin/admin614/insert', formData, { method: 'PUT' });
+                uiCommon.fnShowAlertModal('등록되었습니다.', () => this.fnGoToListPage());
+            } catch (error) {
+                console.error('등록 실패:', error);
+                let errorMessage = '등록에 실패했습니다.';
+                if (error instanceof APIError) {
+                    if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        /**
+         * 팝업 수정
+         */
+        fnUpdateData: async function () {
+            try {
+                const param = this.fnBuildParam();
+                const formData = new FormData();
+
+                const jsonData = {
+                    popupOid: parseInt(this.state.popupOid),
+                    popupTtl: param.popupTtl,
+                    popupBgngDt: param.popupBgngDt,
+                    popupEndDt: param.popupEndDt,
+                    openYn: param.openYn,
+                    popupType: param.popupType,
+                    pstnX: param.pstnX,
+                    pstnY: param.pstnY,
+                    sizeW: param.sizeW,
+                    sizeH: param.sizeH,
+                    popupCn: param.popupCn,
+                    popupUrlAddr: param.popupUrlAddr
+                };
+
+                // HTML 타입인 경우 에디터 파일 정보 추가
+                if (param.popupType === 'H') {
+                    // 삭제 대상 계산
+                    this.prepareEditorDeletionPayload(CommonCKEditor.getContent('pop_editor'));
+                    jsonData.editorFiles = this.state.editorFiles;
+                    jsonData.deleteEditorAttachNos = this.state.deleteEditorAttachNos;
+                }
+
+                formData.append("data", new Blob([JSON.stringify(jsonData)], { type: "application/json" }));
+
+                if (param.popupType === 'I' && this.state.popupFile) {
+                    formData.append("popupFile", this.state.popupFile);
+                }
+
+                await API.upload('/api/admin/admin614/update', formData, { method: 'PATCH' });
+                uiCommon.fnShowAlertModal('수정되었습니다.', () => this.fnGoToDetail());
+            } catch (error) {
+                console.error('수정 실패:', error);
+
+                let errorMessage = '수정에 실패했습니다.';
+                if (error instanceof APIError) {
+                    if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        /**
+         * 파일 선택 처리
+         */
+        fnHandleFileSelect: function (e) {
+            const _this = this;
+            const fileInput = e.target;
+            const files = fileInput.files;
+
+            if (files.length > 0) {
+                const file = files[0];
+
+                // 이미지 파일 검증
+                const fileTypeNm = file.name.split('.').pop().toLowerCase();
+                const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+
+                if (!imgExts.includes(fileTypeNm)) {
+                    uiCommon.fnShowAlertModal('이미지 파일만 업로드 가능합니다.');
+                    fileInput.value = '';
+                    return;
+                }
+
+                this.state.popupFile = file;
+                this.fnRenderFileList();
+                fileInput.value = '';
+            }
+        },
+        /**
+         * 파일 목록 렌더링
+         */
+        fnRenderFileList: function () {
+            const fileTxt = document.getElementById('admin614_1_file_txt');
+
+            if (this.state.popupFile) {
+                fileTxt.textContent = this.state.popupFile.name;
+            } else if (this.state.existingFile && this.state.existingFile.orgnlFileNm) {
+                fileTxt.textContent = this.state.existingFile.orgnlFileNm;
+            } else {
+                fileTxt.textContent = '파일을 첨부해주세요';
+            }
+        },
+
+        /**
+         * 페이지 이동 - 팝업 관리 목록
+         */
+        fnGoToListPage: function () {
+            window.location.href = contextPath + '/admin/page/admin614';
+        },
+
+        /**
+         * 페이지 이동 - 팝업 상세
+         */
+        fnGoToDetail: function () {
+            window.location.href = contextPath + '/admin/page/admin614-2?popupOid=' + this.state.popupOid;
+        },
+
+        /**
+         * CKEditor 업로드 완료 핸들러
+         */
+        handleEditorUploadComplete: function (payload) {
+            if (!payload || !payload.strgFilePath || !payload.strgFileNm) {
+                return;
+            }
+            const meta = {
+                originalStrgFileNm: payload.originalStrgFileNm || payload.strgFileNm,
+                storedStrgFileNm: payload.strgFileNm,
+                strgFilePath: payload.strgFilePath,
+                strgFileCpct: payload.strgFileCpct || null,
+                fileTypeNm: payload.fileTypeNm || this.extractFileExtension(payload.originalStrgFileNm || payload.strgFileNm)
+            };
+            this.upsertEditorFile(meta);
+        },
+
+        /**
+         * 에디터 파일 추가/갱신
+         */
+        upsertEditorFile: function (fileMeta) {
+            if (!fileMeta || !fileMeta.strgFilePath || !fileMeta.storedStrgFileNm) {
+                return;
+            }
+            const key = fileMeta.strgFilePath + '__' + fileMeta.storedStrgFileNm;
+            const idx = this.state.editorFiles.findIndex(function(item) {
+                return (item.strgFilePath + '__' + item.storedStrgFileNm) === key;
+            });
+            if (idx > -1) {
+                this.state.editorFiles[idx] = fileMeta;
+            } else {
+                this.state.editorFiles.push(fileMeta);
+            }
+        },
+
+        /**
+         * 파일 확장자 추출
+         */
+        extractFileExtension: function (strgFileNm) {
+            if (!strgFileNm) {
+                return '';
+            }
+            const pos = strgFileNm.lastIndexOf('.');
+            return pos > -1 ? strgFileNm.substring(pos + 1).toLowerCase() : '';
+        },
+
+        /**
+         * HTML에서 이미지 키 추출
+         */
+        extractImageKeysFromHtml: function (html) {
+            if (!html) {
+                return [];
+            }
+            const container = document.createElement('div');
+            container.innerHTML = html;
+            const uniqueKeys = {};
+            const results = [];
+            const _this = this;
+            Array.from(container.querySelectorAll('img[src]')).forEach(function(img) {
+                const parsed = _this.normalizeImageSrc(img.getAttribute('src'));
+                if (!parsed || uniqueKeys[parsed.key]) {
+                    return;
+                }
+                uniqueKeys[parsed.key] = true;
+                results.push(parsed);
+            });
+            return results;
+        },
+
+        /**
+         * 이미지 src 정규화
+         */
+        normalizeImageSrc: function (src) {
+            if (!src || typeof src !== 'string') {
+                return null;
+            }
+            let cleaned = src.trim();
+            if (!cleaned || cleaned.indexOf('data:') === 0) {
+                return null;
+            }
+            const qIdx = cleaned.indexOf('?');
+            if (qIdx > -1) {
+                cleaned = cleaned.substring(0, qIdx);
+            }
+            const hashIdx = cleaned.indexOf('#');
+            if (hashIdx > -1) {
+                cleaned = cleaned.substring(0, hashIdx);
+            }
+            const origin = window.location.origin;
+            if (cleaned.startsWith(origin)) {
+                cleaned = cleaned.substring(origin.length);
+            }
+            const uploadsIdx = cleaned.indexOf('/files/');
+            if (uploadsIdx === -1) {
+                return null;
+            }
+            const relative = cleaned.substring(uploadsIdx + '/files/'.length);
+            const lastSlash = relative.lastIndexOf('/');
+            if (lastSlash === -1) {
+                return null;
+            }
+            const strgFilePath = relative.substring(0, lastSlash);
+            const strgFileNm = relative.substring(lastSlash + 1);
+            if (!strgFilePath || !strgFileNm) {
+                return null;
+            }
+            return {
+                strgFilePath: strgFilePath.replace(/^\/+/, '').replace(/\\/g, '/'),
+                storedStrgFileNm: strgFileNm,
+                key: this.buildEditorFileKey(strgFilePath, strgFileNm)
+            };
+        },
+
+        /**
+         * 에디터 파일 키 생성
+         */
+        buildEditorFileKey: function (strgFilePath, storedStrgFileNm) {
+            const normalizedPath = (strgFilePath || '').replace(/^\/+/, '').replace(/\\/g, '/');
+            return normalizedPath + '__' + storedStrgFileNm;
+        },
+
+        /**
+         * 기존 에디터 이미지 동기화
+         */
+        syncExistingEditorImages: function (content, attachments) {
+            this.state.existingEditorFileKeys = [];
+            if (!attachments || !attachments.length || !content) {
+                return;
+            }
+            const attachMap = {};
+            const _this = this;
+            attachments.forEach(function(file) {
+                if (!file || !file.strgFilePath || !file.strgFileNm) {
+                    return;
+                }
+                const key = _this.buildEditorFileKey(file.strgFilePath, file.strgFileNm);
+                attachMap[key] = file.fileOid;
+            });
+            const keys = this.extractImageKeysFromHtml(content);
+            keys.forEach(function(item) {
+                const attachNo = attachMap[item.key];
+                if (attachNo) {
+                    _this.state.existingEditorFileKeys.push({
+                        key: item.key,
+                        fileOid: attachNo
+                    });
+                }
+            });
+        },
+
+        /**
+         * 에디터 삭제 대상 계산
+         */
+        prepareEditorDeletionPayload: function (currentContent) {
+            const currentKeys = this.extractImageKeysFromHtml(currentContent);
+            const keySet = {};
+            currentKeys.forEach(function(item) {
+                keySet[item.key] = true;
+            });
+            const _this = this;
+            const removed = this.state.existingEditorFileKeys
+                    .filter(function(item) {
+                        return item && item.fileOid && !keySet[item.key];
+                    })
+                    .map(function(item) {
+                        return item.fileOid;
+                    });
+            this.state.deleteEditorAttachNos = removed;
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        admin614_1.init();
+    });
+</script>
+</body>
+</html>

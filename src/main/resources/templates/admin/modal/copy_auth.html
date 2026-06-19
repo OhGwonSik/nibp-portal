@@ -1,0 +1,652 @@
+<th:block th:fragment="copy_auth" xmlns:th="http://www.thymeleaf.org">
+    <div id="copy_auth" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap" style="min-width: 1200px;">
+                <h1 class="p_tit">권한 복사</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner" style="display: flex; gap: 16px;">
+                            <!-- 소스 유저 영역 (좌측) -->
+                            <div style="flex: 1; min-width: 0;">
+                                <p class="mb10"><strong>소스 유저</strong></p>
+                                <div class="table_desc" style="gap: 4px;">
+                                    <input type="text" id="copy_auth_src_keyword" placeholder="아이디/성명 입력" value="" title="검색">
+                                    <div class="table_top_btn">
+                                        <label>상태</label>
+                                        <select id="copy_auth_src_useYn" title="상태 선택">
+                                            <option value="">전체</option>
+                                            <option value="Y">활성</option>
+                                            <option value="N">비활성</option>
+                                        </select>
+                                        <a href="javascript:;" id="copy_auth_src_btn_search" class="btn_basic bg_type01">검색</a>
+                                    </div>
+                                </div>
+                                <p>총 <strong id="copy_auth_src_total_count">0</strong>건</p>
+                                <div class="table_layout02 list_type s_table mb10" style="max-height: 200px; overflow-y: auto;">
+                                    <table>
+                                        <caption>소스 유저 목록</caption>
+                                        <colgroup>
+                                            <col style="width: 42px">
+                                            <col style="width: 30%">
+                                            <col style="width: 30%">
+                                            <col style="width: 30%">
+                                        </colgroup>
+                                        <thead>
+                                        <tr>
+                                            <th scope="col">선택</th>
+                                            <th scope="col">아이디</th>
+                                            <th scope="col">사용자명</th>
+                                            <th scope="col">상태</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="copy_auth_src_tbody"></tbody>
+                                    </table>
+                                </div>
+
+                                <!-- 권한 리스트 (소스 유저 선택 시 드롭다운 표시) -->
+                                <div id="copy_auth_perm_area" style="display: none;">
+                                    <p class="mb10"><strong id="copy_auth_perm_title">권한 리스트</strong></p>
+                                    <div class="table_layout02 list_type s_table mb10" style="max-height: 250px; overflow-y: auto;">
+                                        <table>
+                                            <caption>권한 리스트</caption>
+                                            <colgroup>
+                                                <col style="width: auto">
+                                                <col style="width: auto">
+                                                <col style="width: 80px">
+                                            </colgroup>
+                                            <thead>
+                                            <tr>
+                                                <th scope="col">메뉴명</th>
+                                                <th scope="col">메뉴코드</th>
+                                                <th scope="col"><span class="s_check"><label class="toggle"><input type="checkbox" aria-label="설정 켜기/끄기" class="copy_auth_select_deselect"><span class="track"></span></label></span></th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="copy_auth_menu_list_tbody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 화살표 영역 -->
+                            <div style="display: flex; align-items: center; padding-top: 40px;">
+                                <span style="font-size: 48px; color: #999; line-height: 1;">&#10132;</span>
+                            </div>
+
+                            <!-- 타겟 유저 영역 (우측) -->
+                            <div style="flex: 1; min-width: 0;">
+                                <p class="mb10"><strong>타겟 유저</strong></p>
+                                <div class="table_desc" style="gap: 4px;">
+                                    <input type="text" id="copy_auth_tgt_keyword" placeholder="아이디/성명 입력" value="" title="검색">
+                                    <div class="table_top_btn">
+                                        <label>상태</label>
+                                        <select id="copy_auth_tgt_useYn" title="상태 선택">
+                                            <option value="">전체</option>
+                                            <option value="Y">활성</option>
+                                            <option value="N">비활성</option>
+                                        </select>
+                                        <a href="javascript:;" id="copy_auth_tgt_btn_search" class="btn_basic bg_type01">검색</a>
+                                    </div>
+                                </div>
+                                <p>총 <strong id="copy_auth_tgt_total_count">0</strong>건</p>
+                                <div class="table_layout02 list_type s_table mb10" style="max-height: 450px; overflow-y: auto;">
+                                    <table>
+                                        <caption>타겟 유저 목록</caption>
+                                        <colgroup>
+                                            <col style="width: 42px">
+                                            <col style="width: 30%">
+                                            <col style="width: 30%">
+                                            <col style="width: 30%">
+                                        </colgroup>
+                                        <thead>
+                                        <tr>
+                                            <th scope="col"><input type="checkbox" id="copy_auth_tgt_all_check"></th>
+                                            <th scope="col">아이디</th>
+                                            <th scope="col">사용자명</th>
+                                            <th scope="col">상태</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="copy_auth_tgt_tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table_top_btn mt10" style="text-align: center;">
+                            <a href="javascript:;" id="copy_auth_btn_copy" class="btn_basic bg_type01">복사</a>
+                        </div>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close btn_close_auth">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+<script>
+    let copy_auth = {
+
+        state: {
+            accountList: null,
+            sourceUserId: null,
+            menuList: null
+        },
+
+        /**
+         * 모달 show
+         */
+        initModal: function () {
+            uiCommon.fnShowModal('copy_auth');
+            this.init();
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // 상태 초기화
+            this.state.sourceUserId = null;
+            this.state.menuList = null;
+
+            // UI 초기화
+            document.querySelector('#copy_auth_src_keyword').value = '';
+            document.querySelector('#copy_auth_src_useYn').value = '';
+            document.querySelector('#copy_auth_tgt_keyword').value = '';
+            document.querySelector('#copy_auth_tgt_useYn').value = '';
+            document.querySelector('#copy_auth_perm_area').style.display = 'none';
+            document.querySelector('#copy_auth_menu_list_tbody').innerHTML = '';
+            document.querySelector('#copy_auth_tgt_all_check').checked = false;
+
+            // 관리자 목록 조회
+            this.getAccountListData();
+
+            // 이벤트 바인딩
+            this.initEvent();
+
+            // 닫기 버튼
+            $(".btn_close_auth").off("click").on("click", function (e) {
+                e.preventDefault();
+                uiCommon.fnHideModal('copy_auth');
+            });
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 소스 유저 검색
+            $("#copy_auth_src_btn_search").off("click").on("click", function (e) {
+                e.preventDefault();
+                _this.state.sourceUserId = null;
+                _this.state.menuList = null;
+                document.querySelector('#copy_auth_perm_area').style.display = 'none';
+                document.querySelector('#copy_auth_menu_list_tbody').innerHTML = '';
+                _this.renderSourceTable();
+                _this.renderTargetTable();
+            });
+
+            // 소스 유저 선택 (radio)
+            $(document).off("click", ".copy_auth_src_check").on("click", ".copy_auth_src_check", function () {
+                const row = this.closest('tr');
+                const userId = row.querySelector('td:nth-child(2)').textContent.trim();
+                _this.state.sourceUserId = userId;
+                _this.getMenuListData(userId);
+                // 타겟 테이블 다시 렌더링 (소스 유저 제외)
+                _this.renderTargetTable();
+            });
+
+            // 타겟 유저 검색
+            $("#copy_auth_tgt_btn_search").off("click").on("click", function (e) {
+                e.preventDefault();
+                _this.renderTargetTable();
+            });
+
+            // 타겟 유저 전체 선택
+            $("#copy_auth_tgt_all_check").off("change").on("change", function () {
+                const isChecked = this.checked;
+                document.querySelectorAll('.copy_auth_tgt_check').forEach(chk => chk.checked = isChecked);
+            });
+
+            // 타겟 유저 개별 체크 → 전체 선택 상태 업데이트
+            $(document).off("change", ".copy_auth_tgt_check").on("change", ".copy_auth_tgt_check", function () {
+                const all = document.querySelectorAll('.copy_auth_tgt_check');
+                const checked = document.querySelectorAll('.copy_auth_tgt_check:checked');
+                document.querySelector('#copy_auth_tgt_all_check').checked = (all.length > 0 && all.length === checked.length);
+            });
+
+            // 복사 버튼
+            $("#copy_auth_btn_copy").off("click").on("click", function (e) {
+                e.preventDefault();
+                _this.fnCopyAuth();
+            });
+
+            // 메뉴 전체 선택/해제
+            $(document).off("change", ".copy_auth_select_deselect").on("change", ".copy_auth_select_deselect", function () {
+                const isChecked = this.checked;
+                document.querySelectorAll('.copy_auth_menu_auth_check').forEach(chk => {
+                    chk.indeterminate = false;
+                    chk.checked = isChecked;
+                });
+            });
+
+            // 메뉴 개별 체크박스 변경
+            $(document).off("change", ".copy_auth_menu_auth_check").on("change", ".copy_auth_menu_auth_check", function () {
+                const isChecked = this.checked;
+                const currentRow = this.closest('tr');
+
+                // 1. 하위 메뉴 처리
+                const hasSubMenus = currentRow.hasAttribute('data-id');
+                if (hasSubMenus) {
+                    const subMenuId = currentRow.getAttribute('data-id');
+                    _this.fnCheckAllSubMenus(subMenuId, isChecked);
+                }
+
+                // 2. 상위 메뉴 처리
+                if (currentRow.hasAttribute('data-tg')) {
+                    _this.fnUpdateParentCheckbox(currentRow);
+                }
+
+                // 3. 전체 선택 체크박스 상태 업데이트
+                _this.fnUpdateAllCheck();
+            });
+        },
+
+        /**
+         * 관리자 목록 데이터 조회 (전체)
+         */
+        getAccountListData: async function () {
+            const param = {
+                page: 1,
+                size: 9999,
+                keyword: '',
+                useYn: ''
+            };
+
+            try {
+                const response = await API.post('/api/admin/admin803/account/list', param);
+                this.state.accountList = response;
+                this.renderSourceTable();
+                this.renderTargetTable();
+            } catch (error) {
+                console.error('관리자 목록 조회 실패:', error);
+            }
+        },
+
+        /**
+         * 소스 유저 테이블 렌더링
+         */
+        renderSourceTable: function () {
+        	const _this = this;
+            const tbody = document.querySelector("#copy_auth_src_tbody");
+            tbody.innerHTML = "";
+
+            if (!this.state.accountList || !this.state.accountList.list) {
+                tbody.innerHTML = `<tr><td class="tac" colspan="4">조회된 결과가 없습니다.</td></tr>`;
+                document.querySelector('#copy_auth_src_total_count').textContent = 0;
+                return;
+            }
+
+            const keyword = document.querySelector('#copy_auth_src_keyword').value.trim();
+            const useYn = document.querySelector('#copy_auth_src_useYn').value;
+
+            _this.state.filteredList = _this.state.accountList.list.filter(item => {
+                    // 선택된 사용자 제외
+                    if (item.userId === _this.state.selectedUserId) return false;
+
+                    // 키워드 필터
+                    if (keyword && !item.userId.includes(keyword) && !item.userNmKorn.includes(keyword)) {
+                        return false;
+                    }
+
+                    // 상태 필터
+                    if (useYn && item.useYn !== useYn) {
+                        return false;
+                    }
+
+                    return true;
+                });
+
+            if (_this.state.filteredList.length === 0) {
+                tbody.innerHTML = `<tr><td class="tac" colspan="4">조회된 결과가 없습니다.</td></tr>`;
+                document.querySelector('#copy_auth_src_total_count').textContent = 0;
+                return;
+            }
+
+            let html = '';
+            _this.state.filteredList.forEach(item => {
+                html += `
+                    <tr>
+                        <td class="tac">
+                            <div class="radio_box">
+                                <input type="radio"
+                                       name="src_user_radio"
+                                       id="src_r_${item.userOid}"
+                                       class="copy_auth_src_check"
+                                       data-user-id="${item.userId}"
+                                       data-user-oid="${item.userOid}"
+                                       ${_this.state.sourceUserId === item.userId ? 'checked' : ''}>
+                                <label for="src_r_${item.userOid}"></label>
+                            </div>
+                        </td>
+                        <td class="tac">${item.userId || ""}</td>
+                        <td class="tac">${item.userNmKorn || ""}</td>
+                        <td class="tac">${common.formatActiveYn(item.useYn)}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            document.querySelector('#copy_auth_src_total_count').textContent = _this.state.filteredList.length;
+        },
+
+        /**
+         * 타겟 유저 테이블 렌더링
+         */
+        renderTargetTable: function () {
+            const tbody = document.querySelector("#copy_auth_tgt_tbody");
+            tbody.innerHTML = "";
+
+            if (!this.state.accountList || !this.state.accountList.list) {
+                tbody.innerHTML = `<tr><td class="tac" colspan="4">조회된 결과가 없습니다.</td></tr>`;
+                document.querySelector('#copy_auth_tgt_total_count').textContent = 0;
+                return;
+            }
+
+            const keyword = document.querySelector('#copy_auth_tgt_keyword').value.trim();
+            const useYn = document.querySelector('#copy_auth_tgt_useYn').value;
+
+            const filtered = this.state.accountList.list.filter(item => {
+                // 소스 유저 제외
+                if (this.state.sourceUserId && item.userId === this.state.sourceUserId) return false;
+                if (keyword && !item.userId.includes(keyword) && !item.userNmKorn.includes(keyword)) return false;
+                if (useYn && item.useYn !== useYn) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td class="tac" colspan="4">조회된 결과가 없습니다.</td></tr>`;
+                document.querySelector('#copy_auth_tgt_total_count').textContent = 0;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(item => {
+                html += `
+                    <tr>
+                        <td class="tac">
+                            <input type="checkbox"
+                                   class="copy_auth_tgt_check"
+                                   data-user-id="${item.userId}"
+                                   data-user-oid="${item.userOid}">
+                        </td>
+                        <td class="tac">${item.userId || ""}</td>
+                        <td class="tac">${item.userNmKorn || ""}</td>
+                        <td class="tac">${common.formatActiveYn(item.useYn)}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            document.querySelector('#copy_auth_tgt_total_count').textContent = filtered.length;
+            document.querySelector('#copy_auth_tgt_all_check').checked = false;
+        },
+
+        /**
+         * 메뉴 목록 데이터 조회
+         */
+        getMenuListData: async function (userId) {
+            const param = { userId: userId };
+
+            try {
+                const response = await API.post('/api/admin/admin803/menu/list', param);
+                this.state.menuList = response;
+                this.renderMenuTable();
+                document.querySelector('#copy_auth_perm_area').style.display = 'block';
+
+                // 타이틀 업데이트
+                const userInfo = this.state.accountList.list.find(u => u.userId === userId);
+                const displayName = userInfo ? `${userInfo.userNmKorn}(${userId})` : userId;
+                document.querySelector('#copy_auth_perm_title').textContent = `${displayName}의 권한 리스트`;
+            } catch (error) {
+                console.error('메뉴 목록 조회 실패:', error);
+            }
+        },
+
+        /**
+         * 메뉴 테이블 렌더링
+         */
+        renderMenuTable: function () {
+            const tbody = document.querySelector("#copy_auth_menu_list_tbody");
+            tbody.innerHTML = "";
+            document.querySelectorAll('.copy_auth_select_deselect').forEach(chk => chk.checked = false);
+
+            if (!this.state.menuList || this.state.menuList.length === 0) {
+                tbody.innerHTML = `<tr><td class="tac" colspan="3">조회된 결과가 없습니다.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = this.renderMenuTree(this.state.menuList, null, 1);
+            this.openDefaultDepth();
+            this.initParentCheckboxStates();
+        },
+
+        /**
+         * 메뉴 트리 렌더링 (재귀)
+         */
+        renderMenuTree: function (menuList, parentId, level) {
+            let html = '';
+            menuList.forEach(item => {
+                let depthClass = 'Depth';
+                if (level === 2) depthClass += ' d_02';
+                if (level === 3) depthClass += ' d_03';
+
+                const hasSub = item.subMenus?.length > 0;
+
+                html += `
+                    <tr class="${level > 1 ? 't_Depth' : ''}"
+                        ${level > 1 && parentId ? `data-tg="${parentId}"` : ''}
+                        ${hasSub ? `data-id="copy_auth_d_0_${item.menuOid}"` : ''}
+                        data-menu-no="${item.menuOid}"
+                        style="${level > 1 ? 'display:none;' : ''}">
+                        <td class="tal">
+                            <strong class="${depthClass}">
+                                ${hasSub ? `<a href="javascript:;" id="copy_auth_d_0_${item.menuOid}">열림</a>` : ''}
+                                ${item.menuNm || ''}
+                            </strong>
+                        </td>
+                        <td>${item.menuCd || ''}</td>
+                        <td>
+                            <span class="s_check">
+                                <label class="toggle">
+                                    <input type="checkbox"
+                                           data-menu-no="${item.menuOid}"
+                                           class="copy_auth_menu_auth_check"
+                                           ${item.inqAuthrtYn === 'Y' ? 'checked' : ''}>
+                                    <span class="track"></span>
+                                </label>
+                            </span>
+                        </td>
+                    </tr>
+                `;
+
+                if (hasSub) {
+                    html += this.renderMenuTree(item.subMenus, `copy_auth_d_0_${item.menuOid}`, level + 1);
+                }
+            });
+            return html;
+        },
+
+        /**
+         * 메뉴 테이블 2depth까지 열어두기
+         */
+        openDefaultDepth: function () {
+            document.querySelectorAll('#copy_auth_menu_list_tbody tr:not(.t_Depth)').forEach(tr => {
+                const toggle = tr.querySelector('.Depth > a');
+                if (toggle) {
+                    const id = toggle.id;
+                    document.querySelectorAll(`tr.t_Depth[data-tg="${id}"]`).forEach(sub => {
+                        sub.style.display = "table-row";
+                    });
+                    toggle.classList.add("off");
+                    toggle.textContent = '닫힘';
+                }
+            });
+        },
+
+        /**
+         * 전체 선택 체크박스 상태 업데이트
+         */
+        fnUpdateAllCheck: function () {
+            const all = document.querySelectorAll('.copy_auth_menu_auth_check');
+            const checked = document.querySelectorAll('.copy_auth_menu_auth_check:checked');
+
+            document.querySelectorAll('.copy_auth_select_deselect').forEach(el => {
+                el.checked = (all.length > 0 && all.length === checked.length);
+            });
+        },
+
+        /**
+         * 하위 메뉴 모두 체크/해제
+         */
+        fnCheckAllSubMenus: function (subMenuId, isChecked) {
+            const subMenuRows = document.querySelectorAll(`tr.t_Depth[data-tg="${subMenuId}"]`);
+
+            subMenuRows.forEach(subRow => {
+                const subCheckbox = subRow.querySelector('.copy_auth_menu_auth_check');
+                if (subCheckbox) {
+                    subCheckbox.checked = isChecked;
+
+                    if (subRow.hasAttribute('data-id')) {
+                        const subSubMenuId = subRow.getAttribute('data-id');
+                        this.fnCheckAllSubMenus(subSubMenuId, isChecked);
+                    }
+                }
+            });
+        },
+
+        /**
+         * 렌더링 후 부모 체크박스 상태 초기화
+         */
+        initParentCheckboxStates: function () {
+            const allSubRows = Array.from(document.querySelectorAll('#copy_auth_menu_list_tbody tr.t_Depth[data-tg]'));
+
+            allSubRows.reverse().forEach(subRow => {
+                this.fnUpdateParentCheckbox(subRow);
+            });
+        },
+
+        /**
+         * 상위 메뉴 체크박스 상태 업데이트
+         */
+        fnUpdateParentCheckbox: function (currentRow) {
+            const parentId = currentRow.getAttribute('data-tg');
+            if (!parentId) return;
+
+            const parentRow = document.querySelector(`tr[data-id="${parentId}"]`);
+            if (!parentRow) return;
+
+            const siblingRows = document.querySelectorAll(`tr.t_Depth[data-tg="${parentId}"]`);
+
+            let allChecked = true;
+            let anyChecked = false;
+
+            siblingRows.forEach(siblingRow => {
+                const siblingCheckbox = siblingRow.querySelector('.copy_auth_menu_auth_check');
+                if (siblingCheckbox) {
+                    if (siblingCheckbox.checked) {
+                        anyChecked = true;
+                    } else {
+                        allChecked = false;
+                    }
+                }
+            });
+
+            const parentCheckbox = parentRow.querySelector('.copy_auth_menu_auth_check');
+            if (parentCheckbox) {
+                if (allChecked) {
+                    parentCheckbox.checked = true;
+                    parentCheckbox.indeterminate = false;
+                } else if (anyChecked) {
+                    parentCheckbox.checked = false;
+                    parentCheckbox.indeterminate = true;
+                } else {
+                    parentCheckbox.checked = false;
+                    parentCheckbox.indeterminate = false;
+                }
+            }
+
+            if (parentRow.hasAttribute('data-tg')) {
+                this.fnUpdateParentCheckbox(parentRow);
+            }
+        },
+
+        /**
+         * 권한 복사 실행
+         */
+        fnCopyAuth: async function () {
+       	    // 1. 소스 유저 선택 확인
+       	    if (!this.state.sourceUserId) {
+       	        uiCommon.fnShowAlertModal('소스 유저를 선택해주세요.');
+       	        return;
+       	    }
+
+       	    // 2. 메뉴 데이터 확인
+       	    if (!this.state.menuList) {
+       	        uiCommon.fnShowAlertModal('권한 정보가 없습니다.');
+       	        return;
+       	    }
+
+       	    // 3. 타겟 유저 선택 확인
+       	    const targetChecks = document.querySelectorAll('.copy_auth_tgt_check:checked');
+       	    if (targetChecks.length === 0) {
+       	        uiCommon.fnShowAlertModal('타겟 유저를 선택해주세요.');
+       	        return;
+       	    }
+
+       	    const targetUserNos = Array.from(targetChecks).map(chk => parseInt(chk.dataset.userOid));
+
+       	    // 변경사유 입력
+       	    const changeReason = await uiCommon.fnShowPromptModal('변경사유를 입력해주세요.', {
+       	        title: '변경사유',
+       	        defaultValue: '',
+       	        placeholder: '변경사유는 2자 이상 입력해주세요.'
+       	    });
+
+       	    if (changeReason === null) return;
+
+       	    if (changeReason.trim() === '') {
+       	        uiCommon.fnShowAlertModal('변경사유는 필수 입니다.');
+       	        return;
+       	    }
+       	    if (changeReason.trim().length < 2) {
+       	        uiCommon.fnShowAlertModal('변경사유는 2자 이상 입력해주세요.');
+       	        return;
+       	    }
+
+       	    try {
+       	        const sourceUser = this.state.accountList.list.find(u => u.userId === this.state.sourceUserId);
+
+       	        // 파라미터 구성
+       	        const param = {
+       	            sourceUserNo: sourceUser.userOid,
+       	            targetUserNos: targetUserNos,
+       	            changeReason: changeReason
+       	        };
+
+       	        // API 호출
+       	        await API.post('/api/admin/admin803/menu/copy', param);
+
+       	        uiCommon.fnShowAlertModal(`${targetUserNos.length}명의 사용자에게 권한이 복사되었습니다.`, function () {
+       	            uiCommon.fnHideModal('copy_auth');
+
+       	            if(typeof admin803 !== 'undefined' && admin803.getAccountListData) {
+       	                // admin803.getAccountListData();
+       	            }
+       	        });
+       	    } catch (error) {
+       	        console.error('권한 복사 실패:', error);
+       	        let errorMessage = '권한 복사에 실패했습니다.';
+       	        if (error.message) errorMessage = error.message;
+       	        uiCommon.fnShowAlertModal(errorMessage);
+       	    }
+       	}
+    }
+</script>
+</th:block>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>만족도 조사 > 설문</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div id="admin501SearchWrap" class="search_wrap col30">
+        <ul>
+            <li>
+                <select id="lab_01" title="분류 선택" class="wp200">
+                    <option>설문명</option>
+                </select>
+                <input type="text" name="" id="lab_02" placeholder="검색어를 입력하세요" value="" title="검색어 입력">
+            </li>
+            <li>
+                <label>상태</label>
+                <span class="radio-box"><input type="radio" id="option1" value="" name="radio_01" checked><label for="option1">전체</label></span>
+                <span class="radio-box"><input type="radio" id="option2" value="REG" name="radio_01"><label for="option2">임시저장</label></span>
+                <span class="radio-box"><input type="radio" id="option3" value="PROG" name="radio_01"><label for="option3">등록</label></span>
+                <!--<span class="radio-box"><input type="radio" id="option4" value="DEL" name="radio_01"><label for="option4">삭제</label></span>-->
+            </li>
+            <li>
+                <label for="admin501RegStartDt">등록일</label>
+                <div class="flex_col"><span class="datepicker"><input type="text" value="시작일" id="admin501RegStartDt" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span> ~ <span class="datepicker"><input type="text" value="종료일" id="admin501RegEndDt" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span></div>
+            </li>
+        </ul>
+        <div class="s_wrap"><a class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_top_btn mb10">
+            <a href="javascript:;" id="admin501_btn_register_survey" class="btn_basic bg_type01">등록</a>
+            <a href="javascript:;" id="admin501_btn_update_survey" class="btn_basic bg_type01">수정</a>
+            <a href="javascript:;" id="admin501_btn_delete_survey" class="btn_basic bg_type02">삭제</a>
+            <a href="javascript:;" id="admin501_btn_exl_down" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+        </div>
+        <div class="table_layout02 list_type mb20">
+            <table>
+                <caption>설문목록</caption>
+                <colgroup>
+                    <col style="width: 80px;">
+                    <col style="width: 80px;">
+                    <col style="width: auto;">
+                    <col style="width: 127px;">
+                    <col style="width: 127px;">
+                    <col style="width: 127px;">
+                    <col style="width: 127px;">
+                    <col style="width: 127px;">
+                    <col style="width: 127px">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">번호</th>
+                    <th scope="col">선택</th>
+                    <th scope="col">설문명</th>
+                    <th scope="col">설문대상</th>
+                    <th scope="col">설문유형</th>
+                    <th scope="col">등록자</th>
+                    <th scope="col">등록일</th>
+                    <th scope="col">상태</th>
+                    <th scope="col">관리</th>
+                </tr>
+                </thead>
+                <tbody id="survey_list_container">
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="admin_modal">
+    <th:block th:replace="~{admin/modal/survey_config_copy :: survey_config_copy}"></th:block>
+</th:block>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin501 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],        // 조회한 데이터
+            //pageInfo(페이징)
+            page: 1,  // 현재 페이지 번호
+            size: 10, // 한 페이지당 표시할 데이터 개수
+            total: 0, // 전체 데이터 총 개수
+            pages: 0 // 전체 페이지 수 (total / size)
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            uiCommon.datepicker.init('#admin501RegStartDt', {
+                onSelect: function(selectedDate, inst) {
+                    const startDate = $(this).datepicker('getDate');
+                    const endDatePicker = $('#admin501RegEndDt');
+                    endDatePicker.datepicker('option', 'minDate', startDate);
+
+                    const currentEndDate = endDatePicker.datepicker('getDate');
+                    if (currentEndDate && startDate && startDate.getTime() > currentEndDate.getTime()) {
+                        endDatePicker.datepicker('setDate', startDate);
+                    }
+                    _this.state.page = 1;
+                    _this.getListData();
+                }
+            });
+
+            // 종료일 datepicker 초기화
+            uiCommon.datepicker.init('#admin501RegEndDt', {
+                onSelect: function(selectedDate, inst) {
+                    const endDate = $(this).datepicker('getDate');
+                    const startDatePicker = $('#admin501RegStartDt');
+                    startDatePicker.datepicker('option', 'maxDate', endDate);
+
+                    const currentStartDate = startDatePicker.datepicker('getDate');
+                    if (currentStartDate && endDate && endDate.getTime() < currentStartDate.getTime()) {
+                        startDatePicker.datepicker('setDate', endDate);
+                    }
+                    _this.state.page = 1;
+                    _this.getListData();
+                }
+            });
+
+            const today = new Date();
+            const weekAgo = new Date();
+            weekAgo.setDate(today.getDate() - 7);
+
+            $('#admin501RegStartDt').datepicker('setDate', weekAgo);
+            $('#admin501RegEndDt').datepicker('setDate', today);
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin501', '.search_wrap');
+            if (saved) {
+                this.state.page = saved._extra.page || 1;
+            }
+
+            this.getListData();
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 목록 체크박스 단일 선택 처리
+            document.addEventListener("change", function (e) {
+                if (!e.target.classList.contains("row_check")) return;
+
+                // 현재 클릭된 체크박스 제외하고 모두 해제
+                document.querySelectorAll(".row_check").forEach(chk => {
+                    if (chk !== e.target) chk.checked = false;
+                });
+            });
+
+            // 검색 버튼
+            document.querySelectorAll(".btn_search").forEach(btn => {
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    _this.state.page = 1;
+                    _this.getListData();
+                });
+            });
+
+            // 등록 버튼
+            const btnRegister = document.querySelector("#admin501_btn_register_survey");
+            if (btnRegister) {
+                btnRegister.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    SearchState.clear('admin501');
+                    window.location.href = contextPath + '/admin/page/admin501-1';
+                });
+            }
+
+            // 수정 버튼
+            document.querySelector('#admin501_btn_update_survey').addEventListener('click', function(e){
+                e.preventDefault();
+
+                // 체크된 row 찾기
+                const checked = document.querySelector('.row_check:checked');
+
+                // 선택된게 없으면 Alert
+                if (!checked) {
+                    uiCommon.fnShowAlertModal("수정할 설문을 선택하세요.");
+                    return;
+                }
+
+                // 선택된 설문 번호
+                const srvyOid = checked.value;
+
+                // 상세 페이지로 이동
+                window.location.href = `${contextPath}/admin/page/admin501-1?srvyOid=${srvyOid}`;
+            });
+
+            // 삭제 버튼
+            const btnDelete = document.querySelector("#admin501_btn_delete_survey");
+            if (btnDelete) {
+                btnDelete.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    // 선택된 체크박스 찾기
+                    const checked = document.querySelector(".row_check:checked");
+                    if (!checked) {
+                        uiCommon.fnShowAlertModal("삭제할 설문을 선택하세요.");
+                        return;
+                    }
+                    uiCommon.fnShowConfirmModal('삭제하시겠습니까?', () => _this.fnDelete(checked));
+                });
+            }
+
+            // 엑셀 다운로드
+            document.querySelector("#admin501_btn_exl_down").addEventListener("click", async function (e) {
+                e.preventDefault();
+
+                const reason = await uiCommon.fnShowPromptModal('엑셀 다운로드 받으시겠습니까?', {
+                    title: '엑셀 다운로드 요청',
+                    defaultValue: '',
+                    placeholder: '사유 입력',
+                });
+
+                
+                // 취소 시 조용히 종료
+                if (reason === null) {
+                    return;
+                }
+
+                // 빈 값 체크
+                if (reason.trim() === '') {
+                    uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                    return;
+                }
+
+                // 2자 미만 체크
+                if (reason.trim().length < 2) {
+                    uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                    return;
+                }
+
+                const params = {
+                    pageId: 'admin501',
+                    srvyTtl : document.querySelector("#lab_02")?.value,
+                    srvyStts : document.querySelector("input[name='radio_01']:checked").value,
+                    regStartDt : document.querySelector("#admin501RegStartDt")?.value,
+                    regEndDt : document.querySelector("#admin501RegEndDt")?.value,
+                    reason: reason.trim()
+                };
+
+                try {
+                    await API.excelDownload('/api/admin/admin501/survey/excel/export', params);
+                } catch(err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal("[error] : " + err, () => uiCommon.fnHideAlertModal());
+                }
+            });
+
+            // 복사 버튼
+            document.addEventListener("click", function (e) {
+                if (!e.target.classList.contains("admin501_config_copy")) return;
+
+                e.preventDefault();
+
+                const srvyOid = e.target.dataset.id;
+
+                // 선택 srvyOid 를 모달로 전달
+                survey_config_copy.initModal(srvyOid);
+            });
+
+            // 교육명 클릭
+            $("#survey_list_container").on("click", ".survey_link", function (e) {
+                e.preventDefault();
+                const srvyOid = $(this).data("srvyOid");
+                if(!srvyOid)return;
+                // 상세 페이지로 이동
+                window.location.href = `${contextPath}/admin/page/admin501-1?srvyOid=${srvyOid}`;
+            });
+
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("admin501SearchWrap").addEventListener('keydown', e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    _this.state.page = 1;
+                    _this.getListData();
+                }
+            });
+            // 검색영역 변경 이벤트
+            document.getElementById("admin501SearchWrap").addEventListener('change', e => {
+                if (e.target.matches('select, input[type="radio"]')) {
+                    e.preventDefault();
+                    _this.state.page = 1;
+                    _this.getListData();
+                }
+            });
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            uiCommon.pagination.render({
+                currentPage: _this.state.page,
+                totalPages: _this.state.pages,
+                onPageChange: (page) => {
+                    _this.state.page = page;
+                    _this.getListData();
+                }
+            });
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+            const tbody = document.querySelector("#survey_list_container");
+            tbody.innerHTML = "";
+
+            const list = this.state.all;
+
+            // 데이터 없을 때
+            if (list.length === 0) {
+                tbody.insertAdjacentHTML(
+                        "beforeend",
+                        `<tr>
+       	                <td class="tac" colspan="9">조회된 결과가 없습니다.</td>
+       	            </tr>`
+                );
+                return;
+            }
+
+            let html = '';
+            list.forEach((item, index) => {
+                html += `
+       	            <tr>
+       	                <td class="tac">${index+1 ?? ""}</td>
+       	                <td class="tac">
+       	                    <input type="checkbox" class="row_check" value="${item.srvyOid ?? ''}">
+       	                </td>
+       	                <td class="tal">
+	                        <a href="#" class="a_link survey_link"
+	                            data-srvy-oid="${item.srvyOid}">
+	                            ${item.srvyTtl ?? ""}
+	                         </a>
+       	                </td>
+       	             	<td class="tac">${item.srvyTgtNm ?? ""}</td>
+       	             	<td class="tac">${item.srvyTypeNm ?? ""}</td>
+       	                <td class="tac">${item.regId ?? ""}</td>
+       	                <td class="tac">${item.regDt ?? ""}</td>
+       	                <td class="tac">${item.srvyStts}</td>
+       	                <td class="tac">
+       	                    <a href="javascript:;"
+       	                       class="s_btn_basic bg_type01 admin501_config_copy"
+       	                       data-id="${item.srvyOid}">
+       	                        복사
+       	                    </a>
+       	                </td>
+       	            </tr>
+       	        `;
+            });
+            tbody.innerHTML = html;
+        },
+
+        /**
+         * 목록 데이터 조회
+         */
+        getListData: async function () {
+            SearchState.saveForm('admin501', '.search_wrap', { page: this.state.page });
+
+            const params = {
+                page: this.state.page,
+                size: this.state.size,
+                srvyTtl : document.querySelector("#lab_02")?.value,
+                srvyStts : document.querySelector("input[name='radio_01']:checked").value,
+                srvyBgngDt : document.querySelector("#admin501RegStartDt")?.value,
+                surveyEndtDt : document.querySelector("#admin501RegEndDt")?.value
+            };
+
+            const queryString = new URLSearchParams(
+                    Object.entries(params).filter(([_, v]) => v !== "")
+            ).toString();
+
+            const data = await API.get(`/api/admin/admin501/survey/list?${queryString}`);
+
+            this.state.all = data.list;
+            this.state.total = data.total;
+            this.state.pages = data.pages;
+
+            this.renderTable();
+            this.renderPagination();
+
+        },
+
+        /**
+         * 게시판 삭제 (soft delete)
+         */
+        fnDelete: async function (checked) {
+            const srvyOid = checked.value;
+
+            // 확인창
+            uiCommon.fnShowConfirmModal("삭제하시겠습니까?", async () => {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    const result = await API.patch("/api/admin/admin501/survey/delete", {
+                        srvyOid: srvyOid
+                    });
+                    uiCommon.fnShowAlertModal("삭제되었습니다.", () => {
+                        admin501.getListData(); // 목록 재조회
+                    });
+                } catch (err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal("삭제 중 오류가 발생했습니다.");
+                }
+            });
+        },
+    };
+
+    $(document).ready(function () {
+        admin501.init();
+    });
+</script>
+</body>
+</html>

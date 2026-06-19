@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <title th:text="${boardInfo.bbsNm} + ' > 상세'">게시판 상세</title>
+	<th:block th:if="${post?.prvtPstYn == 'Y' or post?.openYn == 'N'}">
+	    <meta name="robots" content="noindex, nofollow">
+	</th:block>
+	<th:block th:unless="${post?.prvtPstYn == 'Y' or post?.openYn == 'N'}">
+		<meta name="title" 
+	          th:if="${post?.bbsPstTtl != null}" 
+	          th:content="${post.bbsPstTtl}">    
+		<meta name="description" 
+		      th:if="${post?.bbsPstCnTxt != null}" 
+		      th:content="${#strings.abbreviate(
+		          T(egovframework.common.util.HtmlUtil).stripHtml(
+		              T(egovframework.common.util.HtmlUtil).htmlDecode(post.bbsPstCnTxt)
+		          ), 160)}">
+	</th:block>
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit" th:text="${boardInfo.bbsNm}">게시판</h3>
+
+    <div class="board_wrap">
+        <div class="board_view">
+            <div class="board_view_header">
+                <h4 class="title">
+                    <span th:if="${boardInfo.ctgryYn == 'Y' and post.ctgry != null}" 
+                          th:text="'[' + ${post.ctgry} + '] '" class="c_blue02"></span>
+                    <span th:text="${post.bbsPstTtl}"></span>
+                </h4>
+                
+                <div class="board_info_row" style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <span th:if="${boardInfo.wrtrExpsrYn == 'Y'}" class="mr10">
+                        <strong>작성자:</strong> <span th:text="${post.wrtrNm}"></span>
+                    </span>
+                    <span th:if="${boardInfo.wrtDtExpsrYn == 'Y'}" class="mr10">
+                        <strong>등록일:</strong> <span th:text="${#temporals.format(post.regDt, 'yyyy-MM-dd')}"></span>
+                    </span>
+                    <span th:if="${boardInfo.inqCntExpsrYn == 'Y'}" class="mr10">
+                        <strong>조회수:</strong> <span th:text="${post.inqCnt}"></span>
+                    </span>
+                    <span th:if="${boardInfo.ddlnDtExpsrYn == 'Y' and post.ddlnDt != null}" class="mr10">
+                        <strong>마감일:</strong> <span th:text="${#temporals.format(post.ddlnDt, 'yyyy-MM-dd')}"></span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="board_content post-content" th:utext="${post.bbsPstCn}"></div>
+
+			<div class="attachment" th:if="${fileList != null and !fileList.isEmpty()}">
+			    <h5>첨부파일</h5>
+			    <ul>
+			        <li th:each="file : ${fileList}">
+			            <a th:href="@{|${basicFilePath}${file.strgFilePath}/${file.strgFileNm}|}" 
+			               class="file_link" 
+			               th:attr="download=${file.orgnlFileNm}">
+			                <i class="ico_file">💾</i>
+			                <span th:text="${file.orgnlFileNm}"></span>
+			            </a>
+			        </li>
+			    </ul>
+			</div>
+
+            <div class="btn_wrap mt20">
+                <a href="javascript:" onclick="user_board_post.fnGoList();" class="btn_basic bg_gray">목록</a>
+            </div>
+        </div>
+
+		<div class="pagination" th:if="${boardInfo.prevNextExpsrYn == 'Y'}">
+            <p class="prev">
+                <span class="name">이전글</span>
+                <span class="text">
+                    <a class="link" href="javascript:;" 
+                       th:if="${prevBoardPost != null}"
+                       th:onclick="|user_board_post.fnCheckAccessAndGo(${prevBoardPost.bbsPstOid})|" 
+                       th:text="${prevBoardPost.bbsPstTtl}"></a>
+                    <em th:unless="${prevBoardPost != null}">이전글이 없습니다.</em>
+                </span>
+            </p>
+            <p class="next">
+                <span class="name">다음글</span>
+                <span class="text">
+                    <a class="link" href="javascript:;" 
+                       th:if="${nextBoardPost != null}"
+                       th:onclick="|user_board_post.fnCheckAccessAndGo(${nextBoardPost.bbsPstOid})|"
+                       th:text="${nextBoardPost.bbsPstTtl}"></a>
+                    <em th:unless="${nextBoardPost != null}">다음글이 없습니다.</em>
+                </span>
+            </p>
+        </div>
+        
+        <div th:if="${boardInfo.cmntPsbltyYn == 'Y'}" class="comment_wrap mt30">
+            <h4>댓글 <span th:text="${commentList != null ? commentList.size() : 0}" style="color:#e60000; font-size:0.8em;"></span></h4>
+
+            <div class="comment_list">
+                <ul th:if="${commentList != null and !commentList.isEmpty()}">
+                    <li th:each="cmt : ${commentList}">
+                        <div class="info">
+                            <strong th:text="${cmt.wrtrNm}">작성자</strong>
+                            <span class="date" th:text="${#temporals.format(cmt.regDt, 'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+                        <div class="txt" th:utext="${#strings.replace(cmt.bbsCmntCn, '', '<br>')}"></div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="comment_write">
+                <div class="inputs">
+                    <input type="text" id="cmt_writer" placeholder="작성자 이름" maxlength="20">
+                </div>
+                <textarea id="comment_content" placeholder="내용을 입력해주세요. (비방, 욕설은 삭제될 수 있습니다.)"></textarea>
+                <div class="btn_area">
+                    <button type="button" class="btn_basic_s" onclick="user_board_post.fnRegistComment()">등록</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const user_board_post = {
+        state: {
+            config: /*[[${boardInfo}]]*/ {},       // 게시판 설정
+            post: /*[[${post}]]*/ {},              // 현재 게시글
+            reqDto: /*[[${boardRequestDto}]]*/ {}, // 검색 조건
+            files: /*[[${fileList}]]*/ [],          // 첨부파일
+            strgFilePath: /*[[${basicFilePath}]]*/ []
+        },
+
+        init: function () {
+            // 필요 시 초기화 로직
+        },
+
+        /**
+         * 목록으로 돌아가기
+         */
+         fnGoList: function () {
+             const menuCd = this.state.reqDto.menuCd;
+             window.location.href = contextPath + `/board?menuCd=${menuCd}&bbsOid=${this.state.config.bbsOid}`;
+         },
+        
+        /**
+         * 댓글 등록 
+         */
+        fnRegistComment: function() {
+            const _this = this;
+            
+            const writerEl = document.getElementById('cmt_writer');
+            const contentEl = document.getElementById('comment_content');
+
+            // 유효성 검사
+            if (!writerEl || !writerEl.value.trim()) {
+                uiCommon.fnShowAlertModal('작성자 이름을 입력해주세요.', function(){
+                    if(writerEl) writerEl.focus();  
+                });
+                return;
+            }
+            if (!contentEl || !contentEl.value.trim()) {
+                uiCommon.fnShowAlertModal('내용을 입력해주세요.', function(){
+                    if(contentEl) contentEl.focus();
+                });
+                return;
+            }
+
+            uiCommon.fnShowConfirmModal('댓글을 등록하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+                
+                const params = {
+                    bbsOid: _this.state.config.bbsOid,
+                    bbsPstOid: _this.state.post.bbsPstOid,
+                    wrtrNm: writerEl.value.trim(),
+                    bbsCmntCn: contentEl.value.trim(),
+                    menuCd: _this.state.reqDto.menuCd
+                };
+                
+                try {
+                    await API.put('/api/common/board/comment/insert', params);
+                    
+                    uiCommon.fnShowAlertModal('댓글이 등록되었습니다.', function(){
+                        location.reload();
+                    });
+                } catch (error) {
+                    console.error('등록 실패:', error);
+                    uiCommon.fnShowAlertModal('등록에 실패했습니다.');
+                }
+            });
+        },
+        
+        /**
+         * 권한 체크 후 상세 이동 (이전글/다음글용)
+         */
+        fnCheckAccessAndGo: async function (bbsPstOid) {
+            const _this = this;
+            if(!bbsPstOid) return;
+            const menuCd = _this.state.reqDto.menuCd;
+            try {
+                // 1. 권한 체크 API 호출
+                const response = await API.get(`/api/common/board/post/verify-access/${bbsPstOid}/${menuCd}`, {}, {
+                    handleAuthError: false,
+                    showLoading: true
+                });
+
+                // 2. 비밀번호 필요한 경우 (비회원 비밀글 등)
+                if(response && response.action === 'REQUIRED_PASSWORD'){
+                    // 비밀번호 모달 띄우기 (qna_secret 객체가 있다고 가정)
+                    if(typeof qna_secret !== 'undefined') {
+                        qna_secret.initModal(bbsPstOid, null, 'board');
+                    } else {
+                        // qna_secret이 없는 경우 (일반 게시판 등) 처리
+                        // 공통 비밀번호 모달이 있다면 호출, 없으면 알림
+                         uiCommon.fnShowAlertModal('비밀번호 입력 모듈이 로드되지 않았습니다.');
+                    }
+                } else {
+                    // 3. 권한 있음 -> 페이지 이동
+                    // 조회수 증가 로직은 상세 페이지 진입 시 처리하거나 여기서 처리
+                    window.location.href = contextPath + `/board/post?menuCd=${menuCd}&bbsOid=${_this.state.config.bbsOid}&bbsPstOid=${bbsPstOid}`;
+                }
+            } catch (error) {
+                // 4. 에러 처리 (403, 404 등)
+                if (error.stts === 403) {
+                    uiCommon.fnShowAlertModal('비밀글에 접근할 권한이 없습니다.');
+                } else if (error.stts === 404) {
+                    uiCommon.fnShowAlertModal('게시글이 존재하지 않습니다.');
+                } else {
+                    console.error(error);
+                    uiCommon.fnShowAlertModal('오류가 발생했습니다.');
+                }
+            }
+        },        
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        user_board_post.init();
+    });
+</script>
+</body>
+</html>

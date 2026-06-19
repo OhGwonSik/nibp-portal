@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin800.mapper.Admin803Mapper">
+    <!--관리자 계정 목록 조회-->
+    <select id="selectAdmin803AccountList" parameterType="egovframework.admin.admin800.domain.Admin803FilterDTO" resultType="egovframework.admin.admin800.domain.Admin803AccountVO">
+        SELECT
+        user_oid
+        , user_nm_korn
+        , user_id
+        , use_yn
+        , prvc_use_yn
+        FROM
+        ${schema}.user
+        <where>
+            user_authrt = 'ADMIN'
+            AND use_yn = 'Y'
+            <if test="keyword != null and keyword != ''">
+                AND (
+                user_id LIKE CONCAT('%', #{keyword}, '%')
+                OR user_nm_korn LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="useYn != null and useYn != ''">
+                AND use_yn = #{useYn}
+            </if>
+        </where>
+    </select>
+
+    <!--메뉴 목록 조회-->
+    <select id="selectAdmin803MenuList" parameterType="egovframework.admin.admin800.domain.Admin803MenuDTO" resultType="egovframework.admin.admin800.domain.Admin803MenuDTO">
+        SELECT
+            a.menu_oid
+             , a.menu_nm
+             , a.menu_cd
+             , a.up_menu_oid
+             , a.menu_lv
+             , a.menu_seq
+		     , b.auth_bgng_dt
+		     , b.auth_end_dt
+             , a.use_yn
+             , b.inq_authrt_yn
+        FROM ${schema}.menu a
+                 LEFT JOIN (
+            SELECT
+                b.menu_oid
+                , b.inq_authrt_yn
+				, IF( b.use_yn = 'Y', b.auth_bgng_dt, NULL) AS auth_bgng_dt	
+				, IF( b.use_yn = 'Y', b.auth_end_dt, NULL) AS auth_end_dt
+            FROM ${schema}.user_menu_authrt b
+                     INNER JOIN ${schema}.user c
+                                ON b.user_oid = c.user_oid
+            WHERE c.user_id = #{userId}
+        ) b ON a.menu_oid = b.menu_oid
+        WHERE a.use_yn = 'Y'
+          AND a.menu_auth_lv = 'ADMIN'
+    </select>
+
+    <!--사용자 메뉴 권한 조회-->
+    <select id="selectUserMenuAuth" resultType="egovframework.admin.admin800.domain.Admin803AuthDTO">
+        SELECT
+            user_menu_authrt_oid
+             , user_oid
+             , menu_oid
+             , use_yn
+             , inq_authrt_yn
+             , wrt_authrt_yn
+             , del_authrt_yn
+             , excel_authrt_yn
+             , otpt_authrt_yn
+		     , auth_bgng_dt
+		     , auth_end_dt
+             , reg_id
+             , reg_dt
+             , mdfcn_id
+             , mdfcn_dt
+        FROM
+            ${schema}.user_menu_authrt
+        WHERE
+            user_oid = #{userOid}
+          AND menu_oid = #{menuOid}
+    </select>
+
+    <!--사용자의 모든 메뉴 권한 목록 조회-->
+    <select id="selectUserMenuAuthListByUserNo" resultType="egovframework.admin.admin800.domain.Admin803AuthDTO">
+        SELECT
+            user_menu_authrt_oid
+             , user_oid
+             , menu_oid
+             , use_yn
+             , inq_authrt_yn
+             , wrt_authrt_yn
+             , del_authrt_yn
+             , excel_authrt_yn
+             , otpt_authrt_yn
+		     , auth_bgng_dt
+		     , auth_end_dt
+             , reg_id
+             , reg_dt
+             , mdfcn_id
+             , mdfcn_dt
+        FROM
+            ${schema}.user_menu_authrt
+        WHERE
+            user_oid = #{userOid}
+    </select>
+
+    <!--사용자 메뉴 권한 등록-->
+    <insert id="insertUserMenuAuth" useGeneratedKeys="true" keyProperty="list.userMenuAuthrtOid">
+        INSERT INTO ${schema}.user_menu_authrt (
+        user_oid
+        , menu_oid
+        , inq_authrt_yn
+        , wrt_authrt_yn
+        , del_authrt_yn
+        , excel_authrt_yn
+        , otpt_authrt_yn
+        , use_yn
+        , auth_bgng_dt
+        , auth_end_dt
+        , reg_id
+        , reg_dt
+        , mdfcn_id
+        , mdfcn_dt
+        )
+        VALUES
+        <foreach collection="list" item="auth" separator=",">
+            (
+            #{auth.userOid}
+            , #{auth.menuOid}
+            , #{auth.inqAuthrtYn}
+            , #{auth.wrtAuthrtYn}
+            , #{auth.delAuthrtYn}
+            , #{auth.excelAuthrtYn}
+            , #{auth.otptAuthrtYn}
+            , #{auth.useYn}
+            , #{auth.authBgngDt}
+            , #{auth.authEndDt}
+            , #{auth.regId}
+            , NOW()
+            , #{auth.mdfcnId}
+            , NOW()
+            )
+        </foreach>
+    </insert>
+
+    <!--사용자 메뉴 권한 수정-->
+    <update id="updateUserMenuAuth" parameterType="java.util.List">
+        <!-- updateUserMenuAuth -->
+        UPDATE ${schema}.user_menu_authrt
+        SET
+        inq_authrt_yn = CASE
+        <foreach collection="list" item="auth">
+            <if test="auth.inqAuthrtYn != null">
+                WHEN user_oid = #{auth.userOid} AND menu_oid = #{auth.menuOid} AND user_menu_authrt_oid = #{auth.userMenuAuthrtOid}
+                THEN #{auth.inqAuthrtYn}
+            </if>
+        </foreach>
+        ELSE inq_authrt_yn
+        END,
+        wrt_authrt_yn = CASE
+        <foreach collection="list" item="auth">
+            <if test="auth.wrtAuthrtYn != null">
+                WHEN user_oid = #{auth.userOid} AND menu_oid = #{auth.menuOid} AND user_menu_authrt_oid = #{auth.userMenuAuthrtOid}
+                THEN #{auth.wrtAuthrtYn}
+            </if>
+        </foreach>
+        ELSE wrt_authrt_yn
+        END,
+        del_authrt_yn = CASE
+        <foreach collection="list" item="auth">
+            <if test="auth.delAuthrtYn != null">
+                WHEN user_oid = #{auth.userOid} AND menu_oid = #{auth.menuOid} AND user_menu_authrt_oid = #{auth.userMenuAuthrtOid}
+                THEN #{auth.delAuthrtYn}
+            </if>
+        </foreach>
+        ELSE del_authrt_yn
+        END,
+        excel_authrt_yn = CASE
+        <foreach collection="list" item="auth">
+            <if test="auth.excelAuthrtYn != null">
+                WHEN user_oid = #{auth.userOid} AND menu_oid = #{auth.menuOid} AND user_menu_authrt_oid = #{auth.userMenuAuthrtOid}
+                THEN #{auth.excelAuthrtYn}
+            </if>
+        </foreach>
+        ELSE excel_authrt_yn
+        END,
+        otpt_authrt_yn = CASE
+        <foreach collection="list" item="auth">
+            <if test="auth.otptAuthrtYn != null">
+                WHEN user_oid = #{auth.userOid} AND menu_oid = #{auth.menuOid} AND user_menu_authrt_oid = #{auth.userMenuAuthrtOid}
+                THEN #{auth.otptAuthrtYn}
+            </if>
+        </foreach>
+        ELSE otpt_authrt_yn
+        END,
+        use_yn = CASE
+        <foreach collection="list" item="auth">
+            <if test="auth.useYn != null">
+                WHEN user_oid = #{auth.userOid} AND menu_oid = #{auth.menuOid} AND user_menu_authrt_oid = #{auth.userMenuAuthrtOid}
+                THEN #{auth.useYn}
+            </if>
+        </foreach>
+        ELSE use_yn
+        END,
+        <foreach collection="list" item="auth" open="" close="" separator="">
+            <if test="auth.authBgngDt != null">
+                auth_bgng_dt = CASE
+                <foreach collection="list" item="innerAuth">
+                    WHEN user_oid = #{innerAuth.userOid} AND menu_oid = #{innerAuth.menuOid} AND user_menu_authrt_oid = #{innerAuth.userMenuAuthrtOid}
+                    THEN #{innerAuth.authBgngDt}
+                </foreach>
+                ELSE auth_bgng_dt
+                END,
+            </if>
+        </foreach>
+        <foreach collection="list" item="auth" open="" close="" separator="">
+            <if test="auth.authEndDt != null">
+                auth_end_dt = CASE
+                <foreach collection="list" item="innerAuth">
+                    WHEN user_oid = #{innerAuth.userOid} AND menu_oid = #{innerAuth.menuOid} AND user_menu_authrt_oid = #{innerAuth.userMenuAuthrtOid}
+                    THEN #{innerAuth.authEndDt}
+                </foreach>
+                ELSE auth_end_dt
+                END,
+            </if>
+        </foreach>
+        mdfcn_id = CASE
+        <foreach collection="list" item="auth">
+            WHEN user_oid = #{auth.userOid} AND menu_oid = #{auth.menuOid} AND user_menu_authrt_oid = #{auth.userMenuAuthrtOid}
+            THEN #{auth.mdfcnId}
+        </foreach>
+        ELSE mdfcn_id
+        END,
+        mdfcn_dt = NOW()
+        WHERE user_menu_authrt_oid IN
+        <foreach collection="list" item="auth" open="(" separator="," close=")">
+            #{auth.userMenuAuthrtOid}
+        </foreach>
+    </update>
+
+    <!--개인정보취급권한 수정-->
+    <update id="updateAdmin803PrivacyAuth" parameterType="egovframework.admin.admin800.domain.Admin803AccountDTO">
+        UPDATE
+            ${schema}.user
+        SET
+            prvc_use_yn = #{prvcUseYn}
+          , mdfcn_id = #{mdfcnId}
+          , mdfcn_dt = NOW()
+        WHERE user_oid = #{userOid}
+    </update>
+
+    <!--타겟 유저들의 기존 메뉴 권한 삭제-->
+    <delete id="deleteUserMenuAuthByUserNos">
+        DELETE FROM ${schema}.user_menu_authrt
+        WHERE user_oid IN
+        <foreach collection="targetUserNos" item="userOid" open="(" separator="," close=")">
+            #{userOid}
+        </foreach>
+    </delete>
+
+    <!--소스 유저의 활성 권한을 타겟 유저들에게 복사 (INSERT ... SELECT CROSS JOIN)-->
+    <insert id="copyMenuAuthFromSource">
+        INSERT INTO ${schema}.user_menu_authrt (
+            user_oid, menu_oid, inq_authrt_yn, wrt_authrt_yn, del_authrt_yn, excel_authrt_yn, otpt_authrt_yn,
+            use_yn, auth_bgng_dt, auth_end_dt, reg_id, reg_dt, mdfcn_id, mdfcn_dt
+        )
+        SELECT
+            target.user_oid,
+            source.menu_oid,
+            source.inq_authrt_yn,
+            source.wrt_authrt_yn,
+            source.del_authrt_yn,
+            source.excel_authrt_yn,
+            source.otpt_authrt_yn,
+            source.use_yn,
+            CURDATE(),
+            DATE_ADD(CURDATE(), INTERVAL 2 YEAR),
+            #{regId},
+            NOW(),
+            #{regId},
+            NOW()
+        FROM ${schema}.user_menu_authrt source
+        CROSS JOIN (
+            <foreach collection="targetUserNos" item="userOid" separator="UNION ALL">
+                SELECT #{userOid} AS user_oid
+            </foreach>
+        ) target
+        WHERE source.user_oid = #{sourceUserNo}
+          AND source.use_yn = 'Y'
+    </insert>
+
+    <!--만료된 메뉴 권한 조회-->
+    <select id="selectExpiredMenuAuth" resultType="egovframework.admin.admin800.domain.Admin803AuthDTO">
+        SELECT
+            user_menu_authrt_oid
+             , user_oid
+             , menu_oid
+             , use_yn
+             , inq_authrt_yn
+             , wrt_authrt_yn
+             , del_authrt_yn
+             , excel_authrt_yn
+             , otpt_authrt_yn
+             , auth_bgng_dt
+             , auth_end_dt
+             , reg_id
+             , reg_dt
+             , mdfcn_id
+             , mdfcn_dt
+        FROM
+            ${schema}.user_menu_authrt
+        WHERE
+            auth_end_dt <![CDATA[<]]> NOW()
+          AND use_yn = 'Y'
+    </select>
+
+    <!--만료된 메뉴 권한 비활성화-->
+    <update id="deactivateExpiredMenuAuth">
+        UPDATE
+            ${schema}.user_menu_authrt
+        SET
+            use_yn = 'N'
+          , inq_authrt_yn = 'N'
+          , wrt_authrt_yn = 'N'
+          , del_authrt_yn = 'N'
+          , excel_authrt_yn = 'N'
+          , otpt_authrt_yn = 'N'
+          , mdfcn_id = 'SYSTEM'
+          , mdfcn_dt = NOW()
+        WHERE
+            auth_end_dt <![CDATA[<]]> NOW()
+          AND use_yn = 'Y'
+    </update>
+</mapper>

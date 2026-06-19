@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <title>국가생명윤리정책원</title>
+    <style layout:fragment="main_style">
+        .sub_nav {display: none;}
+    </style>
+</head>
+<body>
+<div layout:fragment="main_content">
+    <!-- 레이어 팝업 컨테이너 -->
+    <div id="layer_popup_container"></div>
+
+    <!--메인 슬라이드 S-->
+    <section class="main_visual_wrap">
+        <div id="mainVisual" class="main_visual">
+            <div class="g_box">
+                <a href="javascript:;">
+                    <img th:src="@{/portal/images/img_visual01_.png}" class="pc" alt="메인페이지 이미지1" width="100%">
+                    <img th:src="@{/portal/images/img_visual01_m.png}" class="mobile" alt="메인페이지 모바일 이미지1" width="100%">
+                    <div class="typo_text">
+                        <div class="typo_text_inner">
+                            <strong class="text_type01"><span>인간존엄·생명존중</span><br />국가생명윤리정책원</strong>
+                            <p>Korea national institute for bioethics policy</p>
+                            <strong class="text_type02"><span>대한민국(K-) 생명윤리 정책 및 제도 선진화를 통하여</span><br />국민의 존엄한 삶을 실현하는 전문기관</strong>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="g_box">
+                <a href="javascript:;">
+                    <img th:src="@{/portal/images/img_visual03_.png}" class="pc" alt="메인페이지 이미지2" width="100%">
+                    <img th:src="@{/portal/images/img_visual03_m.png}" class="mobile" alt="메인페이지 모바일 이미지2" width="100%">
+                    <div class="typo_text">
+                        <div class="typo_text_inner">
+                            <strong class="text_type01"><span>인간존엄·생명존중</span><br />국가생명윤리정책원</strong>
+                            <p>Korea national institute for bioethics policy</p>
+                            <strong class="text_type02"><span>대한민국(K-) 생명윤리 정책 및 제도 선진화를 통하여</span><br />국민의 존엄한 삶을 실현하는 전문기관</strong>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="g_box">
+                <a href="javascript:;">
+                    <img th:src="@{/portal/images/img_visual02_.png}" class="pc" alt="메인페이지 이미지3" width="100%">
+                    <img th:src="@{/portal/images/img_visual02_m.png}" class="mobile" alt="메인페이지 모바일 이미지3" width="100%">
+                    <div class="typo_text">
+                        <div class="typo_text_inner">
+                            <strong class="text_type01"><span>인간존엄·생명존중</span><br />국가생명윤리정책원</strong>
+                            <p>Korea national institute for bioethics policy</p>
+                            <strong class="text_type02"><span>대한민국(K-) 생명윤리 정책 및 제도 선진화를 통하여</span><br />국민의 존엄한 삶을 실현하는 전문기관</strong>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <div class="controller">
+            <div class="controller_inner">
+                <div id="mainPagingInfo" class="pagingInfo"></div>
+                <button id="mainPause" class="Pause">일시정지</button>
+            </div>
+        </div>
+    </section>
+    <!--메인 슬라이드 E-->
+
+    <section>
+        <!--퀵메뉴 영역[S]-->
+        <div class="quick_wrap">
+            <div class="quick_inner">
+                <a href="https://edu.nibp.kr/" class="ico_06" target="_blank" title="새창열림">생명윤리<br />교육시스템</a>
+                <a href="https://nibp.kr/dtc/frt/frt10/frt101010" class="ico_07" target="_blank" title="새창열림">DTC 유전자검사<br />역량처리시스템</a>
+                <a href="https://public.irb.or.kr/" class="ico_03" target="_blank" title="새창열림">공용위원회<br />e-IRB 시스템</a>
+                <a href="https://review.irb.or.kr/uat/uia/egovLoginUsr.do" class="ico_05" target="_blank" title="새창열림">기관생명윤리위원회<br />관리시스템</a>
+                <a href="https://irb.or.kr/Main.aspx" class="ico_01" target="_blank" title="새창열림">기관생명윤리위원회<br />정보포털</a>
+                <a href="https://www.lst.go.kr/main/main.do" class="ico_04" target="_blank" title="새창열림">국립연명의료관리기관<br />정보/교육포털</a>
+                <a href="https://bprlib.kr/main.do?action=main" class="ico_02" target="_blank" title="새창열림">생명윤리정책<br />전문도서관</a>
+            </div>
+        </div>
+        <!--퀵메뉴 영역[E]-->
+
+        <!--주요소식&팝업존 영역[S]-->
+        <div class="news_pzone_wrap">
+            <div class="news_pzone_inner">
+                <div class="news_wrap">
+                    <h3 class="m_tit">주요소식</h3>
+                    <div id="main_tab_wrap" class="main_tab_wrap">
+
+                        <div class="tab_cont_wrap">
+                            <a href="javascript:;" class="tab_01 on"><span>공지사항</span></a>
+                            <div id="notice_list_container" class="tab_cont_inner" style="display:block;">
+                                <div class="skeleton-top-news">
+                                    <div class="skeleton-img skeleton-bone"></div>
+                                    <div class="skeleton-text">
+                                        <div class="skeleton-bone"></div>
+                                        <div class="skeleton-bone"></div>
+                                        <div class="skeleton-bone"></div>
+                                        <div class="skeleton-bone"></div>
+                                    </div>
+                                </div>
+                                <ul class="skeleton-list">
+                                    <li><div class="skeleton-bone"></div><div class="skeleton-bone"></div></li>
+                                    <li><div class="skeleton-bone"></div><div class="skeleton-bone"></div></li>
+                                    <li><div class="skeleton-bone"></div><div class="skeleton-bone"></div></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="tab_cont_wrap">
+                            <a href="javascript:;" class="tab_02"><span>보도자료</span></a>
+                            <div id="press_release_container" class="tab_cont_inner"></div>
+                        </div>
+
+                        <div class="tab_cont_wrap">
+                            <a href="javascript:;" class="tab_03"><span>입찰공고</span></a>
+                            <div id="bid_announcement_container" class="tab_cont_inner"></div>
+                        </div>
+
+                        <div class="tab_cont_wrap">
+                            <a href="javascript:;" class="tab_04"><span>채용정보</span></a>
+                            <div id="recruitment_container" class="tab_cont_inner"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pzone_wrap">
+                    <h3 class="m_tit">팝업존</h3>
+                    <div class="popup_zone" id="popup_zone_container">
+                        <div class="skeleton-pzone">
+                            <div class="skeleton-pzone-img skeleton-bone"></div>
+                        </div>
+                    </div>
+                    <div class="pzone_controller">
+                        <div class="controller_inner">
+                            <div id="pzonePagingInfo" class="pzonePagingInfo"></div>
+                            <button id="pzonePause" class="Pause">일시정지</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--주요소식&팝업존 영역[E]-->
+        <!--생명윤리 언론동향 영역[S]-->
+        <div class="press_wrap">
+            <div class="press_inner">
+                <h3 class="m_tit">생명윤리 <span>언론동향</span></h3>
+                <div id="press_tab_wrap" class="press_tab_wrap">
+                    <div class="press_tab_inner">
+                        <a href="javascript:;" class="tab_01 on"><span>국내</span></a>
+                        <div id="media_trends_domestic_container" class="press_cont" style="display:block;">
+                            <ul class="skeleton-press-list">
+                                <li class="skeleton-press-card"><div class="skeleton-circle skeleton-bone"></div><div class="skeleton-title skeleton-bone"></div><div class="skeleton-desc skeleton-bone"></div></li>
+                                <li class="skeleton-press-card"><div class="skeleton-circle skeleton-bone"></div><div class="skeleton-title skeleton-bone"></div><div class="skeleton-desc skeleton-bone"></div></li>
+                                <li class="skeleton-press-card"><div class="skeleton-circle skeleton-bone"></div><div class="skeleton-title skeleton-bone"></div><div class="skeleton-desc skeleton-bone"></div></li>
+                                <li class="skeleton-press-card"><div class="skeleton-circle skeleton-bone"></div><div class="skeleton-title skeleton-bone"></div><div class="skeleton-desc skeleton-bone"></div></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="press_tab_inner">
+                        <a href="javascript:;" class="tab_02"><span>해외</span></a>
+                        <div id="media_trends_overseas_container" class="press_cont"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--생명윤리 언론동향 영역[E]-->
+        <!--SNS 영역[S]-->
+        <div class="sns_wrap">
+            <div class="sns_inner">
+                <h3 class="m_tit" style="margin-bottom: 0;">SNS 소식</h3>
+                <div id="sns_tab_wrap" class="sns_tab_wrap" style="min-height: 280px;"></div>
+            </div>
+        </div>
+        <!--SNS 영역[E]-->
+        <!--배너 영역[S]-->
+        <div class="banner_wrap">
+            <div class="banner_inner">
+                <div class="banner_box_big">
+                    <ul>
+                        <li>
+                            <a href="javascript:;" class="text_layout">
+                                <strong>생명, 윤리와 <em>정책</em></strong>
+                                <p>생명윤리정책원의 『생명, 윤리와 정책』은 매년 4월, 10월 연 2회 발간되는 생명윤리·정책 학술지입니다</p>
+                            </a>
+                            <a th:href="@{/page/portal501}" class="more">자세히 보기</a>
+                        </li>
+                        <li>
+                            <a href="javascript:;" class="text_layout">
+                                <strong>생명윤리 <em>교육시스템</em></strong>
+                                <p>본 시스템은 '생명윤리 교육시스템'이며, 현재 생명윤리법 관련 종사자 교육을 위해 운영되고 있습니다.</p>
+                            </a>
+                            <a href="https://edu.nibp.kr/" class="more">자세히 보기</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!--배너 영역[E]-->
+        <!--관련사이트 영역[S]-->
+        <div class="family_site_wrap">
+            <div class="family_site_inner">
+                <a href="https://www.mohw.go.kr/" target="_blank" title="새창으로 열림"><img th:src="@{/portal/images/family_site01.png}" alt="보건복지부"></a>
+                <a href="https://www.mois.go.kr/" target="_blank" title="새창으로 열림"><img th:src="@{/portal/images/logo07.png}" alt="행정안전부"></a>
+                <a href="https://www.moef.go.kr/" target="_blank" title="새창으로 열림"><img th:src="@{/portal/images/logo08.png}" alt="재정경재부"></a>
+                <a href="https://plus.gov.kr/" target="_blank" title="새창으로 열림"><img th:src="@{/portal/images/family_site06.png}" alt="정부 24"></a>
+                <a href="https://bioethics.go.kr/user" target="_blank" title="새창으로 열림"><img th:src="@{/portal/images/family_site03.png}" alt="국가생명윤리심의위원회"></a>
+                <a href="https://www.who.int/" target="_blank" title="새창으로 열림"><img th:src="@{/portal/images/family_site04.png}" alt="World Health Organization"></a>
+                <a href="https://www.kigte.org/" target="_blank" title="새창으로 열림"><img th:src="@{/portal/images/family_site05.png}" alt="한국유전자검사평가원"></a>
+                <!-- <a href="https://www.kdca.go.kr/kdca/index.do" target="_blank" title="새창으로 열림"><img th:src="@{/portal/images/family_site02.png}" alt="질병관리청 KDCA"></a> -->
+            </div>
+        </div>
+        <!--관련사이트 영역[E]-->
+    </section>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const main = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: {
+                notice: null,              // 공지사항
+                pressRelease: null,        // 보도자료
+                bidAnnouncement: null,     // 입찰공고
+                recruitment: null,         // 채용정보
+                mediaTrendsDomestic: null, // 국내 언론동향
+                mediaTrendsOverseas: null, // 해외 언론동향
+                sns: null,                 // sns 소식
+                youtube: null,             // youtube
+                popupZone: null,            // 팝업존 카드뉴스
+                layerPopup: null,          // 레이어 팝업
+            },
+            strgFilePath: /*[[${basicFilePath}]]*/ '',
+            pageIndex: 1,
+            pageCnt: 10
+        },
+
+        common: {
+            // 게시판 타입 상수 (API 요청/응답 공통 사용)
+            bbsSubSeCd: {
+                PRESS_RELEASE        : 'PRESS_RELEASE',        // 보도자료
+                BID_ANNOUNCEMENT     : 'BID_ANNOUNCEMENT',     // 입찰공고
+                RECRUITMENT          : 'RECRUITMENT',          // 채용정보
+                MEDIA_TRENDS_DOMESTIC: 'MEDIA_TRENDS_DOMESTIC', // 국내 언론동향
+                MEDIA_TRENDS_OVERSEAS: 'MEDIA_TRENDS_OVERSEAS'  // 해외 언론동향
+            },
+            // 컨테이너 ID
+            containerIds: {
+                PRESS_RELEASE        : 'press_release_container',
+                BID_ANNOUNCEMENT     : 'bid_announcement_container',
+                RECRUITMENT          : 'recruitment_container',
+                MEDIA_TRENDS_DOMESTIC: 'media_trends_domestic_container',
+                MEDIA_TRENDS_OVERSEAS: 'media_trends_overseas_container'
+            },
+            // State 키
+            stateKeys: {
+                PRESS_RELEASE        : 'pressRelease',
+                BID_ANNOUNCEMENT     : 'bidAnnouncement',
+                RECRUITMENT          : 'recruitment',
+                MEDIA_TRENDS_DOMESTIC: 'mediaTrendsDomestic',
+                MEDIA_TRENDS_OVERSEAS: 'mediaTrendsOverseas'
+            }
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            const _this = this;
+            _this.initMainSlider();
+
+            // 데이터 조회 - Promise.allSettled 사용하여 비동기 함수들을 동시에 실행
+            await Promise.allSettled([
+                _this.fnGetNoticeBoardData(),
+                _this.fnGetDynamicBoardDataSet(),
+                _this.fnGetSnsData(),
+                _this.fnGetPopupZoneData(),
+                _this.fnGetLayerPopupData()
+            ]);
+
+            // 이벤트 바인딩
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            _this.updateTabAccessibility('#main_tab_wrap')
+            _this.updateTabAccessibility('#press_tab_wrap')
+
+            // 메인 슬라이드 초기화(위치 이동함)
+            // _this.initMainSlider();
+        },
+
+
+        /**
+         * 슬라이드 초기화 - 공통
+         */
+        initVisualSlider: function($slickElement, $pagingInfo, $pauseBtn, extraOptions) {
+            let autoplaySpeed = 4000;
+
+            $slickElement.on('init', function (event, slick) {
+                $pagingInfo.empty();
+
+                let $barsWrap = $('<div>', { class: 'pagingBars' });
+
+                for (let i = 0; i < slick.slideCount; i++) {
+                    let $item = $('<div>', { class: 'pagingItem', 'data-index': i });
+                    let $bar = $('<div>', { class: 'progressBar' }).append(
+                            $('<span>', { class: 'progressFill' })
+                    );
+                    $item.append($bar);
+                    $barsWrap.append($item);
+                }
+
+                let $counter = $('<span>', {
+                    class: 'slideNum',
+                    text: '1 / ' + slick.slideCount
+                });
+
+                $pagingInfo.append($barsWrap).append($counter);
+
+                if (slick.slideCount <= 1) {
+                    $pauseBtn.hide();
+                }
+            });
+
+            function animateProgress(index) {
+                $pagingInfo.find('.progressFill').stop(true, true).css('width', '0');
+                $pagingInfo.find('.pagingItem').removeClass('active');
+
+                let $targetItem = $pagingInfo.find('.pagingItem[data-index="' + index + '"]');
+                $targetItem.addClass('active');
+                $targetItem.find('.progressFill').animate({ width: '100%' }, autoplaySpeed, 'linear');
+            }
+
+            function updateSlideNum(currentIndex, slick) {
+                $pagingInfo.find('.slideNum').text((currentIndex + 1) + ' / ' + slick.slideCount);
+            }
+
+            $slickElement.on('init reInit afterChange', function (event, slick, currentSlide) {
+                let i = typeof currentSlide === 'undefined' ? 0 : currentSlide;
+                animateProgress(i);
+                updateSlideNum(i, slick);
+
+                // 현재 슬라이드가 마지막 슬라이드일 때 (전체 개수 - 보여지는 개수 기준)
+                if (currentSlide === (slick.slideCount - (slick.options.slidesToShow || 1))) {
+                    setTimeout(function() {
+                        // 일시정지 상태가 아닐 때만 처음으로 이동
+                        if (!$pauseBtn.hasClass("play")) {
+                            $slickElement.slick('slickGoTo', 0);
+                            slick.$slider.slick('slickPause');
+                        }
+                    }, autoplaySpeed);
+                }
+            });
+
+            // 기본 slick 옵션
+            let defaultOptions = {
+                accessibility: false,
+                speed: 500,
+                autoplay: true,
+                infinite: false,
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                autoplaySpeed: autoplaySpeed,
+                pauseOnHover: false,   // 마우스 올렸을 때 멈춤 방지
+                pauseOnFocus: false,   // 클릭/드래그 후 멈춤 방지
+            };
+
+            // 기본 옵션 + 추가 옵션 병합
+            let finalOptions = $.extend({}, defaultOptions, extraOptions);
+            $slickElement.slick(finalOptions);
+            // 재생/일시정지
+            $pauseBtn.on('click', function(){
+                let isPaused = $(this).hasClass("Pause");
+                if (isPaused) {
+                    $slickElement.slick('slickPause');
+                    $(this).removeClass("Pause").addClass("play").text("시작");
+                    $pagingInfo.find('.progressFill').stop();
+                } else {
+                    $slickElement.slick('slickPlay');
+                    $(this).removeClass("play").addClass("Pause").text("일시정지");
+                    let currentSlide = $slickElement.slick('slickCurrentSlide');
+                    animateProgress(currentSlide);
+                }
+            });
+
+
+        },
+
+        /**
+         * 슬라이드 초기화 - 메인
+         */
+        initMainSlider: function() {
+            this.initVisualSlider(
+                    $('#mainVisual'),
+                    $('#mainPagingInfo'),
+                    $('#mainPause'),
+                    {}
+            );
+        },
+
+        /**
+         * 슬라이드 초기화 - 팝업존
+         */
+        initPopupSlider: function() {
+            // 기존 slick 파괴 (있다면)
+            if ($('#popup_zone_container').hasClass('slick-initialized')) {
+                $('#popup_zone_container').slick('unslick');
+            }
+
+            this.initVisualSlider(
+                    $('#popup_zone_container'),
+                    $('#pzonePagingInfo'),
+                    $('#pzonePause'),
+                    {
+                        responsive: [
+                            {
+                                breakpoint: 870,
+                                settings: {
+                                    slidesToShow: 2
+                                }
+                            },
+                            {
+                                breakpoint: 640,
+                                settings: {
+                                    slidesToShow: 1
+                                }
+                            }
+                        ]
+                    }
+            );
+        },
+
+        /**
+         * 슬라이드 초기화 - YouTube (각 채널별 슬라이더)
+         */
+        initYoutubeSlider: function(youtubeCnt) {
+            const $sliders = $('.youtube_channel_slider');
+            $sliders.each(function() {
+                const $slider = $(this);
+
+                if ($slider.find('li').length === 0) return;
+
+                // 기존 slick 파괴 (있다면)
+                if ($slider.hasClass('slick-initialized')) {
+                    $slider.slick('unslick');
+                }
+            });
+
+            for(let idx=0; idx<youtubeCnt; idx++){
+                this.initVisualSlider(
+                    $(`#youtube_list_channel_${idx}`),
+                    $(`#ytPagingInfo_${idx}`),
+                    $(`#ytPause_${idx}`),
+                    {
+                        slidesToShow: 2,
+                        responsive: [
+                            {
+                                breakpoint: 640,
+                                settings: {
+                                    slidesToShow: 1
+                                }
+                            }
+                        ]
+                    }
+                );
+            }
+        },
+
+        /**
+         * 데이터 조회 - 공지사항
+         */
+        fnGetNoticeBoardData: async function () {
+            try {
+                const response = await API.get('/api/common/notice/list/filter', {page: 1, size: 4}, {showLoading: false});
+
+                // 페이지 데이터에 저장
+                this.state.all.notice = response;
+                this.renderNoticeBoardTable();
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+            }
+        },
+
+        /**
+         * 테이블 렌더링 - 공지사항
+         */
+        renderNoticeBoardTable: function () {
+            const _this = this;
+
+            const container = document.getElementById("notice_list_container");
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (!this.state.all.notice|| !this.state.all.notice.list || this.state.all.notice.list.length === 0) {
+                container.innerHTML = '<p class="empty">조회된 결과가 없습니다.</p>';
+                return;
+            }
+
+            const list = this.state.all.notice.list;
+            let featuredNoticeHtml = '';
+            let noticeListHtml = '';
+
+            // 첫 번째 게시글
+            if (list.length > 0) {
+                const firstItem = list[0];
+                const firstLink = contextPath + 'board/notice/post?ntcOid=' + firstItem.ntcOid
+
+                // attachments 배열에서 이미지 파일 찾기
+                let thumbnailUrl = '/portal/images/notice_img.png';
+                let imgSbstTxtCn = firstItem.firstFileAltText || firstItem.ntcNm;
+
+                if (firstItem.attachments && firstItem.attachments.length > 0) {
+                    const imageFile = firstItem.attachments.find(file =>
+                        common.isImageFile(file.strgFileNm)
+                    );
+                    if (imageFile) {
+                        const thumbnailFileName = common.changeToThumbnailPath(imageFile.strgFileNm) || contextPath + '/portal/images/notice_img.png'; // 기본 이미지;
+                        thumbnailUrl = _this.state.strgFilePath + imageFile.strgFilePath + '/' + thumbnailFileName;
+                    }
+                }
+
+                featuredNoticeHtml = `
+                    <a href="${firstLink}" class="top_news">
+                        <span class="text_area">
+                            <em>${common.formatDate(firstItem.regDt)}</em>
+                            <strong>${firstItem.ntcNm}</strong>
+                            <p>${firstItem.ntcCnTxt}</p>
+                        </span>
+                    </a>
+                `;
+            }
+
+            // 나머지 게시글
+            if (list.length >= 2) {
+                noticeListHtml += '<ul>';
+                const displayCount = Math.min(list.length, 4);
+                for (let i = 1; i < displayCount; i++) {
+                    const item = list[i];
+                    const noticeLink = contextPath + 'board/notice/post?ntcOid=' + list[i].ntcOid;
+                    noticeListHtml += `
+                        <li>
+                            <a href="${noticeLink}">${item.ntcNm}</a>
+                            <span>${common.formatDate(item.regDt)}</span>
+                        </li>
+                    `;
+                }
+                noticeListHtml += '</ul>';
+
+                noticeListHtml += '<a href="/board/notice" class="more">더보기</a>';
+            }
+
+            container.innerHTML = featuredNoticeHtml + noticeListHtml;
+        },
+
+        /**
+         * 데이터 조회 - 동적 게시판 개별 병렬 호출 (보도자료, 입찰공고, 채용정보, 생명윤리 언론동향)
+         * 각 API가 독립적으로 호출되어 먼저 로드된 것부터 화면에 표시됨
+         */
+        fnGetDynamicBoardDataSet: function () {
+            const _this = this;
+            const subBoardType = _this.common.bbsSubSeCd;
+
+            // 개별 API 병렬 호출 (먼저 응답받은 것부터 렌더링)
+            _this.fnFetchAndRenderBoard('/api/common/board/main/press-release', subBoardType.PRESS_RELEASE, 'pressRelease');
+            _this.fnFetchAndRenderBoard('/api/common/board/main/bid', subBoardType.BID_ANNOUNCEMENT, 'bidAnnouncement');
+            _this.fnFetchAndRenderBoard('/api/common/board/main/recruitment', subBoardType.RECRUITMENT, 'recruitment');
+            _this.fnFetchAndRenderBoard('/api/common/board/main/media-trends/domestic', subBoardType.MEDIA_TRENDS_DOMESTIC, 'mediaTrendsDomestic');
+            _this.fnFetchAndRenderBoard('/api/common/board/main/media-trends/overseas', subBoardType.MEDIA_TRENDS_OVERSEAS, 'mediaTrendsOverseas');
+        },
+
+        /**
+         * 개별 게시판 데이터 조회 및 렌더링
+         */
+        fnFetchAndRenderBoard: async function (apiUrl, boardType, stateKey) {
+            const _this = this;
+
+            try {
+                const response = await API.get(apiUrl, {}, {showLoading: false});
+
+                if (response) {
+                    _this.state.all[stateKey] = response.list;
+                    _this.renderDynamicBoardTable(boardType, response.board);
+                }
+            } catch (error) {
+                console.error(`게시판 데이터 조회 실패 (${boardType}):`, error);
+            }
+        },
+
+        /**
+         * 테이블 렌더링 - 동적 게시판들(보도자료, 입찰공고, 채용정보, 생명윤리 언론동향)
+         */
+        renderDynamicBoardTable: function (subBoardType, board) {
+            const _this = this;
+
+            const containerId = _this.common.containerIds[subBoardType];
+            const stateKey = _this.common.stateKeys[subBoardType];
+            const data = _this.state.all[stateKey];
+
+            const container = document.getElementById(containerId);
+
+            if (!container) {
+                console.error('Container not found:', containerId);
+                return;
+            }
+
+            container.innerHTML = '';
+
+            if (!data || !data.list || data.list.length === 0) {
+                container.innerHTML = '<p class="empty">조회된 결과가 없습니다.</p>';
+                return;
+            }
+
+            const list = data.list;
+            const boardLink = contextPath + 'board?bbsOid=' + board.bbsOid + '&menuCd=' + board.menuCd;
+
+            // 언론동향 게시판 (국내/해외)
+            const isMediaTrends = subBoardType === _this.common.bbsSubSeCd.MEDIA_TRENDS_DOMESTIC
+                               || subBoardType === _this.common.bbsSubSeCd.MEDIA_TRENDS_OVERSEAS;
+
+            if (isMediaTrends) {
+                let listHtml = '<ul>';
+                const bgTypes = ['bg_type01', 'bg_type02', 'bg_type03', 'bg_type04'];
+                const displayCount = Math.min(list.length, 4);
+
+                for (let i = 0; i < displayCount; i++) {
+                    const item = list[i];
+                    const bgClass = bgTypes[i % 4];
+                    const postLink = contextPath + 'board/post?menuCd=' + board.menuCd + '&bbsOid=' + board.bbsOid + '&bbsPstOid=' + item.bbsPstOid;
+
+                    const dateObj = new Date(item.regDt);
+                    const year = dateObj.getFullYear();
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    const formattedDate = `${year}<em>${month}.${day}</em>`;
+
+                    listHtml += `
+                        <li>
+                        <a href="${postLink}">
+                            <span class="${bgClass}">${formattedDate}</span>
+                            <strong>${item.bbsPstTtl}</strong>
+                            <p>${item.bbsPstCnTxt}</p>
+                        </a>
+                        </li>
+                    `;
+                }
+                listHtml += '</ul>';
+                listHtml += `<a href="${boardLink}" class="more">View more</a>`;
+
+                container.innerHTML = listHtml;
+            } else {
+                // 첫 번째 게시글
+                let featuredPostHtml = '';
+                let postListHtml = '';
+
+                if (list.length > 0) {
+                    const firstItem = list[0];
+                    const firstLink = contextPath + 'board/post?menuCd=' + board.menuCd + '&bbsOid=' + board.bbsOid + '&bbsPstOid=' + firstItem.bbsPstOid;
+
+                    // attachments 배열에서 이미지 파일 찾기
+                    let thumbnailUrl = '/portal/images/notice_img.png';
+                    let imgSbstTxtCn = firstItem.firstFileAltText || firstItem.bbsPstTtl;
+
+                    if (firstItem.attachments && firstItem.attachments.length > 0) {
+                        const imageFile = firstItem.attachments.find(file =>
+                                common.isImageFile(file.strgFileNm)
+                        );
+                        if (imageFile) {
+                            const thumbnailFileName = common.changeToThumbnailPath(imageFile.strgFileNm) || contextPath + '/portal/images/notice_img.png'; // 기본 이미지;
+                            thumbnailUrl = _this.state.strgFilePath + imageFile.strgFilePath + '/' + thumbnailFileName;
+                        }
+                    }
+
+                    featuredPostHtml = `
+                    <a href="${firstLink}" class="top_news">
+                        <span class="text_area">
+                            <em>${common.formatDate(firstItem.regDt)}</em>
+                            <strong>${firstItem.bbsPstTtl}</strong>
+                            <p>${firstItem.bbsPstCnTxt}</p>
+                        </span>
+                    </a>
+                `;
+                }
+
+                // 나머지 게시글
+                if (list.length >= 2) {
+                    postListHtml += '<ul>';
+                    const displayCount = Math.min(list.length, 4);
+                    for (let i = 1; i < displayCount; i++) {
+                        const item = list[i];
+                        const postLink = contextPath + 'board/post?menuCd=' + board.menuCd + '&bbsOid=' + board.bbsOid + '&bbsPstOid=' + item.bbsPstOid;
+                        postListHtml += `
+                        <li>
+                            <a href="${postLink}">${item.bbsPstTtl}</a>
+                            <span>${common.formatDate(item.regDt)}</span>
+                        </li>
+                    `;
+                    }
+                    postListHtml += '</ul>';
+                } else {
+                    postListHtml += '<ul></ul>';
+                }
+
+                postListHtml += '<a href="' + boardLink + '" class="more">더보기</a>';
+
+                container.innerHTML = featuredPostHtml + postListHtml;
+            }
+        },
+
+        /**
+         * 데이터 조회 - 팝업존
+         */
+        fnGetPopupZoneData: async function () {
+            const _this = this;
+
+            try {
+                const response = await API.get('/api/common/portal/popup-zone/list/filter', {
+                    page: 1,
+                    size: 10
+                }, {showLoading: false});
+
+                if (response && response.list && response.list.length > 0) {
+                    _this.state.all.popupZone = response.list;
+                    _this.fnRenderPopupZone(response.list);
+                } else {
+                    // 데이터가 없을 경우 기본 메시지 표시
+                    document.getElementById('popup_zone_container').innerHTML =
+                            '<div class="pzone_wrap"><p style="text-align: center; padding: 40px 0;">등록된 팝업존 게시물이 없습니다.</p></div>';
+                }
+            } catch (error) {
+                console.error('팝업존 데이터 조회 실패:', error);
+                document.getElementById('popup_zone_container').innerHTML =
+                        '<div class="pzone_wrap"><p style="text-align: center; padding: 40px 0;">팝업존 데이터를 불러올 수 없습니다.</p></div>';
+            }
+        },
+
+        /**
+         * 테이블 렌더링 - 팝업존
+         */
+        fnRenderPopupZone: function (popupZoneList) {
+            const _this = this;
+            const container = document.getElementById('popup_zone_container');
+            container.innerHTML = '';
+
+            let popupZoneHtmlAll = '';
+            popupZoneList.forEach(popupZone => {
+                // 이미지 경로 구성
+                let imagePath = '/portal/images/img_pop_zone.png'; // 기본 이미지
+                if (popupZone.thmbPath) {
+                    imagePath = _this.state.strgFilePath + popupZone.thmbPath;
+                }
+
+                // alt 텍스트
+                const imgSbstTxtCn = popupZone.thumbnailAltText || popupZone.smry || popupZone.cardNewsNm || '팝업존 이미지';
+
+                // 링크 URL - cnLink가 있으면 해당 URL로, 없으면 카드뉴스 상세 페이지로 연결
+                let linkUrl = '';
+                let linkTarget = '_self';
+
+                if (popupZone.popupZoneLink) {
+                    // popupZoneLink 있으면 해당 URL로 이동 (새창)
+                    linkUrl = popupZone.popupZoneLink;
+
+                    // http:// 또는 https://가 없으면 자동으로 https:// 추가
+                    if (!linkUrl.startsWith('http://') && !linkUrl.startsWith('https://')) {
+                        linkUrl = 'https://' + linkUrl;
+                    }
+
+                    linkTarget = '_blank';
+                }
+
+                // else {
+                //     // cnLink가 없으면 카드뉴스 상세 페이지로 이동
+                //     linkUrl = contextPath + '/popupZone/post?cardNewsOid=' + popupZone.cardNewsOid;
+                //     linkTarget = '_self';
+                // }
+
+                popupZoneHtmlAll += `
+                    <div class="pzone_wrap">
+                        <a href="${linkUrl}" target="${linkTarget}" ${linkTarget === '_blank' ? 'title="새창열림"' : ''}>
+                            <img src="${imagePath}" alt="${imgSbstTxtCn}">
+                        </a>
+                    </div>
+                `;
+            });
+            container.innerHTML = popupZoneHtmlAll;
+
+            // 슬라이더 초기화
+            _this.initPopupSlider();
+        },
+
+        /**
+         * 데이터 조회 - SNS
+         */
+        fnGetSnsData: async function () {
+            const _this = this;
+
+            try {
+                const data = await API.get('/api/common/portal/sns/list');
+
+                if (data && Array.isArray(data) && data.length > 0) {
+                    _this.state.all.sns = data;
+                    _this.fnRenderSnsTabs(data);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        },
+
+        /**
+         * 탭 렌더링 - SNS
+         */
+        fnRenderSnsTabs: function (snsList) {
+            const _this = this;
+            const snsTabWrap = document.getElementById('sns_tab_wrap');
+            snsTabWrap.innerHTML = '';
+
+            // 플랫폼별로 그룹화
+            const groupedSns = {};
+            snsList.forEach(sns => {
+                if (!groupedSns[sns.pltfmType]) {
+                    groupedSns[sns.pltfmType] = [];
+                }
+                groupedSns[sns.pltfmType].push(sns);
+            });
+
+            // dplySeq 순서대로 플랫폼 목록 추출
+            const platformOrder = [];
+            snsList.forEach(sns => {
+                if (!platformOrder.includes(sns.pltfmType)) {
+                    platformOrder.push(sns.pltfmType);
+                }
+            });
+
+            // .sns_list 생성 (플랫폼 목록)
+            let snsListHtml = '<ul class="sns_list">';
+            platformOrder.forEach(platform => {
+                const channels = groupedSns[platform];
+                const platformClass = platform.toLowerCase();
+
+                if (platform === 'YOUTUBE' || platform === 'FACEBOOK' || platform === 'BLOG') {
+                    // 여러 채널이 있는 플랫폼 (드롭다운 서브메뉴)
+                    let subMenuHtml = '<ul style="display: none;">';
+                    channels.forEach(channel => {
+                        subMenuHtml += `
+                            <li><a href="${channel.chnlUrl}" target="_blank" title="${channel.chnlNm} ${platformClass} 새창열림" class="${platformClass}"><span>${channel.chnlNm}</span></a></li>
+                        `;
+                    });
+                    subMenuHtml += '</ul>';
+
+                    snsListHtml += `
+                        <li>
+                            <a href="javascript:;" class="${platformClass}"><span>${platform.charAt(0) + platform.slice(1).toLowerCase()}</span></a>
+                            ${subMenuHtml}
+                        </li>
+                    `;
+                } else {
+                    // 단일 링크 플랫폼 (Instagram 등)
+                    const channel = channels[0];
+                    snsListHtml += `
+                        <li><a href="${channel.chnlUrl}" target="_blank" title="${platform.charAt(0) + platform.slice(1).toLowerCase()} 새창열림" class="${platformClass}"><span>${platform.charAt(0) + platform.slice(1).toLowerCase()}</span></a></li>
+                    `;
+                }
+            });
+            snsListHtml += '</ul>';
+
+            // .sns_tab_inner 생성 (YouTube 슬라이더)
+            let snsTabInnerHtml = '';
+            if (groupedSns['YOUTUBE'] && groupedSns['YOUTUBE'].length > 0) {
+                const youtubeChannels = groupedSns['YOUTUBE'];
+
+                // 채널별 슬라이더 영역 생성
+                let slidersHtml = '';
+                youtubeChannels.forEach((channel, index) => {
+                    slidersHtml += `
+                        <div class="youtube_slider_item">
+                            <ul id="youtube_list_channel_${index}" class="youtube_channel_slider"></ul>
+                            <div class="yzone_controller">
+                                <div class="controller_inner">
+                                    <div id="ytPagingInfo_${index}" class="ytPagingInfo"></div>
+                                    <button id="ytPause_${index}" class="Pause">일시정지</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                snsTabInnerHtml = `
+                    <div class="sns_list_wrap youtube_slider_wrap">
+                        ${slidersHtml}
+                    </div>
+                `;
+            }
+
+            // 전체 HTML 조합
+            const wrapperHtml = `
+                ${snsListHtml}
+                ${snsTabInnerHtml}
+            `;
+
+            snsTabWrap.innerHTML = wrapperHtml;
+
+            // YouTube 영상 로드 (모든 YOUTUBE 채널에서 6개씩)
+            if (groupedSns['YOUTUBE'] && groupedSns['YOUTUBE'].length > 0) {
+                _this.fnGetYoutubeData();
+            }
+
+            // 드롭다운 이벤트 바인딩
+            _this.fnBindSnsListEvents();
+        },
+
+        /**
+         * SNS 목록 드롭다운 이벤트 바인딩
+         */
+        fnBindSnsListEvents: function () {
+            const $items = $('.sns_list > li');
+            let isMouseDown = false;
+
+            const closeAll = () => {
+                $items.each(function () {
+                    $(this)
+                        .removeClass('is-open')
+                        .children('ul')
+                        .stop(true, true)
+                        .slideUp(200);
+                });
+            };
+
+            // 입력 수단 구분
+            $(document).off('mousedown.snsList').on('mousedown.snsList', () => {
+                isMouseDown = true;
+            });
+
+            $(document).off('keydown.snsList').on('keydown.snsList', e => {
+                if (e.key === 'Tab') {
+                    isMouseDown = false;
+                }
+            });
+
+            $items.each(function () {
+                const $li = $(this);
+                const $link = $li.children('a');
+                const $sub = $li.children('ul');
+
+                if (!$sub.length) return;
+
+                // 클릭 : 슬라이드 토글
+                $link.on('click', function (e) {
+                    e.preventDefault();
+
+                    const isOpen = $li.hasClass('is-open');
+                    closeAll();
+
+                    if (!isOpen) {
+                        $li.addClass('is-open');
+                        $sub.stop(true, true).slideDown(200);
+                    }
+                });
+
+                // 키보드 포커싱(Tab) 시 즉시 열림
+                $link.on('focusin', function () {
+                    if (isMouseDown) return;
+
+                    closeAll();
+                    $li.addClass('is-open');
+                    $sub.stop(true, true).slideDown(200);
+                });
+
+                // 포커스 완전 이탈 시 닫힘
+                $li.on('focusout', function (e) {
+                    if (!this.contains(e.relatedTarget)) {
+                        $li
+                            .removeClass('is-open')
+                            .children('ul')
+                            .stop(true, true)
+                            .slideUp(200);
+                    }
+                });
+            });
+
+            // 메뉴 바깥 클릭 시 닫힘
+            $(document).off('click.snsList').on('click.snsList', function (e) {
+                if (!e.target.closest('.sns_list')) {
+                    closeAll();
+                }
+            });
+        },
+
+        /**
+         * 데이터 조회 - YouTube 영상
+         */
+        fnGetYoutubeData: async function (channelId = null) {
+            const _this = this;
+
+            try {
+                // channelId가 있으면 특정 채널, 없으면 모든 YOUTUBE 채널에서 가져오기 (각 채널별 6개)
+                const url = channelId
+                    ? `/api/common/portal/sns/youtube/videos?snsChnlOid=${channelId}&limit=6`
+                    : `/api/common/portal/sns/youtube/videos`;
+
+                const data = await API.get(url);
+                if (data && Array.isArray(data) && data.length > 0) {
+                    _this.fnRenderYoutubeVideos('main', data);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        },
+
+        /**
+         * 데이터 렌더링 - YouTube 영상 목록 (채널별로 분리)
+         */
+        fnRenderYoutubeVideos: function (containerId, videos) {
+            const _this = this;
+
+            // 채널별로 영상 그룹화
+            const groupedByChannel = {};
+            videos.forEach(video => {
+                const channelName = video.channelName || '국가생명윤리정책원';
+                if (!groupedByChannel[channelName]) {
+                    groupedByChannel[channelName] = [];
+                }
+                groupedByChannel[channelName].push(video);
+            });
+
+            // 각 채널별로 슬라이더에 렌더링
+            const channelNames = Object.keys(groupedByChannel);
+            channelNames.forEach((channelName, index) => {
+                const ul = document.getElementById(`youtube_list_channel_${index}`);
+                if (!ul) return;
+
+                ul.innerHTML = '';
+                const channelVideos = groupedByChannel[channelName];
+
+                let videoHtmlAll = '';
+                channelVideos.forEach(video => {
+                    const thumbnailUrl = video.thumbnail || '/portal/images/s_img04.png';
+
+                    videoHtmlAll += `
+                        <li>
+                            <a href="${video.link}" target="_blank" title="${channelName} 새창열림">
+                                <span>
+                                    <img src="${thumbnailUrl}" alt="${video.title}">
+                                </span>
+                                <p>${video.title}</p>
+                            </a>
+                            <a href="${video.link}" class="sns_chanel" target="_blank" title="${channelName} 새창열림">${channelName}</a>
+                        </li>
+                    `;
+                });
+                ul.innerHTML = videoHtmlAll;
+            });
+
+            // 슬라이드 초기화
+            setTimeout(function() {
+                _this.initYoutubeSlider(channelNames.length);
+            }, 100);
+        },
+
+        /**
+         * 데이터 조회 - 팝업
+         */
+        fnGetLayerPopupData: async function () {
+            const _this = this;
+
+            try {
+                const response = await API.get('/api/common/portal/popup/list', {}, {showLoading: false});
+
+                if (response && response.length > 0) {
+                    _this.state.all.layerPopup = response;
+                    _this.fnRenderLayerPopup(_this.state.all.layerPopup);
+                }
+            } catch (error) {
+                console.error('레이어 팝업 데이터 조회 실패:', error);
+            }
+        },
+
+        /**
+         * 데이터 렌더링 - 팝업
+         */
+        fnRenderLayerPopup: function (popups) {
+            const _this = this;
+            const container = document.getElementById('layer_popup_container');
+
+            popups.forEach((popup, index) => {
+                // 오늘 하루 보지 않기 쿠키 확인
+                const cookieName = 'layer_popup_' + popup.popupOid;
+                if (_this.getCookie(cookieName) === 'hidden') {
+                    return;
+                }
+
+                // 팝업 div 생성
+                const popupDiv = document.createElement('div');
+                popupDiv.className = 'layer_popup_item';
+                popupDiv.id = 'layer_popup_' + popup.popupOid;
+                popupDiv.style.cssText = `
+                    position: fixed;
+                    left: ${popup.pstnX ?? (100 + index * 50)}px;
+                    top: ${popup.pstnY ?? (100 + index * 50)}px;
+                    width: ${popup.sizeW || 400}px;
+                    height: ${popup.sizeH || 500}px;
+                    z-index: ${9000 + index};
+                    background: white;
+                    border: 1px solid #ccc;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                `;
+
+                // 헤더 영역
+                const headerHtml = `
+                    <div class="popup-header" style="padding: 10px; background: #f9f9f9; border-bottom: 1px solid #ddd; cursor: move;">
+                        <span style="font-weight: bold;">${popup.popupTtl || ''}</span>
+                    </div>
+                `;
+
+                let contentHtml = '';
+
+                // 팝업 타입에 따른 컨텐츠
+                if (popup.popupType === 'I') {
+                    // 이미지 타입
+                    let imagePath = '/portal/images/img_pop_zone.png';
+
+                    if (popup.attachments && popup.attachments.length > 0) {
+                        const file = popup.attachments[0];
+                        imagePath = main.state.strgFilePath + file.strgFilePath + '/' + file.strgFileNm;
+                    }
+
+                    const imageContent = popup.popupUrlAddr
+                        ? `<a href="${popup.popupUrlAddr}" target="_blank" style="display: block; width: 100%; height: 100%;"><img src="${imagePath}" alt="${popup.popupTtl}" style="width: 100%; height: 100%; object-fit: contain;"></a>`
+                        : `<img src="${imagePath}" alt="${popup.popupTtl}" style="width: 100%; height: 100%; object-fit: contain;">`;
+
+                    contentHtml = imageContent;
+                } else if (popup.popupType === 'H') {
+                    // HTML 타입
+                    contentHtml = `<div style="height: 100%; overflow-y: auto;">${popup.popupCn || ''}</div>`;
+                }
+
+                // 팝업 HTML 구성
+                popupDiv.innerHTML = `
+                    <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+                        ${headerHtml}
+                        <div style="flex: 1; overflow: auto;">
+                            ${contentHtml}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-top: 1px solid #ddd; background: #f5f5f5;">
+                            <label style="cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" id="hideToday_${popup.popupOid}" style="margin-right: 5px;">
+                                오늘 하루 보지 않기
+                            </label>
+                            <button onclick="main.closeLayerPopup('${popup.popupOid}')"
+                                    style="padding: 5px 15px; background: #333; color: white; border: none; cursor: pointer; border-radius: 3px;">
+                                닫기
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(popupDiv);
+
+                // 드래그 가능하게 만들기
+                _this.makeDraggable(popupDiv);
+            });
+        },
+
+        /**
+         * 팝업 닫기
+         */
+        closeLayerPopup: function (popupOid) {
+            const popup = document.getElementById('layer_popup_' + popupOid);
+            const checkbox = document.getElementById('hideToday_' + popupOid);
+
+            if (checkbox && checkbox.checked) {
+                // 오늘 하루 보지 않기
+                this.setCookie('layer_popup_' + popupOid, 'hidden', 1);
+            }
+
+            if (popup) {
+                popup.remove();
+            }
+        },
+
+        /**
+         * 팝업 쿠키 설정
+         */
+        setCookie: function (name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        },
+
+        /**
+         * 팝업 쿠키 가져오기
+         */
+        getCookie: function (name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        },
+
+        /**
+         * 팝업 드래그 가능하게 만들기
+         */
+        makeDraggable: function (element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+            element.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        },
+
+        /**
+         * 탭 메뉴 접근성 속성 업데이트
+         */
+        updateTabAccessibility: function(container) {
+            const $container = $(container);
+
+            $container.each(function() {
+                const $tabMenu = $(this);
+                const $links = $tabMenu.find('a');
+
+                $links.each(function() {
+                    const $link = $(this);
+
+                    if ($link.hasClass('on')) {
+                        $link.attr('title', '선택됨');
+                    } else {
+                        $link.removeAttr('title');
+                    }
+                });
+            });
+        },
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+        main.init();
+    });
+</script>
+</body>
+</html>

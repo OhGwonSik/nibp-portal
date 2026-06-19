@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin700.mapper.Admin702Mapper">
+
+    <!-- 질문 기본 (질문 등록일 기준, 미답변 포함) -->
+    <sql id="qnaQuestionBase">
+        FROM ${schema}.bbs_pst tbbp
+        INNER JOIN ${schema}.bbs tbb ON tbb.bbs_oid = tbbp.bbs_oid
+        WHERE tbb.bbs_se_cd = 'QNA'
+          AND tbbp.up_bbs_pst_oid IS NULL
+          AND tbbp.del_yn = 'N'
+          AND tbb.stats_yn = 'Y'
+    </sql>
+
+    <!-- 초안 답변 기본 (초안 답변일 기준) : 히스토리 → 답변 글 → 질문 글 추적 -->
+    <sql id="qnaDraftBase">
+        FROM ${schema}.bbs_pst tbbp
+        INNER JOIN ${schema}.bbs tbb ON tbb.bbs_oid = tbbp.bbs_oid
+        INNER JOIN (
+            SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS first_reply_dt
+            FROM ${schema}.bbs_hstry tbh
+            INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+            WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'TEMP'
+              AND reply.up_bbs_pst_oid IS NOT NULL
+              AND reply.del_yn = 'N'
+            GROUP BY reply.up_bbs_pst_oid
+        ) ans ON tbbp.bbs_pst_oid = ans.up_bbs_pst_oid
+        WHERE tbb.bbs_se_cd = 'QNA'
+          AND tbbp.up_bbs_pst_oid IS NULL
+          AND tbbp.del_yn = 'N'
+          AND tbb.stats_yn = 'Y'
+    </sql>
+
+    <!-- 최종 완료 기본 (최종 완료일 기준) : 히스토리 → 답변 글 → 질문 글 추적 -->
+    <sql id="qnaFinalBase">
+        FROM ${schema}.bbs_pst tbbp
+        INNER JOIN ${schema}.bbs tbb ON tbb.bbs_oid = tbbp.bbs_oid
+        INNER JOIN (
+            SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS final_comp_dt
+            FROM ${schema}.bbs_hstry tbh
+            INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+            WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'COMP'
+              AND reply.up_bbs_pst_oid IS NOT NULL
+              AND reply.del_yn = 'N'
+            GROUP BY reply.up_bbs_pst_oid
+        ) hist ON tbbp.bbs_pst_oid = hist.up_bbs_pst_oid
+        WHERE tbb.bbs_se_cd = 'QNA'
+          AND tbbp.up_bbs_pst_oid IS NULL
+          AND tbbp.del_yn = 'N'
+          AND tbb.stats_yn = 'Y'
+    </sql>
+
+    <select id="selectMonthlyQnaStatisticsData" resultType="egovframework.admin.admin700.domain.MonthlyQnaStatisticsDataDTO">
+        -- selectMonthlyQnaStatisticsData
+        -- Yearly
+        SELECT
+            'YEARLY' AS periodType,
+            CONCAT(
+                YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d')), '년 누적',
+                '(~',
+                DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'), '%m'), '월)'
+            ) AS monthGrp,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaQuestionBase"/>
+                AND YEAR(tbbp.reg_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND tbbp.reg_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS questionCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaDraftBase"/>
+                AND YEAR(ans.first_reply_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND ans.first_reply_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS draftCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaFinalBase"/>
+                AND YEAR(hist.final_comp_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND hist.final_comp_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS finalCount,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(ans.first_reply_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaDraftBase"/>
+                AND YEAR(ans.first_reply_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND ans.first_reply_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS draftAverageDate,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(hist.final_comp_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaFinalBase"/>
+                AND YEAR(hist.final_comp_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND hist.final_comp_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS finalAverageDate
+
+        UNION ALL
+
+        -- Current Month
+        SELECT
+            'CURRENT' AS periodType,
+            #{toDate} AS monthGrp,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaQuestionBase"/>
+                AND DATE_FORMAT(tbbp.reg_dt, '%Y-%m') = #{toDate}
+            ), 0) AS questionCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = #{toDate}
+            ), 0) AS draftCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = #{toDate}
+            ), 0) AS finalCount,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(ans.first_reply_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = #{toDate}
+            ), 0) AS draftAverageDate,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(hist.final_comp_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = #{toDate}
+            ), 0) AS finalAverageDate
+
+        UNION ALL
+
+        -- Previous Month
+        SELECT
+            'PREVIOUS' AS periodType,
+            DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m') AS monthGrp,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaQuestionBase"/>
+                AND DATE_FORMAT(tbbp.reg_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS questionCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS draftCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS finalCount,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(ans.first_reply_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS draftAverageDate,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(hist.final_comp_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS finalAverageDate
+
+        UNION ALL
+
+        -- Same Month Last Year
+        SELECT
+            'LAST_YEAR' AS periodType,
+            DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m') AS monthGrp,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaQuestionBase"/>
+                AND DATE_FORMAT(tbbp.reg_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS questionCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS draftCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS finalCount,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(ans.first_reply_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS draftAverageDate,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(hist.final_comp_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS finalAverageDate
+    </select>
+
+    <select id="selectMonthlyVisitorStatisticsData" resultType="egovframework.admin.admin700.domain.MonthlyVisitorStatisticsDataDTO">
+        -- selectMonthlyVisitorStatisticsData
+        -- Yearly
+        SELECT
+            'YEARLY' AS periodType,
+            CONCAT(
+                YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d')), '년 누적',
+                '(~',
+                DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'), '%m'), '월)'
+            ) AS monthGrp,
+            IFNULL(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END), 0) AS visitor,
+            IFNULL(ROUND(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END) / DAYOFYEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d')), 2), 0) AS dailyVisitorAverage
+        FROM ${schema}.user_acs_log
+        WHERE acs_type = 'PAGE' AND YEAR(reg_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+        AND reg_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+
+        UNION ALL
+
+        -- Current Month
+        SELECT
+            'CURRENT' AS periodType,
+            #{toDate} AS monthGrp,
+            IFNULL(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END), 0) AS visitor,
+            IFNULL(ROUND(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END) / DAY(LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))), 2), 0) AS dailyVisitorAverage
+        FROM ${schema}.user_acs_log
+        WHERE acs_type = 'PAGE' AND DATE_FORMAT(reg_dt, '%Y-%m') = #{toDate}
+
+        UNION ALL
+
+        -- Previous Month
+        SELECT
+            'PREVIOUS' AS periodType,
+            DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m') AS monthGrp,
+            IFNULL(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END), 0) AS visitor,
+            IFNULL(ROUND(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END) / DAY(LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH)), 2), 0) AS dailyVisitorAverage
+        FROM ${schema}.user_acs_log
+        WHERE acs_type = 'PAGE' AND DATE_FORMAT(reg_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+
+        UNION ALL
+
+        -- Same Month Last Year
+        SELECT
+            'LAST_YEAR' AS periodType,
+            DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m') AS monthGrp,
+            IFNULL(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END), 0) AS visitor,
+            IFNULL(ROUND(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END) / DAY(LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR)), 2), 0) AS dailyVisitorAverage
+        FROM ${schema}.user_acs_log
+        WHERE acs_type = 'PAGE' AND DATE_FORMAT(reg_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+    </select>
+
+	<select id="selectMonthlyQnaStatisticsDataForExcel" resultType="egovframework.admin.admin700.domain.MonthlyQnaStatisticsDataDTO">
+        -- selectMonthlyQnaStatisticsDataForExcel
+        -- Yearly
+        SELECT
+            'YEARLY' AS periodType,
+            CONCAT(
+                YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d')), '년 누적',
+                '(~',
+                DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'), '%m'), '월)'
+            ) AS monthGrp,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaQuestionBase"/>
+                AND YEAR(tbbp.reg_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND tbbp.reg_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS questionCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaDraftBase"/>
+                AND YEAR(ans.first_reply_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND ans.first_reply_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS draftCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaFinalBase"/>
+                AND YEAR(hist.final_comp_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND hist.final_comp_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS finalCount,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(ans.first_reply_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaDraftBase"/>
+                AND YEAR(ans.first_reply_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND ans.first_reply_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS draftAverageDate,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(hist.final_comp_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaFinalBase"/>
+                AND YEAR(hist.final_comp_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+                AND hist.final_comp_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+            ), 0) AS finalAverageDate
+
+        UNION ALL
+
+        -- Current Month
+        SELECT
+            'CURRENT' AS periodType,
+            #{toDate} AS monthGrp,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaQuestionBase"/>
+                AND DATE_FORMAT(tbbp.reg_dt, '%Y-%m') = #{toDate}
+            ), 0) AS questionCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = #{toDate}
+            ), 0) AS draftCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = #{toDate}
+            ), 0) AS finalCount,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(ans.first_reply_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = #{toDate}
+            ), 0) AS draftAverageDate,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(hist.final_comp_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = #{toDate}
+            ), 0) AS finalAverageDate
+
+        UNION ALL
+
+        -- Previous Month
+        SELECT
+            'PREVIOUS' AS periodType,
+            DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m') AS monthGrp,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaQuestionBase"/>
+                AND DATE_FORMAT(tbbp.reg_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS questionCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS draftCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS finalCount,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(ans.first_reply_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS draftAverageDate,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(hist.final_comp_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+            ), 0) AS finalAverageDate
+
+        UNION ALL
+
+        -- Same Month Last Year
+        SELECT
+            'LAST_YEAR' AS periodType,
+            DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m') AS monthGrp,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaQuestionBase"/>
+                AND DATE_FORMAT(tbbp.reg_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS questionCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS draftCount,
+            IFNULL((
+                SELECT COUNT(tbbp.bbs_pst_oid)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS finalCount,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(ans.first_reply_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaDraftBase"/>
+                AND DATE_FORMAT(ans.first_reply_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS draftAverageDate,
+            IFNULL((
+                SELECT ROUND(AVG(GREATEST(0, (DATEDIFF(hist.final_comp_dt, tbbp.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt)
+                                AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt)
+                                AND d.wrkdy_yn = 'N'), 0)))), 2)
+                <include refid="qnaFinalBase"/>
+                AND DATE_FORMAT(hist.final_comp_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+            ), 0) AS finalAverageDate
+    </select>
+
+    <select id="selectMonthlyVisitorStatisticsDataForExcel" resultType="egovframework.admin.admin700.domain.MonthlyVisitorStatisticsDataDTO">
+        -- selectMonthlyVisitorStatisticsDataForExcel
+        -- Yearly
+        SELECT
+            'YEARLY' AS periodType,
+            CONCAT(
+                YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d')), '년 누적',
+                '(~',
+                DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'), '%m'), '월)'
+            ) AS monthGrp,
+            IFNULL(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END), 0) AS visitor,
+            IFNULL(ROUND(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END) / DAYOFYEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d')), 2), 0) AS dailyVisitorAverage
+        FROM ${schema}.user_acs_log
+        WHERE acs_type = 'PAGE' AND YEAR(reg_dt) = YEAR(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+        AND reg_dt <![CDATA[<=]]> LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))
+
+        UNION ALL
+
+        -- Current Month
+        SELECT
+            'CURRENT' AS periodType,
+            #{toDate} AS monthGrp,
+            IFNULL(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END), 0) AS visitor,
+            IFNULL(ROUND(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END) / DAY(LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d'))), 2), 0) AS dailyVisitorAverage
+        FROM ${schema}.user_acs_log
+        WHERE acs_type = 'PAGE' AND DATE_FORMAT(reg_dt, '%Y-%m') = #{toDate}
+
+        UNION ALL
+
+        -- Previous Month
+        SELECT
+            'PREVIOUS' AS periodType,
+            DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m') AS monthGrp,
+            IFNULL(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END), 0) AS visitor,
+            IFNULL(ROUND(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END) / DAY(LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH)), 2), 0) AS dailyVisitorAverage
+        FROM ${schema}.user_acs_log
+        WHERE acs_type = 'PAGE' AND DATE_FORMAT(reg_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 MONTH, '%Y-%m')
+
+        UNION ALL
+
+        -- Same Month Last Year
+        SELECT
+            'LAST_YEAR' AS periodType,
+            DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m') AS monthGrp,
+            IFNULL(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END), 0) AS visitor,
+            IFNULL(ROUND(COUNT(DISTINCT CASE WHEN user_oid IS NOT NULL THEN CONCAT('U_', user_oid) ELSE CONCAT('T_', ssn_id) END) / DAY(LAST_DAY(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR)), 2), 0) AS dailyVisitorAverage
+        FROM ${schema}.user_acs_log
+        WHERE acs_type = 'PAGE' AND DATE_FORMAT(reg_dt, '%Y-%m') = DATE_FORMAT(STR_TO_DATE(CONCAT(#{toDate}, '-01'), '%Y-%m-%d') - INTERVAL 1 YEAR, '%Y-%m')
+    </select>
+</mapper>

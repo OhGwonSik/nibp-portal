@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <title>Q&A 상세</title>
+    <title th:text="${boardInfo.bbsNm} + ' > 상세'">게시판 상세</title>
+	<th:block th:if="${post?.prvtPstYn == 'Y' or post?.openYn == 'N'}">
+	    <meta name="robots" content="noindex, nofollow">
+	</th:block>
+	<th:block th:unless="${post?.prvtPstYn == 'Y' or post?.openYn == 'N'}">
+		<meta name="title" 
+	          th:if="${post?.bbsPstTtl != null}" 
+	          th:content="${post.bbsPstTtl}">    
+		<meta name="description" 
+		      th:if="${post?.bbsPstCn != null}" 
+		      th:with="
+		        qText=${T(egovframework.common.util.HtmlUtil).stripHtml(T(egovframework.common.util.HtmlUtil).htmlDecode(post.bbsPstCn))},
+		        aText=${post.answers != null ? T(egovframework.common.util.HtmlUtil).stripHtml(T(egovframework.common.util.HtmlUtil).htmlDecode(post.answers.bbsPstCn)) : ''}
+		      "
+		      th:content="${#strings.abbreviate('질문: ' + qText.replaceAll('\\s+', ' '), 80)} + 
+		                  ${!#strings.isEmpty(aText) ? ' | 답변: ' + #strings.abbreviate(aText.replaceAll('\\s+', ' '), 80) : ''}">
+	</th:block>    
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit"
+        th:text="${boardInfo.bbsSubSeCd == 'BIOETHICS_QNA' ? '생명윤리법 Q&A' : 'Q&A'}">
+        Q&A
+    </h3>
+
+    <!-- Q&A 질문 테이블 -->
+    <h3 class="ssstit">Q&amp;A 문의</h3>
+    <div class="table_layout t_tal">
+        <table>
+            <caption>Q&amp;A 질문 테이블</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row">등록일</th>
+                <td th:text="${#temporals.format(post?.regDt, 'yyyy-MM-dd')}">-</td>
+            </tr>
+            <tr>
+                <th scope="row">제목</th>
+                <td th:text="${post?.bbsPstTtl}">-</td>
+            </tr>
+            <tr>
+                <th scope="row">내용</th>
+                <td class="post-content" th:utext="${post?.bbsPstCn}">-</td>
+            </tr>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+
+    <!-- Q&A 답변 테이블 -->
+    <h3 class="ssstit">Q&amp;A 답변</h3>
+    <div class="table_layout t_tal">
+        <table>
+            <caption>Q&amp;A 답변 테이블</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <th:block th:if="${post?.stts == 'COMP' and post?.answers != null}">
+                <tr>
+                    <th scope="row">등록일</th>
+                    <td th:text="${#temporals.format(post.answers.regDt, 'yyyy-MM-dd')}">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">답변</th>
+                    <td class="post-content" th:utext="${post.answers.bbsPstCn}">-</td>
+                </tr>
+				<tr>
+                    <th scope="row">첨부파일</th>
+                    <td>
+                        <span th:unless="${post.answers.attachments != null 
+                                           and !#lists.isEmpty(post.answers.attachments) 
+                                           and post.answers.attachments[0].attachNo != null}">
+                            첨부파일이 없습니다.
+                        </span>
+                        
+                        <ul th:if="${post.answers.attachments != null 
+                                     and !#lists.isEmpty(post.answers.attachments) 
+                                     and post.answers.attachments[0].attachNo != null}">
+                            
+                            <li th:each="file : ${post.answers.attachments}">
+                                <a th:if="${file.attachNo != null}" 
+                                   th:href="@{|${basicFilePath}${file.strgFilePath}/${file.strgFileNm}|}" 
+                                   class="file_link" 
+                                   th:attr="download=${file.orgnlFileNm}">
+                                    <i class="ico_file">첨부아이콘</i>
+                                    <span th:text="${file.orgnlFileNm}"></span>
+                                </a>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+            </th:block>
+            
+            <th:block th:unless="${post?.stts == 'COMP' and post?.answers != null}">
+                <tr>
+                    <th scope="row">답변</th>
+                    <td>답변 대기 중입니다.</td>
+                </tr>
+            </th:block>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+
+    <div class="btn_wrap mt20">
+    	<a th:if="${post.stts != 'COMP'}" href="javascript:;" id="qnaBoardPostUpdBtn" class="btn_basic">수정하기</a>
+    	<a th:if="${post.stts != 'COMP'}" href="javascript:;" id="qnaBoardPostDelBtn" class="btn_basic bg_red">삭제</a>
+        <a th:href="@{/board(menuCd=${param.menuCd}, bbsOid=${param.bbsOid})}" class="btn_basic">목록으로</a>
+    </div>
+    
+	<div class="rate" th:if="${post.prvtPstYn == 'Y' and post.stts == 'COMP'}">
+	    <div class="rate-form-wrap">
+	        <fieldset>
+	            <p class="tac"><strong>이 페이지에서 제공하는 정보에 대하여 만족하십니까?</strong></p>
+	            <div class="rate-row" role="radiogroup" aria-label="만족도 선택">
+	                <div class="rate-list">
+	                    <label><input type="radio" name="rate" value="LIKE">만족</label>
+	                    <label><input type="radio" name="rate" value="DISLIKE">불만족</label>
+	                </div>
+	                <button type="button" id="btn_submit_rate" class="rate-btn">제출하기</button>
+	            </div>
+	        </fieldset>
+	    </div>
+	</div>    
+</div>
+<th:block layout:fragment="main_modal">
+    <th:block th:replace="~{portal/modal/qna_secret :: qna_secret}"></th:block>
+</th:block>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">    
+    	const qna_board_post = {
+			
+	        /**
+	         * 상태
+	         */
+	        state : {
+	            config: /*[[${boardInfo}]]*/ {},       // 게시판 설정
+	        	post : /*[[${post}]]*/ '',
+	            reqDto: /*[[${boardRequestDto}]]*/ {}, // 검색 조건 (페이지, 키워드 등)
+	        	prvtPstYn: /*[[${post.prvtPstYn}]]*/ {}, //질문의 비밀글 타입
+	        	isLogin: /*[[${#authorization.expression('isAuthenticated()')}]]*/ false
+	        },
+	        
+	        init: function(){
+	        	const _this = this;
+	            
+	        	_this.initEvent();
+	        },
+	        
+	        /**
+	         * 이벤트 바인딩
+	         */
+	        initEvent: function () {
+	        	const _this = this;
+	        	
+	        	const submitRate = document.querySelector('#btn_submit_rate');
+	        	if(submitRate){
+		        	submitRate.addEventListener('click', async function(e){
+		        		e.preventDefault();
+		        		await _this.submitRate();
+		        	});
+	        	}
+	        	
+	        	const qnaBoardPostUpdBtn = document.querySelector('#qnaBoardPostUpdBtn');
+	        	if(qnaBoardPostUpdBtn){
+	        		qnaBoardPostUpdBtn.addEventListener('click', async function(e){
+		        		e.preventDefault();
+
+		        		await _this.fnGoToUpdate(_this.state.post.bbsPstOid);
+		        	});
+	        	}
+
+	        	const qnaBoardPostDelBtn = document.querySelector('#qnaBoardPostDelBtn');
+	        	if(qnaBoardPostDelBtn){
+	        		qnaBoardPostDelBtn.addEventListener('click', function(e){
+		        		e.preventDefault();
+		        		_this.fnDelete();
+		        	});
+	        	}
+	        },
+	        
+	        /**
+	         * Q&A 수정 페이지 이동
+	         */
+	        fnGoToUpdate: async function (bbsPstOid) {
+	            const menuCd = this.state.reqDto.menuCd;
+	            try {
+	                // Q&A 읽기 권한 체크
+	                const response = await API.get(`/api/common/board/post/verify-access/${bbsPstOid}/${menuCd}?mode=upd`, {}, {
+	                    handleAuthError: false,
+	                    showLoading: false
+	                });
+
+	                // 권한 있음 / 비밀번호 요구 모두 200이지만
+	                // 비밀번호 요구는 action에 행위 값이 담겨있음 (REQUIRED_PASSWORD)
+	                if(response && response.action){
+	                	const boardConfig = {
+	                			menuCd: menuCd,
+	                			bbsOid: this.state.config.bbsOid
+	                	}
+	                    qna_secret.initModal(bbsPstOid, null, 'board', boardConfig, 'upd');
+	                }else{
+	                    // 200 : 권한 있음 (공개글, 관리자, 본인, 세션인증[비밀번호 입력후 성공시 5분간 세션])
+	                    window.location.href = contextPath + `/board/write?menuCd=${menuCd}&bbsOid=${this.state.config.bbsOid}&bbsPstOid=${bbsPstOid}`;
+	                }
+	            } catch (error) {
+	                if (error.stts === 403) {
+	                    // 403 Forbidden -> 회원 글 (접근 불가)
+	                    // (타인이 회원 비밀글을 클릭한 경우)
+	                    uiCommon.fnShowAlertModal('비밀글에 접근할 권한이 없습니다.');
+	                } else if (error.stts === 404) {
+	                    uiCommon.fnShowAlertModal('게시글이 존재하지 않습니다.');
+	                } else {
+	                    console.error(error);
+	                    uiCommon.fnShowAlertModal('오류가 발생했습니다.');
+	                }
+	            }
+	        },	        
+	        
+	        /**
+	         * 게시글 삭제
+	         */
+	        fnDelete: function () {
+	            const _this = this;
+	            const bbsPstOid = this.state.post.bbsPstOid;
+	            if (!bbsPstOid) return;
+
+	            uiCommon.fnShowConfirmModal('게시글을 삭제하시겠습니까?', function () {
+	                uiCommon.fnHideConfirmModal();
+
+	                if (!_this.state.isLogin) {
+	                    const boardConfig = {
+	                        menuCd: _this.state.reqDto.menuCd,
+	                        bbsOid: _this.state.config.bbsOid
+	                    };
+	                    qna_secret.initModal(
+	                        bbsPstOid,
+	                        null,
+	                        'board',
+	                        boardConfig,
+	                        'del',
+	                        function () { _this.fnDeleteRequest(); }
+	                    );
+	                } else {
+	                    _this.fnDeleteRequest();
+	                }
+	            });
+	        },
+
+	        /**
+	         * 삭제 API 호출
+	         */
+	        fnDeleteRequest: async function () {
+	            const _this = this;
+	            const bbsPstOid = this.state.post.bbsPstOid;
+	            const menuCd = this.state.reqDto.menuCd;
+
+	            try {
+	                await API.patch('/api/common/board/post/delete', {
+	                    bbsPstOid: bbsPstOid,
+	                    bbsOid: _this.state.config.bbsOid,
+	                    menuCd: menuCd
+	                });
+
+	                uiCommon.fnShowAlertModal('삭제되었습니다.', function () {
+	                    window.location.href = contextPath + '/board?menuCd=' + menuCd + '&bbsOid=' + _this.state.config.bbsOid;
+	                });
+	            } catch (error) {
+	                uiCommon.fnShowAlertModal(error.details || '삭제에 실패했습니다.');
+	            }
+	        },
+
+	        /**
+	         * 만족도 제출 로직
+	         */
+	        submitRate: async function() {
+	            const selectedRate = document.querySelector('input[name="rate"]:checked');
+	            if (!selectedRate) {
+	            	uiCommon.fnShowAlertModal('만족 또는 불만족을 선택해주세요.');
+	                return;
+	            }
+
+	            const params = {
+	            	bbsPstOid: this.state.post.bbsPstOid,
+                    chc: selectedRate.value
+	            };
+	            
+	            const menuCd = this.state.reqDto.menuCd;
+	            
+	            try {
+	                const response = await API.patch('/api/common/board/satisfaction', params);
+
+	                	uiCommon.fnShowAlertModal('소중한 의견 감사합니다.');
+
+	            } catch (error) {
+	                console.error('저장 실패:', error);
+	                uiCommon.fnShowAlertModal(error.details || error.message || '저장에 실패했습니다.');
+	            }
+	        }
+	}
+	
+    document.addEventListener("DOMContentLoaded", function() {
+    	qna_board_post.init();
+    });
+</script>
+</body>
+</html>

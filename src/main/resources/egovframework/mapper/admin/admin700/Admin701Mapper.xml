@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin700.mapper.Admin701Mapper">
+	<select id="selectQnaDataList" resultType="egovframework.admin.admin700.domain.QnaDataDTO">
+        SELECT
+            tbbp.ctgry AS ctgry                   -- 문의구분
+            , CASE 
+	            WHEN tbqs.chc = 'LIKE' THEN '만족'
+	            WHEN tbqs.chc = 'DISLIKE' THEN '불만족'
+	            ELSE '' END AS isSatisfied                -- 만족여부 (LIKE/DISLIKE)
+            , tbqs.mdfcn_dt AS satisfactionDate           -- 만족여부 답변일
+            , tbbp.bbs_pst_ttl AS bbsPstTtl              -- 제목
+            , tbbp.reg_dt AS questionDate               -- 질문일
+            , ans.first_reply_dt AS answerTempDate      -- 초안 답변일
+            , hist.final_comp_dt AS ansCnDate          -- 최종 답변일
+
+            -- [초안 소요일] (날짜차이 - 휴일수)
+            
+            , IFNULL(GREATEST(0,
+                DATEDIFF(ans.first_reply_dt, tbbp.reg_dt) - 
+                IFNULL((SELECT COUNT(*) 
+                        FROM ${schema}.ntn_std_cldr d
+                        WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt) AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt) 
+                        AND d.wrkdy_yn = 'N'), 0)
+            ), 0) AS draftResponseWorkDays
+
+            -- [최종 소요일] (날짜차이 - 휴일수)
+            , IFNULL(GREATEST(0,
+                DATEDIFF(hist.final_comp_dt, tbbp.reg_dt) - 
+                IFNULL((SELECT COUNT(*) 
+                        FROM ${schema}.ntn_std_cldr d
+                        WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt) AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt) 
+                        AND d.wrkdy_yn = 'N'), 0)
+            ), 0) AS finalResponseWorkDays
+        FROM
+            ${schema}.bbs tbb
+        INNER JOIN
+            ${schema}.bbs_pst tbbp ON tbb.bbs_oid = tbbp.bbs_oid
+        LEFT JOIN (
+            SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS first_reply_dt
+            FROM ${schema}.bbs_hstry tbh
+            INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+            WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'TEMP'
+              AND reply.up_bbs_pst_oid IS NOT NULL
+              AND reply.del_yn = 'N'
+            GROUP BY reply.up_bbs_pst_oid
+        ) ans ON tbbp.bbs_pst_oid = ans.up_bbs_pst_oid
+        LEFT JOIN (
+            SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS final_comp_dt
+            FROM ${schema}.bbs_hstry tbh
+            INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+            WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'COMP'
+              AND reply.up_bbs_pst_oid IS NOT NULL
+              AND reply.del_yn = 'N'
+            GROUP BY reply.up_bbs_pst_oid
+        ) hist ON tbbp.bbs_pst_oid = hist.up_bbs_pst_oid
+        LEFT JOIN
+            ${schema}.qna_dgstfn_evl tbqs ON tbbp.bbs_pst_oid = tbqs.tbl_oid
+            AND tbqs.tbl_nm = 'bbs_pst'
+            AND tbqs.stts = 'COMPLETED'
+        WHERE
+            tbb.bbs_se_cd = 'QNA'
+            AND tbb.use_yn = 'Y'
+            AND tbb.stats_yn = 'Y'
+            AND tbbp.del_yn = 'N'
+            AND tbbp.up_bbs_pst_oid IS NULL
+            <if test='fromQuestionDate != null'>
+                AND tbbp.reg_dt <![CDATA[>=]]> #{fromQuestionDate}
+            </if>
+            <if test='toQuestionDate != null'>
+                AND tbbp.reg_dt <![CDATA[<]]> DATE_ADD(#{toQuestionDate}, INTERVAL 1 DAY)
+            </if>
+        ORDER BY
+            tbbp.reg_dt DESC
+	</select>
+
+    <select id="selectQnaDataListForExcel" resultType="egovframework.admin.admin700.domain.QnaDataDTO">
+        SELECT
+            ROW_NUMBER() OVER(ORDER BY tbbp.reg_dt DESC) AS qnaOrderNo                      -- 번호
+            , tbbp.ctgry AS ctgry                 -- 문의구분
+            , CASE
+	            WHEN tbqs.chc = 'LIKE' THEN '만족'
+	            WHEN tbqs.chc = 'DISLIKE' THEN '불만족'
+	            ELSE '' END AS isSatisfied                -- 만족여부 (LIKE/DISLIKE)
+            , tbqs.mdfcn_dt AS satisfactionDate           -- 만족여부 답변일
+			, ans.first_reply_dt AS answerTempDate      -- 초안 답변일
+            , tbbp.bbs_pst_ttl AS postTitle              -- 제목
+            , tbbp.reg_dt AS questionDate               -- 질문일
+            , hist.final_comp_dt AS ansCnDate          -- 최종 답변일
+
+            -- [초안 소요일] (날짜차이 - 휴일수)
+            
+            , IFNULL(GREATEST(0,
+                DATEDIFF(ans.first_reply_dt, tbbp.reg_dt) - 
+                IFNULL((SELECT COUNT(*) 
+                        FROM ${schema}.ntn_std_cldr d
+                        WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt) AND d.dt <![CDATA[<=]]> DATE(ans.first_reply_dt) 
+                        AND d.wrkdy_yn = 'N'), 0)
+            ), 0) AS draftResponseWorkDays
+
+            -- [최종 소요일] (날짜차이 - 휴일수)
+            , IFNULL(GREATEST(0,
+                DATEDIFF(hist.final_comp_dt, tbbp.reg_dt) - 
+                IFNULL((SELECT COUNT(*) 
+                        FROM ${schema}.ntn_std_cldr d
+                        WHERE d.dt <![CDATA[>=]]> DATE(tbbp.reg_dt) AND d.dt <![CDATA[<=]]> DATE(hist.final_comp_dt) 
+                        AND d.wrkdy_yn = 'N'), 0)
+            ), 0) AS finalResponseWorkDays
+        FROM
+            ${schema}.bbs tbb
+        INNER JOIN
+            ${schema}.bbs_pst tbbp ON tbb.bbs_oid = tbbp.bbs_oid
+        LEFT JOIN (
+            SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS first_reply_dt
+            FROM ${schema}.bbs_hstry tbh
+            INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+            WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'TEMP'
+              AND reply.up_bbs_pst_oid IS NOT NULL
+              AND reply.del_yn = 'N'
+            GROUP BY reply.up_bbs_pst_oid
+        ) ans ON tbbp.bbs_pst_oid = ans.up_bbs_pst_oid
+        LEFT JOIN (
+            SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS final_comp_dt
+            FROM ${schema}.bbs_hstry tbh
+            INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+            WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'COMP'
+              AND reply.up_bbs_pst_oid IS NOT NULL
+              AND reply.del_yn = 'N'
+            GROUP BY reply.up_bbs_pst_oid
+        ) hist ON tbbp.bbs_pst_oid = hist.up_bbs_pst_oid
+        LEFT JOIN 
+            ${schema}.qna_dgstfn_evl tbqs ON tbbp.bbs_pst_oid = tbqs.tbl_oid
+            AND tbqs.tbl_nm = 'bbs_pst'
+            AND tbqs.stts = 'COMPLETED'
+        WHERE 
+            tbb.bbs_se_cd = 'QNA'
+            AND tbb.use_yn = 'Y'
+            AND tbb.stats_yn = 'Y'
+            AND tbbp.del_yn = 'N'
+            AND tbbp.up_bbs_pst_oid IS NULL
+            <if test='fromQuestionDate != null'>
+                AND tbbp.reg_dt <![CDATA[>=]]> #{fromQuestionDate}
+            </if>
+            <if test='toQuestionDate != null'>
+                AND tbbp.reg_dt <![CDATA[<]]> DATE_ADD(#{toQuestionDate}, INTERVAL 1 DAY)
+            </if>
+        ORDER BY
+            tbbp.reg_dt DESC
+	</select>
+</mapper>

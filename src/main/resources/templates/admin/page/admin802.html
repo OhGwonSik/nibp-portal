@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 공통코드관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div id="admin802SearchWrap" class="search_wrap">
+        <ul>
+            <li>
+                <label for="lab_01">시스템</label>
+                <select id="lab_01" title="시스템 선택">
+                    <option>전체</option>
+                </select>
+            </li>
+            <li>
+                <label>사용여부</label>
+                <span class="radio-box"><input type="radio" id="admin802_use_yn" name="admin802_use_yn" value="" checked><label for="admin802_use_yn">전체</label></span>
+                <span class="radio-box"><input type="radio" id="admin802_use_y" name="admin802_use_yn" value="Y"><label for="admin802_use_y">사용</label></span>
+                <span class="radio-box"><input type="radio" id="admin802_use_n" name="admin802_use_yn" value="N"><label for="admin802_use_n">미사용</label></span>
+            </li>
+            <li>
+                <label for="admin802_keyword">검색어</label>
+                <input type="text" id="admin802_keyword" placeholder="그룹코드 또는 그룹코드명을 입력해주세요." title="검색어 입력">
+            </li>
+        </ul>
+        <div class="s_wrap"><a id="admin802_btn_search" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_desc">
+            <h4 class="sstit">그룹코드 목록</h4>
+            <div class="table_top_btn">
+                <a href="javascript:;" id="btn_register_gcode" class="btn_basic bg_type01">등록</a>
+            </div>
+        </div>
+        <div class="table_layout02 list_type mb20">
+            <table>
+                <caption>그룹코드 목록</caption>
+                <colgroup>
+                    <col style="width: 80px;">
+                    <col style="width: 13%;">
+                    <col style="width: 13%;">
+                    <col style="width: 13%;">
+                    <col style="width: auto;">
+                    <col style="width: 8%;">
+                    <col style="width: 10%;">
+                    <col style="width: 160px;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">번호</th>
+                    <th scope="col">시스템</th>
+                    <th scope="col">그룹코드</th>
+                    <th scope="col">그룹코드명</th>
+                    <th scope="col">그룹코드설명</th>
+                    <th scope="col">사용여부</th>
+                    <th scope="col">등록자</th>
+                    <th scope="col">등록일시</th>
+                </tr>
+                </thead>
+                <tbody id="admin802_groupcode_tbody"></tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+        <div id="code_section" style="display: none;">
+            <div class="table_desc mt30">
+                <h4 class="sstit">코드 목록</h4>
+                <div class="table_top_btn">
+                    <a href="javascript:;" id="btn_register_code" class="btn_basic bg_type01">등록</a>
+                </div>
+            </div>
+            <div class="table_layout02 list_type mb20">
+                <table>
+                    <caption>코드 목록</caption>
+                    <colgroup>
+                        <col style="width: 80px;">
+                        <col style="width: 13%;">
+                        <col style="width: 13%;">
+                        <col style="width: 13%;">
+                        <col style="width: auto;">
+                        <col style="width: 5%;">
+                        <col style="width: 8%;">
+                        <col style="width: 10%;">
+                        <col style="width: 160px;">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col">번호</th>
+                        <th scope="col">코드값</th>
+                        <th scope="col">코드명</th>
+                        <th scope="col">서브코드명</th>
+                        <th scope="col">코드설명</th>
+                        <th scope="col">순번</th>
+                        <th scope="col">사용여부</th>
+                        <th scope="col">등록자</th>
+                        <th scope="col">등록일시</th>
+                    </tr>
+                    </thead>
+                    <tbody id="admin802_code_tbody"></tbody>
+                </table>
+                <span class="scroll_img">스크롤</span>
+            </div>
+            <div id="paging_wrap_sec" class="paging_wrap">
+                <a href="javascript:" class="first page_first">첫 페이지</a>
+                <a href="javascript:" class="previous page_prev">전 페이지</a>
+                <div class="namber pagination_container"></div>
+                <a href="javascript:" class="next page_next">다음 페이지</a>
+                <a href="javascript:" class="last page_last">끝 페이지</a>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="admin_modal">
+    <th:block th:replace="~{admin/modal/register_gcode :: register_gcode}"></th:block>
+    <th:block th:replace="~{admin/modal/register_code :: register_code}"></th:block>
+</th:block>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin802 = {
+
+        /**
+         * 이벤트 선택자 관리
+         */
+        selectors: {
+            btnSearch: "#admin802_btn_search",
+            registerGcodeBtn: "#btn_register_gcode",
+            registerCodeBtn: "#btn_register_code",
+            gcodeTbody: "#admin802_groupcode_tbody",
+            codeTbody: "#admin802_code_tbody",
+            gcodeRow: "tr.gcode_row",
+            codeRow: "tr.code_row"
+        },
+
+        /**
+         * 상태
+         */
+        state: {
+            gcode: {
+                all: [],          // 그룹코드 전체 목록
+                pageIndex: 1,
+                pageCnt: 10
+            },
+            code: {
+                all: [],          // 코드 전체 목록
+                pageIndex: 1,
+                pageCnt: 10
+            },
+            selectedGcode: null,  // 선택된 그룹코드
+            selectedGcodeNm: null // 선택된 그룹코드명
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // 기존 이벤트 리스너 제거
+            this.destroy();
+
+            // 이벤트 바인딩
+            this.initEvent();
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin802', '.search_wrap');
+            if (saved) {
+                this.state.gcode.pageIndex = saved._extra.pageIndex || 1;
+            }
+
+            // 그룹코드 목록 데이터 조회
+            this.getGcodeData();
+        },
+
+        /**
+         * 모든 이벤트 정리
+         */
+        destroy: function () {
+            $(this.selectors.btnSearch).off("click");
+            $(this.selectors.registerGcodeBtn).off("click");
+            $(this.selectors.registerCodeBtn).off("click");
+            $(this.selectors.gcodeTbody).off("click", this.selectors.gcodeRow);
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 코드 목록 테이블 숨김
+            $('#code_section').hide();
+
+            // 검색 버튼 클릭
+            $(_this.selectors.btnSearch).on("click", function (e) {
+                e.preventDefault();
+
+                _this.state.gcode.pageIndex = 1; // 검색하면 첫 페이지로 이동
+                _this.getGcodeData();
+            });
+
+            // 그룹코드 등록 버튼 클릭
+            $(_this.selectors.registerGcodeBtn).on("click", function (e) {
+                e.preventDefault();
+                register_gcode.initModal();
+            });
+
+            // 코드 등록 버튼 클릭
+            $(_this.selectors.registerCodeBtn).on("click", function (e) {
+                e.preventDefault();
+                // 신규 등록 시 그룹코드 정보만 포함
+                const newCodeData = {
+                    grpCdOid: _this.state.selectedGcode,
+                    grpCdNm: _this.state.selectedGcodeNm
+                };
+                register_code.initModal('create', newCodeData);
+            });
+
+            // 그룹코드 row 클릭 - 위임 이벤트 방식
+            $(_this.selectors.gcodeTbody).on("click", _this.selectors.gcodeRow, function (e) {
+                e.preventDefault();
+                const $row = $(this);
+
+                // 클릭된 row 하이라이트
+                $(_this.selectors.gcodeTbody).find("tr").removeClass('selected');
+                $row.addClass('selected');
+
+                // 선택된 그룹코드 저장
+                _this.state.selectedGcode = $row.data('gcode');
+                _this.state.selectedGcodeNm = $row.data('gnm');
+
+                // 해당 그룹코드의 코드 목록 필터링 및 표시
+                _this.getCodeData();
+            });
+
+            // 더블 클릭으로 모달 열기 - 그룹코드 수정
+            $(_this.selectors.gcodeTbody).on("dblclick", _this.selectors.gcodeRow, function (e) {
+                e.preventDefault();
+                const $row = $(this);
+                const groupCodeNo = $row.data('gcode');
+
+                // state에서 전체 데이터 조회
+                const groupCodeData = _this.fnFindGroupCodeByNo(groupCodeNo);
+
+                if (groupCodeData) {
+                    register_gcode.initModal('update', groupCodeData);
+                }
+            })
+
+            // 더블 클릭으로 모달 열기 - 코드 수정
+            $(_this.selectors.codeTbody).on("dblclick", _this.selectors.codeRow, function (e) {
+                e.preventDefault();
+                const $row = $(this);
+                const codeNo = $row.data('code');
+
+                // state에서 전체 데이터 조회
+                const codeData = _this.fnFindCodeByNo(codeNo);
+
+                if (codeData) {
+                    // 코드 데이터에 그룹코드명 추가
+                    codeData.grpCdNm = _this.state.selectedGcodeNm;
+                    register_code.initModal('update', codeData);
+                }
+            });
+
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("admin802SearchWrap").addEventListener('keydown', e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    _this.state.gcode.pageIndex = 1;
+                    _this.getGcodeData();
+                }
+            });
+            // 검색영역 변경 이벤트
+            document.getElementById("admin802SearchWrap").addEventListener('change', e => {
+                if (e.target.matches('select, input[type="radio"]') && e.target.id !== 'lab_01') { // lab_01은 별도 처리
+                    e.preventDefault();
+                    _this.state.gcode.pageIndex = 1;
+                    _this.getGcodeData();
+                }
+            });
+        },
+
+        /**
+         * 그룹코드 페이지네이션 렌더링
+         */
+        renderGcodePagination: function () {
+            const _this = this;
+
+            if (!_this.state.gcode.all) {
+                return;
+            }
+
+            const totalPages = _this.state.gcode.all.pages;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: this.state.gcode.pageIndex,
+                totalPages: totalPages,
+                onPageChange: function (page) {
+                    _this.state.gcode.pageIndex = page;
+                    _this.getGcodeData();
+                }
+            });
+        },
+
+        /**
+         * 코드 페이지네이션 렌더링
+         */
+        renderCodePagination: function () {
+            const _this = this;
+
+            if (!_this.state.code.all) {
+                return;
+            }
+
+            const totalPages = _this.state.code.all.pages;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: this.state.code.pageIndex,
+                totalPages: totalPages,
+                containerSelector: '#paging_wrap_sec',
+                onPageChange: function (page) {
+                    _this.state.code.pageIndex = page;
+                    _this.getCodeData();
+                }
+            });
+        },
+
+        /**
+         * 메인 테이블 렌더링 - 그룹코드
+         */
+        renderTable: function () {
+            const $tbody = $('#admin802_groupcode_tbody');
+            $tbody.empty();
+
+            if (!this.state.gcode.all || !this.state.gcode.all.list || this.state.gcode.all.list.length === 0) {
+                $tbody.append(
+                    '<tr><td class="tac" colspan="8">조회된 결과가 없습니다.</td></tr>'
+                );
+                $('#total_count').text(0);
+                return;
+            }
+
+            const list = this.state.gcode.all.list;
+
+            $.each(list, function (_, item) {
+                const rowHtml = `
+                    <tr class="gcode_row" style="cursor: pointer;" data-gcode="${item.grpCdOid}" data-gnm="${item.grpCdNm}">
+                        <td class="tac">${item.grpCdOid || ''}</td>
+                        <td class="tac">${item.system || '-'}</td>
+                        <td class="tac">${item.grpCd || ''}</td>
+                        <td class="tac">${item.grpCdNm || ''}</td>
+                        <td class="tal">${item.grpCdExpln || ''}</td>
+                        <td class="tac">${common.formatUseYn(item.useYn)}</td>
+                        <td class="tac">${item.regId || ''}</td>
+                        <td class="tac">${common.formatDateTime(item.regDt)}</td>
+                    </tr>
+                `;
+                $tbody.append(rowHtml);
+            });
+        },
+
+        /**
+         * 하위 테이블 렌더링 - 코드
+         */
+        renderSideTables: function () {
+            const $tbody = $('#admin802_code_tbody');
+            $tbody.empty();
+
+            if (!this.state.code.all || !this.state.code.all.list || this.state.code.all.list.length === 0) {
+                $tbody.append(
+                        '<tr><td class="tac" colspan="9">조회된 결과가 없습니다.</td></tr>'
+                );
+                $('#total_count').text(0);
+                return;
+            }
+
+            const list = this.state.code.all.list;
+
+            $.each(list, function (_, item) {
+                const rowHtml = `
+                    <tr class="code_row" data-code=${item.cdOid}>
+                        <td class="tac">${item.cdOid}</td>
+                        <td class="tac">${item.cdVal}</td>
+                        <td class="tac">${item.cdNm}</td>
+                        <td class="tac"></td>
+                        <td class="tal">${item.cdExpln || '-'}</td>
+                        <td class="tac">${item.cdSeq}</td>
+                        <td class="tac">${common.formatUseYn(item.useYn)}</td>
+                        <td class="tac">${item.regId}</td>
+                        <td class="tac">${common.formatDateTime(item.regDt)}</td>
+                    </tr>
+                `;
+                $tbody.append(rowHtml);
+            });
+        },
+
+        /**
+         * groupCodeNo로 그룹코드 찾기
+         * @param groupCodeNo - 검색할 그룹코드의 groupCodeNo
+         */
+        fnFindGroupCodeByNo: function (groupCodeNo) {
+            if (!this.state.gcode.all || !this.state.gcode.all.list) {
+                return null;
+            }
+
+            const groupCode = this.state.gcode.all.list.find(item => item.grpCdOid === groupCodeNo);
+
+            if (groupCode) {
+                return {
+                    grpCdOid: groupCode.grpCdOid,
+                    system: groupCode.system,
+                    grpCd: groupCode.grpCd,
+                    grpCdNm: groupCode.grpCdNm,
+                    grpCdExpln: groupCode.grpCdExpln,
+                    useYn: groupCode.useYn,
+                    regId: groupCode.regId,
+                    regDt: groupCode.regDt,
+                    mdfcnId: groupCode.mdfcnId,
+                    mdfcnDt: groupCode.mdfcnDt
+                };
+            }
+
+            return null;
+        },
+
+        /**
+         * codeNo로 코드 찾기
+         * @param codeNo - 검색할 코드의 codeNo
+         */
+        fnFindCodeByNo: function (codeNo) {
+            if (!this.state.code.all || !this.state.code.all.list) {
+                return null;
+            }
+
+            const code = this.state.code.all.list.find(item => item.cdOid === parseInt(codeNo));
+
+            if (code) {
+                return {
+                    cdOid: code.cdOid,
+                    grpCdOid: code.grpCdOid,
+                    cdVal: code.cdVal,
+                    cdNm: code.cdNm,
+                    subCdNm: code.subCdNm,
+                    cdExpln: code.cdExpln,
+                    cdSeq: code.cdSeq,
+                    useYn: code.useYn,
+                    regId: code.regId,
+                    regDt: code.regDt,
+                    mdfcnId: code.mdfcnId,
+                    mdfcnDt: code.mdfcnDt
+                };
+            }
+
+            return null;
+        },
+
+        /**
+         * 목록 데이터 조회 - 그룹코드
+         */
+        getGcodeData: async function () {
+            SearchState.saveForm('admin802', '.search_wrap', { pageIndex: this.state.gcode.pageIndex });
+
+            /*TODO: system_id 추가 필요*/
+            const param = {
+                page: this.state.gcode.pageIndex,
+                size: this.state.gcode.pageCnt,
+                keyword: $('#admin802_keyword').val().trim() || null,
+                useYn: $('input[name="admin802_use_yn"]:checked').val()
+            }
+            try {
+                const response = await API.get('/api/admin/admin802/groupcode/filter?', param);
+
+                // 페이지 데이터에 저장
+                this.state.gcode.all = response;
+                this.renderTable();
+                this.renderGcodePagination();
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('목록 조회에 실패했습니다.');
+            }
+        },
+
+        /**
+         * 목록 데이터 조회 - 코드
+         */
+        getCodeData: async function () {
+            const param = {
+                page: this.state.code.pageIndex,
+                size: this.state.code.pageCnt,
+                grpCdOid: this.state.selectedGcode || null
+            }
+            try {
+                const response = await API.get('/api/admin/admin802/code/filter?', param);
+
+                // 페이지 데이터에 저장
+                this.state.code.all = response;
+                this.renderSideTables();
+                this.renderCodePagination();
+                $('#code_section').show();
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('목록 조회에 실패했습니다.');
+            }
+        }
+    };
+
+    // 전역 범위에서 접근 가능하도록 window 객체에 할당
+    window.admin802 = admin802;
+
+    $(document).ready(function () {
+        admin802.init();
+    });
+</script>
+</body>
+</html>

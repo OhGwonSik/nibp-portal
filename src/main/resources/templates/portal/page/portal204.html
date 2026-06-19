@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>사업 > 생명윤리 정책 개발 및 제도 지원 > 역량 강화 지원 및 관리</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">교육 등 역량 강화 지원 및 관리</h3>
+    <h4 class="sstit">생명윤리법 종사자 대상 교육</h4>
+    <ul class="text_list">
+        <li>유전자검사기관 종사자 교육(의무)</li>
+        <li>배아생성의료기관 종사자 교육</li>
+        <li>인체유래물은행 종사자 등 생명윤리법 내 종사자 교육 개발 및 시행 등</li>
+    </ul>
+    <h4 class="sstit">교육 기획 및 관리</h4>
+    <ul class="text_list">
+        <li>생명윤리 관련 교육 기획 및 추진 등 관리</li>
+    </ul>
+    <h4 class="sstit">교육 신청 및 이수 절차</h4>
+    <div class="accreditation_step course">
+        <ul>
+            <li>
+                <div class="course_box">
+                    <strong>교육공지</strong>
+                    <ul class="text_list">
+                        <li>국가생명윤리정책원 홈페이지 및 생명윤리 교육시스템을 통한 교육 공지</li>
+                        <li>1월: 연간교육 일정 공지</li>
+                        <li>교육 1달 전: 각 교육 일정 상세 안내</li>
+                    </ul>
+                </div>
+            </li>
+            <li>
+                <div class="course_box">
+                    <strong class="gray">교육신청</strong>
+                    <ul class="text_list">
+                        <li>생명윤리 교육시스템 접속 > 교육 대상자의 교육신청</li>
+                    </ul>
+                </div>
+            </li>
+            <li>
+                <div class="course_box">
+                    <strong class="bg_yellow">신청접수</strong>
+                    <ul class="text_list">
+                        <li>신청자 확인 후 접수</li>
+                    </ul>
+                </div>
+            </li>
+            <li>
+                <div class="course_box">
+                    <strong class="gray">교육진행</strong>
+                    <ul class="text_list">
+                        <li>교육과정에 따라 대면 또는 비대면교육 진행</li>
+                    </ul>
+                </div>
+            </li>
+            <li>
+                <div class="course_box">
+                    <strong class="bg_puple">만족도 조사 및 이수증 발급</strong>
+                    <ul class="text_list">
+                        <li>교육 만족도 조사: 교육 직후</li>
+                        <li>이수증 발급: 교육 완료 후 14일 이내</li>
+                    </ul>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="bg_box mt30 flex_wrap">
+        <p>※ 각 교육의 상세 내용 및 교육 신청 절차 등은 생명윤리 교육시스템을 통해 확인하실 수 있습니다.</p>
+        <a href="https://edu.nibp.kr/" class="btn_basic btn_bg_type01 flex_shrink" target="_blank" title="새창열림"><em class="blenk_link">홈페이지 바로가기</em></a>
+    </div>
+    <h4 class="sstit">생명윤리 인식 개선 및 역량 강화 프로그램</h4>
+    <ul class="text_list">
+        <li>학생 및 예비 의료인 또는 법조인, 연구자을 대상으로 하는 생명윤리 위탁 교육 또는 참관 실습 등 제공</li>
+        <li>대국민 생명윤리 인식 개선을 위한 각종 콘텐츠 발굴, 개발 및 지원</li>
+        <li>그밖에 생명윤리 관련 이해도 증진 자료 생성 및 공유 등</li>
+    </ul>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal204 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal204.init();
+    });
+</script>
+</body>
+</html>

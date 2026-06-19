@@ -1,0 +1,201 @@
+<th:block th:fragment="register_popup" xmlns:th="http://www.thymeleaf.org">
+    <div id="register_popup" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap wp700">
+                <h1 class="p_tit">안내(팝업)등록</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <div class="table_layout02 mb10">
+                                <table>
+                                    <caption>안내(팝업)등록</caption>
+                                    <colgroup>
+                                        <col style="width: 100px;">
+                                        <col style="width: auto;">
+                                    </colgroup>
+                                    <tbody>
+                                    <tr>
+                                        <th scope="row"><label for="lab_03">제목</label></th>
+                                        <td>
+                                            <input type="text" name="" id="lab_03">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="datepicker1">기간</label></th>
+                                        <td>
+                                            <div class="flex_col"><span class="datepicker"><input type="text" value="시작일" id="datepicker1" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span> ~ <span class="datepicker"><input type="text" value="종료일" id="datepicker2" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">공개상태</th>
+                                        <td>
+                                            <span class="radio-box"><input type="radio" id="option1" name="radio_01" checked=""><label for="option1">대기</label></span>
+                                            <span class="radio-box"><input type="radio" id="option2" name="radio_01"><label for="option2">게재</label></span>
+                                            <span class="radio-box"><input type="radio" id="option3" name="radio_01"><label for="option3">게재 종료</label></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">작성방식</th>
+                                        <td>
+                                            <span class="radio-box"><input type="radio" id="option4" class="img_input_radio" name="checked_radio" checked=""><label for="option4">이미지 등록</label></span>
+                                            <span class="radio-box"><input type="radio" id="option5" class="text_input_radio" name="checked_radio"><label for="option5">텍스트 입력(직접작성)</label></span>
+                                        </td>
+                                    </tr>
+                                    <tr id="popup_attach_row">
+                                        <th scope="row">팝업첨부</th>
+                                        <td>
+                                            <div class="file_upload">
+                                                <label for="file"><span>파일찾기</span></label>
+                                                <input type="file" id="file">
+                                                <span class="file_txt">파일을 첨부해주세요</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr id="content_row" style="display: none;">
+                                        <th scope="row"><label for="pop_editor">내용</label></th>
+                                        <td>
+                                            <textarea class="bor1ddd" name="pop_editor" id="pop_editor" rows="30"></textarea>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">위치/크기</th>
+                                        <td>
+                                            <div class="flex_col">
+                                                <span class="flex_1">
+                                                    <label for="lab_04">X 좌표</label>
+                                                    <input type="text" name="" id="lab_04">
+                                                </span>
+                                                <span class="flex_1">
+                                                    <label for="lab_05">Y 좌표</label>
+                                                    <input type="text" name="" id="lab_05">
+                                                </span>
+                                            </div>
+                                            <div class="flex_col mt5">
+                                                <span class="flex_1">
+                                                    <label for="lab_06">가로 크기(W)</label>
+                                                    <input type="text" name="" id="lab_06">
+                                                </span>
+                                                <span class="flex_1">
+                                                    <label for="lab_07">세로 크기(H)</label>
+                                                    <input type="text" name="" id="lab_07">
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn_wrap mt30">
+                        <a href="javascript:;" id="btn_save_pop" class="btn_basic bg_type01">저장</a>
+                        <a href="javascript:;" class="btn_basic bg_type02 btn_close_register_pop">취소</a>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close btn_close_register_pop">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        let register_popup = {
+
+            /**
+             * 상태
+             */
+            state: {
+                all: [],        // 전체
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function () {
+                uiCommon.fnShowModal('register_popup');
+                this.init();
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function () {
+                // 이벤트 바인딩
+                this.initEvent();
+
+                // 폼 값 초기화
+                this.initFormData();
+
+                // CKEditor 초기화
+                CommonCKEditor.destroy('pop_editor');
+                $('#pop_editor').show().css('visibility', 'visible');
+
+                // CKEditor 생성 - CommonCKEditor
+                CommonCKEditor.init({
+                    editorId: 'pop_editor',
+                    content: '', // 초기 내용 없으면 빈 문자열
+                    config: {
+                        height: 100 // 에디터 높이 설정
+                    },
+                    onReady: function(editor) {
+                        console.log('CKEditor 준비 완료', editor);
+                    }
+                });
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function () {
+                const _this = this;
+
+                // 이미지 등록 라디오 버튼 클릭 시
+                $('.img_input_radio').off('change').on('change', function() {
+                    if ($(this).is(':checked')) {
+                        $('#popup_attach_row').css('display','table-row');
+                        $('#content_row').css('display','none');
+                    }
+                });
+
+                // 텍스트 입력 라디오 버튼 클릭 시
+                $('.text_input_radio').off('change').on('change', function() {
+                    if ($(this).is(':checked')) {
+                        $('#popup_attach_row').css('display','none');
+                        $('#content_row').css('display','table-row');
+                    }
+                });
+
+                // 저장 버튼 클릭
+                $("#btn_save_pop").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    uiCommon.fnShowAlertModal('준비 중입니다.');
+                });
+
+                // 닫기/취소 버튼 클릭
+                $(".btn_close_register_pop").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    uiCommon.fnHideModal('register_popup');
+                });
+            },
+
+            /**
+             * 폼 입력값 초기화
+             */
+            initFormData: function () {
+                $('#lab_03').val('');                    // 제목
+                $('#datepicker1').val('');               // 시작일
+                $('#datepicker2').val('');               // 종료일
+                $('#option1').prop('checked', true);     // 공개상태 - 대기
+                $('#option4').prop('checked', true);     // 작성방식 - 이미지 등록
+                $('#file').val('');                      // 파일 첨부
+                $('.file_txt').text('파일을 첨부해주세요'); // 파일 텍스트
+                $('#lab_04').val('');                    // X 좌표
+                $('#lab_05').val('');                    // Y 좌표
+                $('#lab_06').val('');                    // 가로 크기
+                $('#lab_07').val('');                    // 세로 크기
+
+                // 초기 상태: 이미지 등록 선택
+                $('#popup_attach_row').show();
+                $('#content_row').hide();
+            }
+        };
+    </script>
+</th:block>

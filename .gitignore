@@ -1,0 +1,28 @@
+# Sensitive files
+src/main/resources/application.yml
+src/main/resources/application-prod.yml
+src/main/resources/keystore.p12
+
+# CI/CD (서버 정보 및 Git 인증 정보 노출)
+Jenkinsfile
+
+# Internal docs
+NIBP_PORTAL_프로젝트정리.md
+commits_detail.txt
+
+# 기관 제공 공식 서식 파일 (저작권은 문제없으나 불필요한 콘텐츠)
+src/main/resources/static/portal/files/form/
+
+# Build
+target/
+*.class
+*.jar
+
+# IDE
+.idea/
+*.iml
+.gradle/
+
+# Logs
+logs/
+*.log

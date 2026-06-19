@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > FAQ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div id="admin606SearchWrap" class="search_wrap">
+        <ul>
+            <li>
+                <label for="admin606_category">분류</label>
+                <select id="admin606_category" title="분류 선택">
+                    <option value="">전체</option>
+                </select>
+            </li>
+            <li>
+                <label for="admin606_keyword">검색어</label>
+                <input type="text" id="admin606_keyword" placeholder="번호 또는 질문을 입력해주세요." title="검색어 입력">
+            </li>
+            <li>
+                <label>공개여부</label>
+                <span class="radio-box"><input type="radio" id="admin606_open_yn" name="admin606_open_yn" value="" checked><label for="admin606_open_yn">전체</label></span>
+                <span class="radio-box"><input type="radio" id="admin606_open_y" name="admin606_open_yn" value="Y"><label for="admin606_open_y">공개</label></span>
+                <span class="radio-box"><input type="radio" id="admin606_open_n" name="admin606_open_yn" value="N"><label for="admin606_open_n">비공개</label></span>
+            </li>
+            <li>
+                <label for="admin606_reg_dt_st">등록일</label>
+                <div class="flex_col">
+                    <span class="datepicker">
+                        <input type="text" id="admin606_reg_dt_st" class="datepick">
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="시작일 선택" title="시작일 선택">
+                    </span>
+                    ~
+                    <span class="datepicker">
+                        <input type="text" id="admin606_reg_dt_ed" class="datepick">
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="종료일 선택" title="종료일 선택">
+                    </span>
+                </div>
+            </li>
+        </ul>
+        <div class="s_wrap"><a id="admin606_btn_search" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_desc">
+            <p>총 <strong id="admin606_total_count"></strong>건</p>
+            <div class="table_top_btn">
+                <a href="javascript:;" id="admin606_btn_register_popup" class="btn_basic bg_type01">등록</a>
+                <a href="javascript:;" id="admin606_btn_delete" class="btn_basic bg_type02">삭제</a>
+                <a href="javascript:;" id="admin606_btn_exl_down" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+            </div>
+        </div>
+        <div class="table_layout02 list_type mb20">
+            <table>
+                <caption>FAQ 목록</caption>
+                <colgroup>
+                    <col style="width: 46px;">
+                    <col style="width: 80px;">
+                    <col style="width: 13%;">
+                    <col style="width: auto;">
+                    <col style="width: 160px;">
+                    <col style="width: 100px;">
+                    <col style="width: 80px;">
+                    <col style="width: 80px;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col"><input type="checkbox" id="check_all"></th>
+                    <th scope="col">번호</th>
+                    <th scope="col">분류</th>
+                    <th scope="col">질문</th>
+                    <th scope="col">등록일시</th>
+                    <th scope="col">공개여부</th>
+                    <th scope="col">조회수</th>
+                    <th scope="col">사용여부</th>
+                </tr>
+                </thead>
+                <tbody id="faq_list_container"></tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin606 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: null,  // 조회한 데이터
+            categories: null,  // 카테고리 목록
+            pageIndex: 1,
+            pageCnt: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // 이벤트 바인딩
+            this.initEvent();
+
+            // 카테고리 목록 조회
+            this.getCategoryList();
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin606', '.search_wrap');
+            if (saved) {
+                this.state.pageIndex = saved._extra.pageIndex || 1;
+            }
+
+            // 데이터 조회
+            this.getListData();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            uiCommon.datepicker.init('#admin606_reg_dt_st', {
+                onSelect: function(selectedDate, inst) {
+                    const startDate = $(this).datepicker('getDate');
+                    const endDatePicker = $('#admin606_reg_dt_ed');
+                    endDatePicker.datepicker('option', 'minDate', startDate);
+
+                    const currentEndDate = endDatePicker.datepicker('getDate');
+                    if (currentEndDate && startDate && startDate.getTime() > currentEndDate.getTime()) {
+                        endDatePicker.datepicker('setDate', startDate);
+                    }
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                }
+            });
+            uiCommon.datepicker.init('#admin606_reg_dt_ed', {
+                onSelect: function(selectedDate, inst) {
+                    const endDate = $(this).datepicker('getDate');
+                    const startDatePicker = $('#admin606_reg_dt_st');
+                    startDatePicker.datepicker('option', 'maxDate', endDate);
+
+                    const currentStartDate = startDatePicker.datepicker('getDate');
+                    if (currentStartDate && endDate && endDate.getTime() < currentStartDate.getTime()) {
+                        startDatePicker.datepicker('setDate', endDate);
+                    }
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                }
+            });
+
+            // 오늘 기준으로 시작일 : -30일, 종료일 : 오늘 설정
+            document.getElementById("admin606_reg_dt_st").value = common.formatDateOffset(-30);
+            document.getElementById("admin606_reg_dt_ed").value = common.formatDateOffset();
+
+            // 검색 버튼 클릭
+            document.getElementById("admin606_btn_search").addEventListener("click", function (e) {
+                e.preventDefault();
+
+                // 검색하면 첫 페이지로 이동
+                _this.state.pageIndex = 1;
+                _this.getListData();
+            });
+
+            // 등록 버튼 클릭
+            document.getElementById("admin606_btn_register_popup").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnRegister();
+            });
+
+            // 삭제 버튼 클릭
+            document.getElementById("admin606_btn_delete").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnDelete();
+            });
+
+            // 엑셀 다운로드 버튼 클릭
+            document.getElementById("admin606_btn_exl_down").addEventListener("click", async function (e) {
+                e.preventDefault();
+
+                const reason = await uiCommon.fnShowPromptModal('엑셀 다운로드 받으시겠습니까?', {
+                    title: '엑셀 다운로드 요청',
+                    defaultValue: '',
+                    placeholder: '사유 입력',
+                });
+
+                
+                // 취소 시 조용히 종료
+                if (reason === null) {
+                    return;
+                }
+
+                // 빈 값 체크
+                if (reason.trim() === '') {
+                    uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                    return;
+                }
+
+                // 2자 미만 체크
+                if (reason.trim().length < 2) {
+                    uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                    return;
+                }
+
+                const cateNoValue = document.getElementById('admin606_category').value;
+                const params = {
+                    pageId: 'admin606',
+                    faqCtgryOid: cateNoValue ? parseInt(cateNoValue) : null,
+                    keyword: document.getElementById('admin606_keyword').value.trim() || '',
+                    openYn: document.querySelector('input[name="admin606_open_yn"]:checked')?.value || '',
+                    regDtSt: document.getElementById('admin606_reg_dt_st').value.trim() || '',
+                    regDtEd: document.getElementById('admin606_reg_dt_ed').value.trim() || '',
+                    reason: reason.trim()
+                }
+
+                // 빈 값 필터링
+                const filteredParams = Object.fromEntries(
+                        Object.entries(params).filter(([_, v]) => v && v !== '' && v !== '전체')
+                );
+
+                try{
+                    await API.excelDownload('/api/admin/admin606/list/excel/export', filteredParams);
+                } catch(err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal("[error] : " + err, () => uiCommon.fnHideAlertModal());
+                }
+            });
+
+            // 전체 체크박스 클릭
+            document.getElementById("check_all").addEventListener("change", function (e) {
+                const checkboxes = document.querySelectorAll(".row_check");
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.checked = e.target.checked;
+                });
+            });
+
+            // FAQ 제목 클릭
+            document.querySelector("#faq_list_container").addEventListener("click", function (e) {
+                const link = e.target.closest(".faq_link");
+                if (!link) return;
+                e.preventDefault();
+
+                const id = Number(link.dataset.id);
+                _this.fnGoToDetail(id);
+            });
+
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("admin606SearchWrap").addEventListener('keydown', e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                }
+            });
+            // 검색영역 변경 이벤트
+            document.getElementById("admin606SearchWrap").addEventListener('change', e => {
+                if (e.target.matches('select, input[type="radio"]')) {
+                    e.preventDefault();
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                }
+            });
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            if (!_this.state.all) {
+                return;
+            }
+
+            const totalPages = _this.state.all.pages;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: totalPages,
+                onPageChange: function(page) {
+                    _this.state.pageIndex = page;
+                    _this.getListData();
+                }
+            });
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+            const tbody = document.getElementById("faq_list_container");
+            tbody.innerHTML = '';
+
+            if (!this.state.all || !this.state.all.list || this.state.all.list.length === 0) {
+                tbody.innerHTML = '<tr><td class="tac" colspan="7">조회된 결과가 없습니다.</td></tr>';
+                document.getElementById('admin606_total_count').textContent = '';
+                return;
+            }
+
+            const list = this.state.all.list;
+            let html = '';
+            list.forEach(function (item) {
+                html += `
+                    <tr>
+                        <td class="tac">
+                            <input type="checkbox" class="row_check" value="${item.faqDtlOid || ''}">
+                        </td>
+                        <td class="tac">${item.faqDtlOid || ''}</td>
+                        <td class="tac">${item.ctgryNm || ''}</td>
+                        <td class="tal">
+                            <a href="javascript:" class="a_link faq_link" data-id="${item.faqDtlOid}">${item.qstnCn || ''}</a>
+                        </td>
+                        <td class="tac">${common.formatDateTime(item.regDt)}</td>
+                        <td class="tac">${item.openYn === "Y" ? "공개" : "비공개"}</td>
+                        <td class="tac">${item.inqCnt || 0}</td>
+                        <td class="tac">${item.useYn === "Y" ? "사용" : "미사용"}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+
+            document.getElementById('admin606_total_count').textContent = this.state.all.total;
+
+            // 전체 체크박스 해제
+            document.getElementById('check_all').checked = false;
+        },
+
+        /**
+         * 카테고리 목록 조회
+         */
+        getCategoryList: async function () {
+            try {
+                const response = await API.get('/api/admin/admin606/category/list');
+                this.state.categories = response;
+                this.renderCategorySelect();
+            } catch (error) {
+                console.error('카테고리 조회 실패:', error);
+            }
+        },
+
+        /**
+         * 카테고리 셀렉트 박스 렌더링
+         */
+        renderCategorySelect: function () {
+            const select = document.getElementById('admin606_category');
+            const category = this.state.categories;
+
+            // 기존 옵션 유지하고 새 옵션 추가
+            select.innerHTML = '<option value="">전체</option>';
+
+            if (category && category.length > 0) {
+                category.forEach(function(cate) {
+                    const option = document.createElement('option');
+                    option.value = cate.faqCtgryOid;
+                    option.textContent = cate.ctgryNm;
+                    select.appendChild(option);
+                });
+            }
+        },
+
+        /**
+         * 목록 데이터 조회
+         */
+        getListData: async function () {
+            SearchState.saveForm('admin606', '.search_wrap', { pageIndex: this.state.pageIndex });
+
+            const cateNoValue = document.getElementById('admin606_category').value;
+            const param = {
+                page: this.state.pageIndex,
+                size: this.state.pageCnt,
+                faqCtgryOid: cateNoValue ? parseInt(cateNoValue) : null,
+                keyword: document.getElementById('admin606_keyword').value.trim() || '',
+                openYn: document.querySelector('input[name="admin606_open_yn"]:checked')?.value || '',
+                regDtSt: document.getElementById('admin606_reg_dt_st').value.trim() || '',
+                regDtEd: document.getElementById('admin606_reg_dt_ed').value.trim() || ''
+            };
+
+            try {
+                const response = await API.post('/api/admin/admin606/list/filter', param);
+
+                // 페이지 데이터에 저장
+                this.state.all = response;
+                this.renderTable();
+                this.renderPagination();
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('목록 조회에 실패했습니다.');
+            }
+        },
+
+        /**
+         * FAQ 등록
+         */
+        fnRegister: function () {
+            SearchState.clear('admin606');
+            window.location.href = contextPath + '/admin/page/admin606-1';
+        },
+
+        /**
+         * FAQ 삭제
+         */
+        fnDelete: function () {
+            const _this = this;
+
+            // 체크된 항목 찾기
+            const checkedItems = document.querySelectorAll(".row_check:checked");
+            if (checkedItems.length === 0) {
+                uiCommon.fnShowAlertModal('삭제할 항목을 선택해주세요.');
+                return;
+            }
+
+            // 선택된 ID 배열 생성
+            const ids = [];
+            checkedItems.forEach(function(item) {
+                ids.push(item.value);
+            });
+
+            uiCommon.fnShowConfirmModal(`선택한 ${ids.length}개의 항목을 삭제하시겠습니까?`, async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    // 일괄 삭제 API 호출
+                    await API.patch('/api/admin/admin606/delete', { faqDtlOids: ids });
+                    uiCommon.fnShowAlertModal('삭제되었습니다.');
+                    // 목록 새로고침
+                    await _this.getListData();
+                } catch (error) {
+                    console.error('삭제 실패:', error);
+                    uiCommon.fnShowAlertModal('삭제에 실패했습니다.');
+                }
+            });
+        },
+
+        /**
+         * 페이지 이동 - FAQ 상세
+         */
+        fnGoToDetail: function (faqId) {
+            const targetFaq = this.state.all.list.find(item => item.faqDtlOid === faqId);
+            if (!targetFaq) {
+                uiCommon.fnShowAlertModal('상세 정보를 찾을 수 없습니다.');
+                return;
+            }
+            // 상세 페이지로 이동
+            window.location.href = contextPath + '/admin/page/admin606-2?faqDtlOid=' + targetFaq.faqDtlOid;
+        }
+    };
+
+    $(document).ready(function () {
+        admin606.init();
+    });
+</script>
+</body>
+</html>

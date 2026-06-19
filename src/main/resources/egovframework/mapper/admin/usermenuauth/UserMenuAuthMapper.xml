@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.usermenuauth.mapper.UserMenuAuthMapper">
+
+    <select	id="selectMyMenuList" resultType="egovframework.admin.usermenuauth.domain.MenuDto">
+        <!-- selectMyMenuList -->
+        SELECT
+        m.menu_oid,
+        m.menu_nm,
+        m.menu_page,
+        m.menu_cd,
+        m.menu_url,
+        m.up_menu_oid,
+        m.menu_lv,
+        m.menu_auth_lv,
+        m.menu_seq,
+        m.menu_type,
+        m.bbs_use_yn,
+        m.prvc_use_yn,
+        m.use_yn,
+        m.icon_nm,
+        m.menu_expln
+        FROM
+        ${schema}.menu m
+        INNER JOIN
+        ${schema}.user_menu_authrt uma
+        ON
+        m.menu_oid = uma.menu_oid
+        WHERE
+        uma.user_oid = #{userOid}
+        AND m.use_yn = 'Y'
+        AND uma.use_yn = 'Y'
+        AND m.menu_type != 'HIDDEN'
+        AND uma.auth_bgng_dt <![CDATA[<=]]> CURDATE()
+        AND uma.auth_end_dt <![CDATA[>=]]> CURDATE()
+    </select>
+
+
+    <!-- 메뉴 리스트 조회 -->
+    <select id="selectValidAuth" resultType="egovframework.admin.usermenuauth.domain.UserMenuAuthDto">
+        <!-- selectValidAuth -->
+        SELECT
+        user_menu_authrt_oid,
+        user_oid,
+        menu_oid,
+        inq_authrt_yn,
+        wrt_authrt_yn,
+        del_authrt_yn,
+        excel_authrt_yn,
+        otpt_authrt_yn,
+        auth_bgng_dt,
+        auth_end_dt,
+        use_yn,
+        reg_id,
+        reg_dt,
+        mdfcn_id,
+        mdfcn_dt
+        FROM
+        ${schema}.user_menu_authrt
+        WHERE
+        user_oid = #{userOid}
+        AND menu_oid = #{menuOid}
+        AND use_yn = 'Y'
+        AND auth_bgng_dt <![CDATA[<=]]> #{now}
+        AND auth_end_dt <![CDATA[>=]]> #{now}
+    </select>
+
+    <!--게시판 메뉴 상세 조회-->
+    <select id="selectMenuByBoardInfo" resultType="egovframework.admin.usermenuauth.domain.MenuDto">
+        SELECT
+            menu_oid,
+            menu_nm,
+            menu_page,
+            menu_cd,
+            menu_url,
+            up_menu_oid,
+            menu_lv,
+            menu_seq,
+            menu_type,
+            menu_auth_lv,
+            bbs_use_yn,
+            prvc_use_yn,
+            expsr_yn,
+            use_yn,
+            icon_nm,
+            menu_expln,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        FROM
+            ${schema}.menu
+        WHERE
+            use_yn  = 'Y'
+          AND
+            menu_cd = #{menuCd}
+    </select>
+</mapper>

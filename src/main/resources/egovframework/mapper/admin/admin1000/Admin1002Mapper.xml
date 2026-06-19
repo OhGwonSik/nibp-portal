@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin1000.mapper.Admin1002Mapper">
+
+    <!-- 구성원 목록 조회 -->
+    <select id="selectAdmin1002List" resultType="egovframework.admin.admin1000.domain.Admin1002VO">
+        /* selectAdmin1002List */
+        SELECT
+            dm.dept_mmbr_oid,
+            dm.dept_oid,
+            d.dept_nm,
+            dm.user_nm,
+            dm.telno,
+            dm.jbgd,
+            dm.indct_seq,
+            dm.chrg_job,
+            dm.reg_id,
+            dm.reg_dt,
+            dm.mdfcn_id,
+            dm.mdfcn_dt
+        FROM ${schema}.dept_mmbr dm
+        INNER JOIN ${schema}.dept d ON dm.dept_oid = d.dept_oid
+        <where>
+            <if test="deptOid != null">
+                AND dm.dept_oid = #{deptOid}
+            </if>
+            <if test="userNm != null and userNm != ''">
+                AND dm.user_nm LIKE CONCAT('%', #{userNm}, '%')
+            </if>
+            <if test="jbgd != null and jbgd != ''">
+                AND dm.jbgd LIKE CONCAT('%', #{jbgd}, '%')
+            </if>
+            <if test="chrgJob != null and chrgJob != ''">
+                AND dm.chrg_job = #{chrgJob}
+            </if>
+        </where>
+        ORDER BY dm.indct_seq, dm.chrg_job DESC, dm.user_nm
+    </select>
+
+    <!-- 구성원 상세 조회 -->
+    <select id="selectAdmin1002" resultType="egovframework.admin.admin1000.domain.Admin1002VO">
+        /* selectAdmin1002 */
+        SELECT
+            dm.dept_mmbr_oid,
+            dm.dept_oid,
+            d.dept_nm,
+            dm.user_nm,
+            dm.telno,
+            dm.jbgd,
+            dm.indct_seq,
+            dm.chrg_job,
+            dm.reg_id,
+            dm.reg_dt,
+            dm.mdfcn_id,
+            dm.mdfcn_dt
+        FROM ${schema}.dept_mmbr dm
+        INNER JOIN ${schema}.dept d ON dm.dept_oid = d.dept_oid
+        WHERE dm.dept_mmbr_oid = #{deptMmbrOid}
+    </select>
+
+    <!-- 구성원 추가 -->
+    <insert id="insertAdmin1002" parameterType="egovframework.admin.admin1000.domain.Admin1002DTO" useGeneratedKeys="true" keyProperty="deptMmbrOid">
+        /* insertAdmin1002 */
+        INSERT INTO ${schema}.dept_mmbr (
+            dept_oid,
+            user_nm,
+            telno,
+            jbgd,
+            indct_seq,
+            chrg_job,
+            reg_id,
+            reg_dt
+        ) VALUES (
+            #{deptOid},
+            #{userNm},
+            #{telno},
+            #{jbgd},
+            COALESCE(#{indctSeq}, 0),
+            COALESCE(#{chrgJob}, false),
+            #{regId},
+            NOW()
+        )
+    </insert>
+
+    <!-- 구성원 수정 -->
+    <update id="updateAdmin1002" parameterType="egovframework.admin.admin1000.domain.Admin1002DTO">
+        /* updateAdmin1002 */
+        UPDATE ${schema}.dept_mmbr
+        SET
+            user_nm = #{userNm},
+            telno = #{telno},
+            jbgd = #{jbgd},
+            indct_seq = #{indctSeq},
+            chrg_job = #{chrgJob},
+            mdfcn_id = #{mdfcnId},
+            mdfcn_dt = NOW()
+        WHERE dept_mmbr_oid = #{deptMmbrOid}
+    </update>
+
+    <!-- 구성원 삭제 -->
+    <delete id="deleteAdmin1002" parameterType="egovframework.admin.admin1000.domain.Admin1002DeleteDTO">
+        /* deleteAdmin1002 */
+        DELETE FROM ${schema}.dept_mmbr
+        WHERE dept_mmbr_oid IN
+        <foreach collection="deptMmbrOids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 표시 순서 변경 -->
+    <update id="updateDisplayOrder" parameterType="egovframework.admin.admin1000.domain.Admin1002DTO">
+        /* updateDisplayOrder */
+        UPDATE ${schema}.dept_mmbr
+        SET
+            indct_seq = #{indctSeq},
+            mdfcn_id = #{mdfcnId},
+            mdfcn_dt = NOW()
+        WHERE dept_mmbr_oid = #{deptMmbrOid}
+    </update>
+
+    <!-- 중복 구성원 확인 -->
+    <select id="checkDuplicateMember" resultType="int">
+        /* checkDuplicateMember */
+        SELECT COUNT(*)
+        FROM ${schema}.dept_mmbr
+        WHERE user_nm = #{userNm}
+        AND telno = #{telno}
+        AND dept_oid = #{deptOid}
+        <if test="deptMmbrOid != null">
+            AND dept_mmbr_oid != #{deptMmbrOid}
+        </if>
+    </select>
+
+</mapper>

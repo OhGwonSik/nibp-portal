@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > 공지사항</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div id="admin601SearchWrap" class="search_wrap">
+        <ul>
+            <li>
+                <label for="lab_01">제목</label>
+                <input type="text" name="" id="lab_01" placeholder="" value="" title="제목 입력">
+            </li>
+            <li>
+                <label>공개여부</label>
+                <span class="radio-box"><input type="radio" id="option1" name="radio_01" checked="" value=""><label for="option1">전체</label></span>
+                <span class="radio-box"><input type="radio" id="option2" name="radio_01" value="Y"><label for="option2">공개</label></span>
+                <span class="radio-box"><input type="radio" id="option3" name="radio_01" value="N"><label for="option3">비공개</label></span>
+            </li>
+            <li>
+                <label for="datepicker1">등록일</label>
+                <div class="flex_col"><span class="datepicker"><input type="text" value="시작일" id="datepicker1" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span> ~ <span class="datepicker"><input type="text" value="종료일" id="datepicker2" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span></div>
+            </li>
+        </ul>
+        <div class="s_wrap"><a class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_desc">
+            <p>총 <strong id="total_count"></strong>건</p>
+            <div class="btn_wrap">
+                <a href="/admin/page/admin601-1" id="btn_register_notice" class="btn_basic bg_type01">등록</a>
+            </div>
+        </div>
+        <div class="table_layout02 list_type mb20">
+            <table>
+                <caption>공지사항 목록</caption>
+                <colgroup>
+                    <col style="width: 80px;">
+                    <col style="width: auto;">
+                    <col style="width: 15%;">
+                    <col style="width: 15%;">
+                    <col style="width: 10%;">
+                    <col style="width: 10%;">
+                    <col style="width: 10%;">
+                    <col style="width: 10%;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">No</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">등록자</th>
+                    <th scope="col">등록일</th>
+                    <th scope="col">공개여부</th>
+                    <th scope="col">상단고정</th>
+                    <th scope="col">조회수</th>
+                    <th scope="col">사용여부</th>
+                </tr>
+                </thead>
+                <tbody id="notice_list_container"></tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin601 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],        // 전체 목록
+            filtered: [],   // 필터 적용된 목록
+            pageIndex: 1,
+            pageSize: 10,
+            total: 0,       // 목록 총 개수
+            pageNum: 1,     // 현재 페이지 번호
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            // 시작일 datepicker 초기화
+            uiCommon.datepicker.init('#datepicker1', {
+                onSelect: async function(selectedDate) {
+                    // 시작일 선택 시 종료일의 최소 날짜를 시작일로 설정
+                    $('#datepicker2').datepicker('option', 'minDate', selectedDate);
+
+                    // 종료일이 이미 선택되어 있고 시작일보다 빠른 경우 경고
+                    const endDate = $('#datepicker2').val();
+                    if (endDate && selectedDate > endDate) {
+                        uiCommon.fnShowAlertModal('시작일은 종료일보다 빨라야 합니다.', function() {
+                            $('#datepicker1').val('');
+                        });
+                    }
+                    _this.state.pageNum = 1;
+                    await _this.fetchList();
+                }
+            });
+
+            // 종료일 datepicker 초기화
+            uiCommon.datepicker.init('#datepicker2', {
+                onSelect: async function(selectedDate) {
+                    // 종료일 선택 시 시작일의 최대 날짜를 종료일로 설정
+                    $('#datepicker1').datepicker('option', 'maxDate', selectedDate);
+
+                    // 시작일이 이미 선택되어 있고 종료일보다 늦은 경우 경고
+                    const startDate = $('#datepicker1').val();
+                    if (startDate && startDate > selectedDate) {
+                        uiCommon.fnShowAlertModal('종료일은 시작일보다 늦어야 합니다.', function() {
+                            $('#datepicker2').val('');
+                        });
+                    }
+                    _this.state.pageNum = 1;
+                    await _this.fetchList();
+                }
+            });
+
+            // 저장된 검색조건 복원 또는 기본값 설정
+            const saved = SearchState.restoreForm('admin601', '.search_wrap');
+            if (saved) {
+                this.state.pageNum = saved._extra.pageNum || 1;
+            } else {
+                const today = new Date();
+                const weekAgo = new Date();
+                weekAgo.setDate(today.getDate() - 7);
+                $('#datepicker1').datepicker('setDate', weekAgo);
+                $('#datepicker2').datepicker('setDate', today);
+            }
+
+            this.fetchList();
+
+            // 이벤트 바인딩
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼 클릭
+            $(".btn_search").on("click", function (e) {
+                e.preventDefault();
+                _this.state.pageNum = 1; // 검색하면 첫 페이지로 이동
+
+                _this.fetchList();
+            });
+
+            // 제목 클릭
+            $("#notice_list_container").off("click").on("click", ".notice_title_link", function (e) {
+                e.preventDefault();
+                const id = $(this).data("id");
+                // 상세 페이지로 이동
+                _this.fnGoToDetail(id);
+            });
+
+            // 등록 버튼 클릭
+            $("#btn_register_notice").on("click", function (e) {
+                e.preventDefault();
+                // 등록 페이지로 이동
+                _this.fnGoToRegisterNoticePage();
+            });
+
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("admin601SearchWrap").addEventListener('keydown', async e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    _this.state.pageNum = 1;
+                    await _this.fetchList();
+                }
+            });
+            // 검색영역 변경 이벤트
+            document.getElementById("admin601SearchWrap").addEventListener('change', async e => {
+                if (e.target.matches('select, input[type="radio"]')) {
+                    e.preventDefault();
+                    _this.state.pageNum = 1;
+                    await _this.fetchList();
+                }
+            });
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+            const list = (_this.state.filtered?.length > 0)
+                ? _this.state.filtered
+                : [];
+
+            const totalCount = _this.state.total;
+            const totalPages = Math.ceil(totalCount / _this.state.pageSize);
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageNum,
+                totalPages: totalPages,
+                onPageChange: async function(page) {
+                    _this.state.pageNum = page;
+                    await _this.fetchList();
+                }
+            });
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+            const $tbody = $("#notice_list_container");
+            $tbody.empty();
+
+            const list = (this.state.filtered?.length > 0)
+                ? this.state.filtered
+                : [];
+
+            const pageItems = list?.slice(0, this.state.pageSize);
+
+            if (pageItems?.length === 0) {
+                $tbody.append(
+                    '<tr><td class="tac" colspan="8">조회된 결과가 없습니다.</td></tr>'
+                );
+                return;
+            }
+
+            $.each(pageItems, function (_, item) {
+                const rowHtml = `
+                    <tr>
+                        <td class="tac">${item.ntcOid}</td>
+                        <td class="tal">
+                            <a href="#" class="a_link notice_title_link"
+                               data-id="${item.ntcOid}">
+                                ${item.ntcNm}
+                            </a>
+                        </td>
+                        <td class="tac">${item.regId}</td>
+                        <td class="tac">${common.formatDate(item.regDt)}</td>
+                        <td class="tac">${item.openYn === "Y" ? "공개" : "비공개"}</td>
+                        <td class="tac">${item.upendFixYn === "Y" ? "고정" : "-"}</td>
+                        <td class="tac">${item.inqCnt}</td>
+                        <td class="tac">${item.useYn === "Y" ? "사용" : "미사용"}</td>
+                    </tr>
+                `;
+                $tbody.append(rowHtml);
+            });
+
+            $('#total_count').text(this.state.total);
+        },
+
+        /**
+         * 페이지 이동 - 공지사항 상세
+         */
+        fnGoToDetail: function (id) {
+            const target = this.state.all.find(item => item.ntcOid === id);
+            if (!target) {
+                uiCommon.fnShowAlertModal("상세 정보를 찾을 수 없습니다.");
+                return;
+            }
+
+            // 상세 페이지로 이동
+            window.location.href = contextPath + `/admin/page/admin601-2?ntcOid=${id}`;
+        },
+
+        /**
+         * 페이지 이동 - 공지사항 등록
+         */
+        fnGoToRegisterNoticePage: function () {
+            SearchState.clear('admin601');
+            window.location.href = contextPath + '/admin/page/admin601-1';
+        },
+
+        /**
+         * 공지사항 목록 조회
+         */
+        fetchList: async function () {
+            const _this = this;
+
+            // 검색조건 저장
+            SearchState.saveForm('admin601', '.search_wrap', { pageNum: _this.state.pageNum });
+
+            const params = new URLSearchParams({
+                keyword: document.querySelector("#lab_01").value.trim(),
+                openYn: document.querySelector("input[name='radio_01']:checked")?.value || "",
+                regDtFrom: document.querySelector("#datepicker1").value,
+                regDtTo: document.querySelector("#datepicker2").value,
+                pageNum: _this.state.pageNum,
+                pageSize: _this.state.pageSize
+            });
+
+            try {
+                _this.state.loading = true;
+
+                const resp = await API.get(`/api/admin/admin601/notice/list?${params.toString()}`);
+                const page = resp && resp ? resp : {};
+                // const list = Array.isArray(page.list) ? page.list : [];
+
+                // this.state.list     = list.map(this.mapApiToUi);
+                _this.state.pageNum  = page.pageNum  || pageNum;
+                _this.state.pageSize = page.pageSize || pageSize;
+                _this.state.pages    = page.pages    || 1;
+                _this.state.total    = page.total    || 0;
+
+                _this.state.all = page.list;
+                _this.state.filtered = _this.state.all?.slice();
+
+                return page;
+            } finally {
+                _this.renderTable();
+                _this.renderPagination();
+                _this.state.loading = false;
+            }
+        }
+    };
+
+    $(document).ready(function () {
+        admin601.init();
+    });
+</script>
+</body>
+</html>

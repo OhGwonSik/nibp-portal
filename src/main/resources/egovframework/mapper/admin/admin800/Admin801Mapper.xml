@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin800.mapper.Admin801Mapper">
+    <!--관리자 목록 조회-->
+	<select id="selectAdmin801ListWithFilter" resultType="egovframework.admin.admin800.domain.Admin801ResponseDto">
+		SELECT
+            user_oid,
+            user_id,
+			user_nm_korn,
+            inst_nm,
+            mpno_pfx,
+            ${schema}.fn_decrypt_aes(mpno_mid, #{aesKey}) AS mpno_mid, 
+            mpno_sfx,
+            ${schema}.fn_decrypt_aes(eml_lcal, #{aesKey}) AS eml_lcal,
+            eml_dmn,
+            prvc_use_yn,
+            prvc_reg_id,
+            prvc_start_dt,
+            prvc_end_dt,
+			use_yn,
+            reg_dt
+		FROM
+			${schema}.user
+		<where>
+            user_authrt = 'ADMIN'
+			<if test="filter.keyword != null and filter.keyword != ''">
+				AND (
+                    user_nm_korn LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR user_id LIKE CONCAT('%', #{filter.keyword}, '%')
+                )
+			</if>
+            <if test="filter.useYn != null and filter.useYn != ''">
+                AND use_yn = #{filter.useYn}
+            </if>
+            <if test="filter.regDtFrom != null and filter.regDtFrom != '' and filter.regDtTo != null and filter.regDtTo != ''">
+                AND DATE_FORMAT(reg_dt, '%Y-%m-%d') <![CDATA[ >= ]]> #{filter.regDtFrom}
+                AND DATE_FORMAT(reg_dt, '%Y-%m-%d') <![CDATA[ <= ]]> #{filter.regDtTo}
+            </if>
+            <if test="filter.mpno != null and filter.mpno != ''"> 
+                AND CONCAT(mpno_pfx, ${schema}.fn_decrypt_aes(mpno_mid, #{aesKey}), mpno_sfx) LIKE CAST(CONCAT('%', #{filter.mpno}, '%') AS CHAR) collate utf8mb4_unicode_ci
+            </if>
+			<if test="filter.emlLcal != null and filter.emlLcal != ''">
+				AND eml_lcal LIKE CONCAT('%', #{filter.emlLcal}, '%')
+			</if>
+			<if test="filter.emlDmn != null and filter.emlDmn != ''">
+				AND eml_dmn LIKE CONCAT('%', #{filter.emlDmn}, '%')
+			</if>
+			<if test="filter.prvcUseYn != null and filter.prvcUseYn != ''">
+				AND prvc_use_yn = #{filter.prvcUseYn}
+			</if>
+		</where>
+	</select>
+
+    <!--관리자 상세 정보 조회-->
+    <select id="selectAdmin801Detail" resultType="egovframework.admin.admin800.domain.Admin801VO">
+        SELECT
+            u.user_oid    AS userOid,
+            u.user_nm_korn AS userNmKorn,
+            u.user_nm_eng AS userNmEng,
+            u.brdt       AS brdt,
+            u.user_id    AS userId,
+            ${schema}.fn_decrypt_aes(u.eml_lcal, #{aesKey}) AS emlLcal,
+            u.eml_dmn    AS emlDmn,
+            u.mpno_pfx   AS mpnoPfx,
+            ${schema}.fn_decrypt_aes(u.mpno_mid, #{aesKey}) AS mpno_mid, 
+            u.mpno_sfx   AS mpnoSfx,
+            u.dept_nm    AS deptNm,
+            u.jbps_nm    AS jbpsNm,
+            u.use_yn     AS useYn,
+            u.prvc_use_yn AS prvcUseYn,
+            u.prvc_reg_id AS prvcRegId,
+            u.prvc_start_dt AS prvcStartDt,
+            u.prvc_end_dt AS prvcEndDt,
+            u.lgn_fail_cnt AS lgnFailCnt,
+            DATE_FORMAT(u.reg_dt, '%Y.%m.%d. %H:%i') AS regDt,
+            CONCAT(u.mpno_pfx, '-', ${schema}.fn_decrypt_aes(u.mpno_mid, #{aesKey}), '-', u.mpno_sfx) AS phone,
+            CONCAT(${schema}.fn_decrypt_aes(u.eml_lcal, #{aesKey}), '@', u.eml_dmn) AS email
+        FROM ${schema}.user u
+        WHERE u.user_oid = #{egovMap.userOid}
+    </select>
+
+    <!-- 관리자 정보 등록 -->
+    <insert id="insertAdmin801" parameterType="egovframework.admin.admin800.domain.Admin801VO" useGeneratedKeys="true" keyProperty="userOid">
+        INSERT INTO ${schema}.user (
+            user_nm_korn,
+            user_nm_eng,
+            brdt,
+            user_id,
+            pswd,
+            user_authrt,
+            user_type,
+            eml_lcal,
+            eml_dmn,
+            mpno_pfx,
+            mpno_mid,
+            mpno_sfx,
+            inst_oid,
+            inst_nm,
+            dept_cd,
+            dept_nm,
+            jbps_cd,
+            jbps_nm,
+            lgn_fail_cnt,
+            prvc_use_yn,
+            prvc_reg_id,
+            prvc_start_dt,
+            prvc_end_dt,
+            use_yn,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        )
+        VALUES (
+                   #{userNmKorn},
+                   #{userNmEng},
+                   #{brdt},
+                   #{userId},
+                   #{pswd},
+                   #{userAuthrt},
+                   #{userType},
+                   #{emlLcal},
+                   #{emlDmn},
+                   #{mpnoPfx},
+                   #{mpnoMid},
+                   #{mpnoSfx},
+                   #{instOid},
+                   #{instNm},
+                   #{deptCd},
+                   #{deptNm},
+                   #{jbpsCd},
+                   #{jbpsNm},
+                   0,
+                   #{prvcUseYn},
+                   #{prvcRegId},
+                   #{prvcStartDt},
+                   #{prvcEndDt},
+                   #{useYn},
+                   #{regId},
+                   NOW(),
+                   #{mdfcnId},
+                   NOW()
+               )
+    </insert>
+
+    <!-- 관리자 정보 수정 -->
+    <update id="updateAdmin801" parameterType="egovframework.admin.admin800.domain.Admin801VO">
+        UPDATE ${schema}.user
+        <set>
+            user_nm_korn = #{userNmKorn},
+            user_nm_eng = #{userNmEng},
+            brdt          = #{brdt},
+            eml_lcal     = #{emlLcal},
+            eml_dmn       = #{emlDmn},
+            mpno_pfx      = #{mpnoPfx},
+            mpno_mid      = #{mpnoMid},
+            mpno_sfx      = #{mpnoSfx},
+            <if test="instOid != null and instOid !=''">
+                inst_oid = #{instOid},
+            </if>
+            <if test="instNm != null and instNm !=''">
+                inst_nm = #{instNm},
+            </if>
+            dept_cd       = #{deptCd},
+            dept_nm       = #{deptNm},
+            jbps_cd       = #{jbpsCd},
+            jbps_nm       = #{jbpsNm},  
+            prvc_use_yn    = #{prvcUseYn},
+            prvc_reg_id = #{prvcRegId},
+            prvc_start_dt = #{prvcStartDt},
+            prvc_end_dt = #{prvcEndDt},
+            use_yn        = #{useYn},
+            mdfcn_id   = #{mdfcnId},
+            mdfcn_dt        = NOW()
+            <if test="pswd != null and pswd != ''">
+                , pswd = #{pswd}
+            </if>
+        </set>
+        WHERE user_oid = #{userOid}
+    </update>
+
+    <update id="unlockAccount" parameterType="egovframework.admin.admin800.domain.UnlockAccountDto">
+        UPDATE ${schema}.user
+        SET user_stts = 'ACTIVE',
+            lgn_fail_cnt = 0,
+            mdfcn_id = #{mdfcnId},
+            mdfcn_dt = NOW()
+        WHERE user_oid = #{userOid}
+    </update>
+</mapper>

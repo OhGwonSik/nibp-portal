@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_board_layout}">
+<head>
+    <title th:text="${boardInfo.bbsNm}">게시글 관리</title>
+</head>
+<body>
+<div layout:fragment="admin_board_content" class="sub_cont_wrap">
+    
+    <div class="board_tit mb20">
+        <h3 class="sub_tit" th:text="${boardInfo.bbsNm}">게시글 관리</h3>
+    </div>
+
+    <div class="board_search_box mb20">
+        <form id="searchForm" onsubmit="return false;">
+            <input type="hidden" name="bbsOid" th:value="${boardInfo.bbsOid}">
+            <input type="hidden" name="menuCd" th:value="${boardRequestDto.menuCd}">
+
+            <select id="searchCategory" name="ctgry" class="w150 mr5" th:if="${boardInfo.ctgryYn == 'Y'}">
+                <option value="">전체 분류</option>
+                <option th:each="cat : ${#strings.arraySplit(#strings.replace(#strings.replace(#strings.replace(boardInfo.ctgryList, '(', ''), ')', ''), '''', ''), ',')}"
+                        th:value="${#strings.trim(cat)}" 
+                        th:text="${#strings.trim(cat)}"
+                        th:selected="${boardRequestDto.ctgry == #strings.trim(cat)}">
+                </option>
+            </select>
+
+            <select id="searchType" name="searchType" class="w150">
+                <option value="all" th:selected="${boardRequestDto.searchType == 'all'}">전체</option>
+                <option value="title" th:selected="${boardRequestDto.searchType == 'title'}">제목</option>
+                <option value="writer" th:selected="${boardRequestDto.searchType == 'writer'}">작성자</option>
+            </select>
+            
+            <input type="text" id="keyword" name="keyword" class="w300" placeholder="검색어를 입력하세요" th:value="${boardRequestDto.keyword}">
+            <button type="button" class="btn_basic bg_type01" id="btnSearch">검색</button>
+        </form>
+    </div>
+
+    <div class="table_top_btn mb10">
+        <a href="javascript:;" id="btnRegister" class="btn_basic bg_type01">등록</a>
+        <a href="javascript:;" id="btnDelete" class="btn_basic bg_type02">삭제</a>
+    </div>
+
+    <div class="table_layout02 list_type mb20">
+        <table>
+            <caption>게시글 목록</caption>
+            
+            <colgroup>
+                <col style="width:50px;">
+                <col th:if="${boardInfo.pstOidExpsrYn == 'Y'}" style="width:60px;">
+                <col th:if="${boardInfo.ctgryYn == 'Y'}" style="width:120px;">
+                <col th:if="${boardInfo.bbsSeCd == 'PHOTO' or boardInfo.bbsSeCd == 'THUMBNAIL'}" style="width:100px;">
+                <col style="width:auto;">
+                <col th:if="${boardInfo.wrtrExpsrYn == 'Y'}" style="width:120px;">
+                <col th:if="${boardInfo.wrtDtExpsrYn == 'Y'}" style="width:120px;">
+                <col th:if="${boardInfo.ddlnDtExpsrYn == 'Y'}" style="width:120px;">
+                <col th:if="${boardInfo.prgrsSttsExpsrYn == 'Y' or boardInfo.bbsSeCd == 'QNA'}" style="width:100px;">
+                <col th:if="${boardInfo.atchFileEnYn == 'Y'}" style="width:60px;">
+                <col th:if="${boardInfo.inqCntExpsrYn == 'Y'}" style="width:80px;">
+                <col th:if="${boardInfo.bbsSeCd == 'COMMON'}" style="width:80px;">
+            </colgroup>
+
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="checkAll"></th>
+                    
+                    <th th:if="${boardInfo.pstOidExpsrYn == 'Y'}">번호</th>
+                    <th th:if="${boardInfo.ctgryYn == 'Y'}">분류</th>
+                    
+                    <th th:if="${boardInfo.bbsSeCd == 'PHOTO'}">이미지</th>
+                    <th th:if="${boardInfo.bbsSeCd == 'THUMBNAIL'}">썸네일</th>
+                    
+                    <th>제목</th>
+                    
+                    <th th:if="${boardInfo.wrtrExpsrYn == 'Y'}">작성자</th>
+                    <th th:if="${boardInfo.wrtDtExpsrYn == 'Y'}">작성일</th>
+                    <th th:if="${boardInfo.ddlnDtExpsrYn == 'Y'}">마감일</th>
+                    <th th:if="${boardInfo.prgrsSttsExpsrYn == 'Y' or boardInfo.bbsSeCd == 'QNA'}">상태</th>
+                    <th th:if="${boardInfo.atchFileEnYn == 'Y'}">첨부</th>
+                    <th th:if="${boardInfo.inqCntExpsrYn == 'Y'}">조회수</th>
+                    <th th:if="${boardInfo.bbsSeCd == 'COMMON'}">상단고정</th>
+                </tr>
+            </thead>
+
+            <tbody id="dynamicTbody">
+                <tr th:if="${#lists.isEmpty(boardPostList.list)}">
+                    <td class="tac" th:colspan="${1 
+                        + (boardInfo.pstOidExpsrYn == 'Y' ? 1 : 0)
+                        + (boardInfo.ctgryYn == 'Y' ? 1 : 0)
+                        + (boardInfo.bbsSeCd == 'PHOTO' or boardInfo.bbsSeCd == 'THUMBNAIL' ? 1 : 0)
+                        + 1 
+                        + (boardInfo.wrtrExpsrYn == 'Y' ? 1 : 0)
+                        + (boardInfo.wrtDtExpsrYn == 'Y' ? 1 : 0)
+                        + (boardInfo.ddlnDtExpsrYn == 'Y' ? 1 : 0)
+                        + (boardInfo.prgrsSttsExpsrYn == 'Y' or boardInfo.bbsSeCd == 'QNA' ? 1 : 0)
+                        + (boardInfo.atchFileEnYn == 'Y' ? 1 : 0)
+                        + (boardInfo.inqCntExpsrYn == 'Y' ? 1 : 0)
+                        + (boardInfo.bbsSeCd == 'COMMON' ? 1 : 0)
+                    }">등록된 게시글이 없습니다.</td>
+                </tr>
+
+                <tr th:each="item : ${boardPostList.list}">
+                    <td class="tac"><input type="checkbox" class="row_check" th:data-post-no="${item.bbsPstOid}" th:data-board-no="${boardInfo.bbsOid}"></td>
+
+                    <td th:if="${boardInfo.pstOidExpsrYn == 'Y'}" class="tac" th:text="${item.bbsPstOid}"></td>
+
+                    <td th:if="${boardInfo.ctgryYn == 'Y'}" class="tac" th:text="${item.ctgry}"></td>
+
+					<td th:if="${boardInfo.bbsSeCd == 'PHOTO' or boardInfo.bbsSeCd == 'THUMBNAIL'}" class="tac">
+					    <img th:src="${item.thmbPath != null ? item.thmbPath : '/img/no_image.png'}"
+					         style="width: 80px; height: 50px; object-fit: cover; border: 1px solid #eee; display: block; margin: 0 auto;" 
+					         onerror="this.src='/img/no_image.png'">
+					</td>
+
+                    <td class="tal">
+                        <a href="javascript:;" th:onclick="|admin807_list1.goDetail(${item.bbsPstOid})|" class="a_link">
+                            <span th:text="${item.bbsPstTtl}"></span>
+                        </a>
+                        <i th:if="${item.prvtPstYn == 'Y'}" class="ico_lock">🔒</i>
+                    </td>
+
+                    <td th:if="${boardInfo.wrtrExpsrYn == 'Y'}" class="tac" th:text="${item.wrtrNm}"></td>
+
+                    <td th:if="${boardInfo.wrtDtExpsrYn == 'Y'}" class="tac" 
+                        th:text="${#temporals.format(item.regDt, 'yyyy-MM-dd')}"></td>
+
+                    <td th:if="${boardInfo.ddlnDtExpsrYn == 'Y'}" class="tac"
+                        th:text="${item.ddlnDt != null ? #temporals.format(item.ddlnDt, 'yyyy-MM-dd') : '-'}"></td>
+
+                    <td th:if="${boardInfo.prgrsSttsExpsrYn == 'Y' or boardInfo.bbsSeCd == 'QNA'}" class="tac">
+                        <th:block th:if="${boardInfo.bbsSeCd == 'QNA'}">
+                            <span th:text="${item.answerYn == 'Y' ? '답변완료' : '대기'}" 
+                                  th:style="${item.answerYn == 'Y' ? 'color:#007bff; font-weight:bold;' : 'color:#888;'}"></span>
+                        </th:block>
+                        <th:block th:unless="${boardInfo.bbsSeCd == 'QNA'}">
+                            <span th:text="${item.statusNm != null ? item.statusNm : '-'}"></span>
+                        </th:block>
+                    </td>
+
+                    <td th:if="${boardInfo.atchFileEnYn == 'Y'}" class="tac">
+                        <span th:if="${item.fileCnt > 0}">💾</span>
+                        <span th:unless="${item.fileCnt > 0}">-</span>
+                    </td>
+
+                    <td th:if="${boardInfo.inqCntExpsrYn == 'Y'}" class="tac" th:text="${item.inqCnt}"></td>
+
+                    <td th:if="${boardInfo.bbsSeCd == 'COMMON'}" class="tac">
+                        <span th:if="${item.upendFixYn == 'Y'}">고정</span>
+                        <span th:unless="${item.upendFixYn == 'Y'}">-</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="paging_wrap" class="paging_wrap">
+        <a href="javascript:" class="first page_first">첫 페이지</a>
+        <a href="javascript:" class="previous page_prev">전 페이지</a>
+        <div class="namber pagination_container"></div>
+        <a href="javascript:" class="next page_next">다음 페이지</a>
+        <a href="javascript:" class="last page_last">끝 페이지</a>
+    </div>
+</div>
+
+<script layout:fragment="board_scripts" th:inline="javascript" type="text/javascript">
+    const admin807_list1 = {
+        state: {
+            boardInfo: /*[[${boardInfo}]]*/ {}, // 게시판 설정
+            list: /*[[${boardPostList.list}]]*/ [], // 초기 데이터 (Thymeleaf)
+            targetBoardMenu: /*[[${targetBoardMenu}]]*/ {},
+            page: /*[[${boardPostList.pageNum}]]*/ 1,
+            total: /*[[${boardPostList.total}]]*/ 0,
+            pages: /*[[${boardPostList.pages}]]*/ 1,
+            size: /*[[${boardInfo.pageCnt}]]*/ 10,
+            activeColumns: [] // 동적 컬럼 정의 저장소
+        },
+
+        init: function() {
+            this.setDynamicColumns();
+            this.initPagination();
+            this.initEvent(); 
+        },
+
+        /**
+         * 설정값에 따라 컬럼을 정의
+         */
+        setDynamicColumns: function() {
+            const info = this.state.boardInfo;
+            const cols = [];
+
+            // 1. 체크박스
+            cols.push({ type: 'checkbox' });
+            
+            // 2. 번호 (sideNewYn)
+            if (info.pstOidExpsrYn === 'Y') cols.push({ type: 'text', field: 'bbsPstOid' });
+
+            // 3. 분류 (categoryYn)
+            if (info.ctgryYn === 'Y') cols.push({ type: 'text', field: 'category' });
+
+            // 4. 이미지 (갤러리/썸네일)
+            if (['PHOTO', 'THUMBNAIL'].includes(info.bbsSeCd)) {
+                cols.push({ type: 'image', field: 'thmbPath' });
+            }
+
+            // 5. 제목 (필수)
+            cols.push({ type: 'title_link', field: 'postTitle' });
+
+            // 6. 작성자 (sideWriterYn)
+            if (info.wrtrExpsrYn === 'Y') cols.push({ type: 'text', field: 'writerNm' });
+
+            // 7. 작성일 (sideWriteDtYn)
+            if (info.wrtDtExpsrYn === 'Y') cols.push({ type: 'date', field: 'regDt' });
+
+            // 8. 마감일 (sideUpdateDtYn)
+            if (info.ddlnDtExpsrYn === 'Y') cols.push({ type: 'date', field: 'deadlineDt' });
+
+            // 9. 상태 (sideStatusYn or Q&A)
+            if (info.prgrsSttsExpsrYn === 'Y' || info.bbsSeCd === 'QNA') {
+                cols.push({ type: 'status' });
+            }
+
+            // 10. 첨부파일 (sideNoticeYn)
+            if (info.atchFileEnYn === 'Y') cols.push({ type: 'file_icon' });
+
+            // 11. 조회수 (sideAttendYn)
+            if (info.inqCntExpsrYn === 'Y') cols.push({ type: 'text', field: 'viewCnt' });
+
+            // 12. 공지 고정 (일반게시판)
+            if (info.bbsSeCd === 'COMMON') cols.push({ type: 'notice_fix' });
+
+            this.state.activeColumns = cols;
+        },
+
+        /**
+         * 검색 및 테이블 리렌더링
+         */
+        search: async function(page) {
+            const pageNum = page || 1;
+            const keyword = document.getElementById("keyword").value;
+            const searchType = document.getElementById("searchType").value;
+            const categoryEl = document.getElementById("searchCategory");
+            const category = categoryEl ? categoryEl.value : '';
+
+            // 파라미터 구성
+            const params = new URLSearchParams();
+            params.append('bbsOid', this.state.boardInfo.bbsOid);
+            params.append('page', pageNum);
+            params.append('size', this.state.size);
+            params.append('menuCd', this.state.targetBoardMenu.menuCd);
+            if (keyword) params.append('keyword', keyword);
+            if (searchType) params.append('searchType', searchType);
+            if (category) params.append('category', category);
+            
+
+            try {
+                // API 호출
+                const res = await API.get(`/api/common/board/list/filter?${params.toString()}`);
+                
+                // 상태 업데이트
+                this.state.list = res.list;
+                this.state.total = res.total;
+                this.state.page = res.pageNum;
+                this.state.pages = res.pages;
+
+                // 화면 다시 그리기
+                this.renderBody();
+                this.initPagination();
+
+            } catch (err) {
+                uiCommon.fnShowAlertModal("검색 중 오류가 발생했습니다.", err);
+            }
+        },
+
+        /**
+         * 테이블 본문 그리기
+         */
+        renderBody: function() {
+            const list = this.state.list;
+            const cols = this.state.activeColumns;
+            const $tbody = document.querySelector("#dynamicTbody");
+            // HTML 구조상 table > tbody 선택
+            const table = document.querySelector(".table_layout02 table tbody");
+            
+            table.innerHTML = '';
+
+            if (!list || list.length === 0) {
+                // colspan 계산
+                table.innerHTML = `<tr><td colspan="${cols.length}" class="tac">등록된 게시글이 없습니다.</td></tr>`;
+                return;
+            }
+
+            list.forEach(item => {
+                let tr = document.createElement('tr');
+                let rowHtml = '';
+
+                // 정의된 컬럼 순서대로 셀 생성
+                cols.forEach(col => {
+                    rowHtml += this.renderCell(col, item);
+                });
+
+                tr.innerHTML = rowHtml;
+                table.appendChild(tr);
+            });
+        },
+
+        /**
+         * 개별 셀(TD) HTML 생성
+         */
+        renderCell: function(col, item) {
+            // 1. 체크박스
+            if (col.type === 'checkbox') {
+                return `<td class="tac"><input type="checkbox" class="row_check" data-post-no="${item.bbsPstOid}" data-board-no="${item.bbsOid}"></td>`;
+            }
+            // 2. 제목 (링크 + 아이콘)
+            else if (col.type === 'title_link') {
+                let icons = '';
+                if(item.prvtPstYn === 'Y') icons += ' <i class="ico_lock">🔒</i>';
+                return `<td class="tal">
+                            <div class="text_ellipsis" style="max-width: 100%;">
+                                <a href="javascript:;" onclick="admin807_list1.goDetail(${item.bbsPstOid})" class="link" title="${item.bbsPstTtl}">
+                                    ${item.bbsPstTtl}
+                                </a>
+                                ${icons}
+                            </div>
+                        </td>`;
+            }
+            // 3. 이미지
+            else if (col.type === 'image') {
+                const src = item.thmbPath || '/img/no_image.png';
+                return `<td class="tac"><img src="${src}" class="thumb_img" onerror="this.src='/img/no_image.png'"></td>`;
+            }
+            // 4. 날짜
+            else if (col.type === 'date') {
+                let dateStr = item[col.field];
+                if (dateStr && dateStr.length >= 10) dateStr = dateStr.substring(0, 10);
+                else dateStr = '-';
+                return `<td class="tac">${dateStr}</td>`;
+            }
+            // 5. 상태 (Q&A/일반)
+            else if (col.type === 'status') {
+                let statusText = '-';
+                let cls = '';
+                if (this.state.boardInfo.bbsSeCd === 'QNA') {
+                    statusText = (item.answerYn === 'Y') ? '답변완료' : '대기';
+                    cls = (item.answerYn === 'Y') ? 'bg_complete' : 'bg_waiting'; // CSS 클래스 활용
+                    return `<td class="tac"><span class="badge_status ${cls}">${statusText}</span></td>`;
+                } else {
+                    statusText = item.statusNm || '-';
+                    return `<td class="tac">${statusText}</td>`;
+                }
+            }
+            // 6. 첨부파일 아이콘
+            else if (col.type === 'file_icon') {
+                const icon = (item.fileCnt > 0) ? '<span title="첨부파일 있음">💾</span>' : '-';
+                return `<td class="tac">${icon}</td>`;
+            }
+            // 7. 공지 고정
+            else if (col.type === 'notice_fix') {
+                const badge = (item.upendFixYn === 'Y') ? '<span class="badge bg_red">고정</span>' : '-';
+                return `<td class="tac">${badge}</td>`;
+            }
+            // 8. 일반 텍스트
+            else {
+                let val = item[col.field];
+                if (val === undefined || val === null) val = '-';
+                return `<td class="tac"><span class="text_ellipsis" title="${val}">${val}</span></td>`;
+            }
+        },
+
+        initPagination: function() {
+            const _this = this;
+            if (this.state.total > 0) {
+                uiCommon.pagination.render({
+                    currentPage: this.state.page,
+                    totalPages: this.state.pages,
+                    onPageChange: function(page) {
+                        _this.search(page);
+                    }
+                });
+            } else {
+                // 데이터가 없을 때 페이징 영역 비우기 (선택사항)
+                document.querySelector(".pagination_container").innerHTML = '';
+            }
+        },
+
+        initEvent: function() {
+            const _this = this;
+
+            // 검색
+            document.getElementById("btnSearch").addEventListener("click", () => _this.search(1));
+            document.getElementById("keyword").addEventListener("keydown", (e) => {
+                if (e.key === 'Enter') _this.search(1);
+            });
+
+            // 전체 선택
+            const checkAll = document.getElementById("checkAll");
+            if(checkAll) {
+                checkAll.addEventListener("change", function() {
+                    document.querySelectorAll(".row_check").forEach(chk => chk.checked = this.checked);
+                });
+            }
+
+            // 등록
+            document.getElementById("btnRegister").addEventListener("click", () => {
+                location.href = `${contextPath}/admin/board/write?bbsOid=${_this.state.boardInfo.bbsOid}`;
+            });
+
+            // 삭제
+            document.getElementById("btnDelete").addEventListener("click", () => {
+                const checked = document.querySelectorAll(".row_check:checked");
+                if (!checked.length) return uiCommon.fnShowAlertModal("삭제할 게시글을 선택해주세요.");
+                
+                const deleteList = Array.from(checked).map(chk => {
+                    return {
+                        bbsOid: Number(chk.dataset.bbsOid),
+                        bbsPstOid: Number(chk.dataset.bbsPstOid),
+                        menuCd: this.state.targetBoardMenu.menuCd
+                    };
+                });
+                uiCommon.fnShowConfirmModal("정말 삭제하시겠습니까?", async () => {
+                    uiCommon.fnHideConfirmModal();
+                    try {
+                        await API.patch('/api/common/board/delete', deleteList);
+                        uiCommon.fnShowAlertModal("삭제되었습니다.", () => _this.search(_this.state.page));
+                    } catch(e) {
+                        uiCommon.fnShowAlertModal("삭제 중 오류가 발생했습니다.");
+                    }
+                });
+            });
+        },
+
+        goDetail: function(bbsPstOid) {
+        	const menuCd = this.state.targetBoardMenu.menuCd;
+            location.href = `${contextPath}/admin/board/write?menuCd=${menuCd}&bbsOid=${this.state.boardInfo.bbsOid}&bbsPstOid=${bbsPstOid}`;
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        admin807_list1.init();
+    });
+</script>
+</body>
+</html>

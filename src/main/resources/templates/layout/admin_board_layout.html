@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>NIBP Admin board</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--css-->
+    <link rel="stylesheet" th:href="@{/admin/css/base.css}">
+    <link rel="stylesheet" th:href="@{/common/css/font.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/layer.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/style.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/tree.css}">
+    <!--<link rel="stylesheet" th:href="@{/admin/css/print.css}">-->
+    <link rel="stylesheet" th:href="@{/common/css/jquery-ui.css}">
+
+    <!--개별 페이지 style-->
+    <th:block layout:fragment="board_style"></th:block>
+  </head>
+  <body>
+    <div class="contents_layout">
+      <div th:replace="~{fragments/admin_header :: admin_header}"></div>
+
+      <div id="contents" class="contents">
+        <div th:replace="~{fragments/admin_sidebar :: admin_sidebar}"></div>
+        <div class="right_wrap">
+          <div id="main_content_area">
+              <hr class="h_bg_type">
+              <div layout:fragment="admin_board_content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="bg_overlay" class="bg_overlay"></div>
+    <div layout:fragment="admin_modal"></div>
+
+    <!-- 공통 UI Fragments -->
+    <div th:replace="~{fragments/modal :: modal}"></div>
+    <div th:replace="~{fragments/skip_nav :: skip_nav}"></div>
+
+    <!--js-->
+    <script th:src="@{/common/js/jquery.min.js}"></script>
+    <script th:src="@{/common/js/jquery-ui.js}"></script>
+    <script th:src="@{/admin/js/tree.js}"></script>
+    <script th:src="@{/common/js/common.js}"></script>
+    <script th:inline="javascript">window.CKEDITOR_BASEPATH = /*[[${ckeditorBasePath}]]*/ '/common/libs/ckeditor/';</script>
+    <script th:src="@{/common/libs/ckeditor/ckeditor.js}"></script>
+    <script th:src="@{/common/js/commonCKEditor.js}"></script>
+    <script th:src="@{/common/js/api.js}"></script>
+    <script th:src="@{/common/js/session.js}"></script>
+    <script th:src="@{/common/js/style.js}"></script>
+    <script th:src="@{/admin/js/sidebar.js}"></script>
+    <script th:src="@{/common/js/echarts.min.js}"></script>
+    <script th:src="@{/common/js/search-state.js}"></script>
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      window.contextPath = /*[[${#request.contextPath}]]*/ '';
+      window.isAuthenticated = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+      window.sessionExpiry = /*[[${sessionExpiry}]]*/ 1800000;
+      window.filePath = /*[[${basicFilePath}]]*/ '';
+      /*]]>*/
+      // 권한 거부 에러 메시지 표시
+      const errorMessage = /*[[${errorMessage}]]*/ null;
+      const errorParam = new URLSearchParams(window.location.search).get('error');
+
+      if (errorMessage || errorParam) {
+        const message = errorMessage || decodeURIComponent(errorParam);
+        uiCommon.fnShowAlertModal(message);
+      }
+    </script>
+
+    <!--개별 페이지 script-->
+    <th:block layout:fragment="board_scripts"></th:block>
+  </body>
+</html>

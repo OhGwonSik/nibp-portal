@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>정보공개 > 공공데이터 개방</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">공공데이터 개방</h3>
+    <div class="public_data_wrap">
+        <p>공공데이터포털은 공공기관에 생성 또는 취득하여 관리하고 있는 데이터를 한 곳에서 제공하는 통합 창구입니다.</p>
+        <div class="btn_wrap mt30">
+            <a href="https://www.data.go.kr/" class="btn_open_window" target="_blank" title="새창열림"><span>공공데이터포탈 바로가기</span></a>
+            <a href="https://www.data.go.kr/tcs/dor/insertDataOfferReqstProcssView.do" class="btn_open_window bg_puple" target="_blank" title="새창열림"><span>공공데이터 제공신청 바로가기</span></a>
+        </div>
+    </div>
+    <ul class="text_list02 mt30">
+        <li>
+            <em>01</em>
+            <p>"공공데이터"란 데이터베이스, 전자화된 파일 등 공공기관이 법령 등에서 정하는 목적을 위하여 생성 또는 취득하여 관리하고 있는 광(光) 또는 전자적 방식으로 처리된 자료 또는 정보입니다.</p>
+        </li>
+        <li>
+            <em>02</em>
+            <p>국민의 공공데이터에 대한 이용권을 보장하고, 공공데이터의 민간 활용을 통한 삶의 질 향상과 국민경제 발전에 이바지함을 목적으로 하는 ‘공공데이터법＇에 따라 정책원은 공공정보의 개방과 공유를 통한 정부·국민간의 소통과 협력을 위해 노력하겠습니다.</p>
+        </li>
+    </ul>
+    <h4 class="sstit">공공데이터 제공 책임관 및 실무</h4>
+    <div class="table_layout data_table">
+        <table>
+            <caption>공공데이터 제공 책임관 및 실무 테이블</caption>
+            <colgroup>
+                <col style="width: 25%">
+                <col style="width: auto">
+                <col style="width: 25%">
+                <col style="width: 25%">
+            </colgroup>
+            <thead>
+            <tr>
+                <th scope="col">구분</th>
+                <th scope="col">부서/직위</th>
+                <th scope="col">성명</th>
+                <th scope="col">연락처</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>공공데이터제공 책임관</td>
+                <td>경영지원본부장</td>
+                <td>류호균</td>
+                <td>02-778-9381</td>
+            </tr>
+            <tr>
+                <td>공공데이터제공 실무담당자</td>
+                <td>정보화운영팀장</td>
+                <td>임현철</td>
+                <td>02-778-7484</td>
+            </tr>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal403 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal403.init();
+    });
+</script>
+</body>
+</html>

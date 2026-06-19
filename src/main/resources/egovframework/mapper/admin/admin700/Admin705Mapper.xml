@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin700.mapper.Admin705Mapper">
+	
+	<select id="selectQnaAnsweredStat" resultType="egovframework.admin.admin700.domain.QnaAnsweredStatDTO">
+	    /* 캘린더 생성 (검색 기간만큼의 빈 달력 생성) */
+        WITH RECURSIVE calendar AS (
+            SELECT
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        STR_TO_DATE(CONCAT(#{startDate}, '-01-01'), '%Y-%m-%d')
+                    </when>
+                    <otherwise>
+                        STR_TO_DATE(CONCAT(#{startDate}, '-01'), '%Y-%m-%d')
+                    </otherwise>
+                </choose> AS m_date
+            
+            UNION ALL
+            
+            SELECT 
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        DATE_ADD(m_date, INTERVAL 1 YEAR)
+                    </when>
+                    <otherwise>
+                        DATE_ADD(m_date, INTERVAL 1 MONTH)
+                    </otherwise>
+                </choose>
+            FROM calendar
+            WHERE 
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        m_date <![CDATA[ < ]]> STR_TO_DATE(CONCAT(#{endDate}, '-01-01'), '%Y-%m-%d')
+                    </when>
+                    <otherwise>
+                        m_date <![CDATA[ < ]]> STR_TO_DATE(CONCAT(#{endDate}, '-01'), '%Y-%m-%d')
+                    </otherwise>
+                </choose>
+        ),
+
+        /* 실제 데이터 집계 (질문당 최초 COMP 기준, 중복 제거) */
+        stat_data AS (
+            SELECT
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        DATE_FORMAT(hist.final_comp_dt, '%Y')
+                    </when>
+                    <otherwise>
+                        DATE_FORMAT(hist.final_comp_dt, '%Y-%m')
+                    </otherwise>
+                </choose> AS join_date
+                , COUNT(*) AS answer_cnt
+            FROM
+                ${schema}.bbs_pst tbbp
+                INNER JOIN ${schema}.bbs b
+                    ON tbbp.bbs_oid = b.bbs_oid
+                INNER JOIN (
+                    SELECT reply.up_bbs_pst_oid, MIN(tbh.reg_dt) AS final_comp_dt
+                    FROM ${schema}.bbs_hstry tbh
+                    INNER JOIN ${schema}.bbs_pst reply ON tbh.tbl_oid = reply.bbs_pst_oid
+                    WHERE tbh.tbl_nm = 'bbs_pst' AND tbh.stts = 'COMP'
+                      AND reply.up_bbs_pst_oid IS NOT NULL
+                      AND reply.del_yn = 'N'
+                    GROUP BY reply.up_bbs_pst_oid
+                ) hist ON tbbp.bbs_pst_oid = hist.up_bbs_pst_oid
+            WHERE
+                tbbp.up_bbs_pst_oid IS NULL
+                AND tbbp.del_yn = 'N'
+                AND b.bbs_se_cd = 'QNA'
+                AND b.stats_yn = 'Y'
+                AND b.use_yn = 'Y'
+
+                /* 검색 기간 필터 (최초 답변 완료일 기준) */
+                AND hist.final_comp_dt <![CDATA[ >= ]]>
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        STR_TO_DATE(CONCAT(#{startDate}, '-01-01 00:00:00'), '%Y-%m-%d %H:%i:%s')
+                    </when>
+                    <otherwise>
+                        STR_TO_DATE(CONCAT(#{startDate}, '-01 00:00:00'), '%Y-%m-%d %H:%i:%s')
+                    </otherwise>
+                </choose>
+
+                AND hist.final_comp_dt <![CDATA[ <= ]]>
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        STR_TO_DATE(CONCAT(#{endDate}, '-12-31 23:59:59'), '%Y-%m-%d %H:%i:%s')
+                    </when>
+                    <otherwise>
+                        STR_TO_DATE(CONCAT(LAST_DAY(STR_TO_DATE(CONCAT(#{endDate}, '-01'), '%Y-%m-%d')), ' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+                    </otherwise>
+                </choose>
+            GROUP BY 
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        DATE_FORMAT(hist.final_comp_dt, '%Y')
+                    </when>
+                    <otherwise>
+                        DATE_FORMAT(hist.final_comp_dt, '%Y-%m')
+                    </otherwise>
+                </choose>
+        )
+
+        /* 최종 조회 (캘린더 Left Join) */
+        SELECT
+            <choose>
+                <when test='searchType == "YEAR"'>
+                    DATE_FORMAT(c.m_date, '%Y')
+                </when>
+                <otherwise>
+                    DATE_FORMAT(c.m_date, '%Y-%m')
+                </otherwise>
+            </choose> AS searchDate
+            , IFNULL(sd.answer_cnt, 0) AS ansCnCnt
+        FROM
+            calendar c
+            LEFT JOIN stat_data sd 
+                ON 
+                <choose>
+                    <when test='searchType == "YEAR"'>
+                        DATE_FORMAT(c.m_date, '%Y') = sd.join_date
+                    </when>
+                    <otherwise>
+                        DATE_FORMAT(c.m_date, '%Y-%m') = sd.join_date
+                    </otherwise>
+                </choose>
+        ORDER BY
+            c.m_date ASC
+    </select>
+</mapper>

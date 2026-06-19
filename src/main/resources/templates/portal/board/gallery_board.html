@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>포토 갤러리 게시판</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<div layout:fragment="main_content" class="content_wrap">
+
+    <h3 class="stit" th:text="${boardInfo.bbsNm}">갤러리 게시판</h3>
+
+    <div class="board_search mb10">
+        <strong>총 <span id="totalCountDisplay" th:text="${boardPostList.total}">0</span>건</strong>
+        <fieldset>
+            <select th:if="${boardInfo.ctgryYn == 'Y' and boardInfo.ctgryList != null}"
+                    id="searchCategory" class="wp100" title="분류 선택">
+                <option value="">전체 분류</option>
+                <option th:each="cat : ${#strings.arraySplit(#strings.replace(#strings.replace(#strings.replace(boardInfo.ctgryList, '(', ''), ')', ''), '''', ''), ',')}"
+                        th:value="${#strings.trim(cat)}"
+                        th:text="${#strings.trim(cat)}"
+                        th:selected="${boardRequestDto.ctgry == #strings.trim(cat)}">
+                </option>
+            </select>
+            <select id="searchType" title="검색 옵션 선택" class="wp100">
+                <option value="all" th:selected="${boardRequestDto.searchType == 'all'}">전체</option>
+                <option value="title" th:selected="${boardRequestDto.searchType == 'qnaTtl'}">제목</option>
+                <option value="content" th:selected="${boardRequestDto.searchType == 'ntcCn'}">내용</option>
+            </select>
+            <input type="text" id="keyword" th:value="${boardRequestDto.keyword}" title="검색어를 입력해주세요." class="wp200" placeholder="검색어 입력">
+            <button type="button" class="btn_basic_ss" id="gallerySearchBtn">검색</button>
+        </fieldset>
+    </div>
+
+    <div class="gallery_list_wrap">
+        <div class="thumbnail_wrap gallery" id="galleryListContainer">
+
+            <div th:if="${boardPostList == null or #lists.isEmpty(boardPostList.list)}"
+                 style="width:100%; text-align:center; padding:80px 0; border-bottom:1px solid #e1e1e1;">
+                <p>등록된 게시글이 없습니다.</p>
+            </div>
+
+            <th:block th:if="${boardPostList != null and not #lists.isEmpty(boardPostList.list)}">
+                <a class="thumbnail_inner" href="javascript:;"
+                   th:each="post : ${boardPostList.list}"
+                   th:onclick="galleryBoard.moveDetail([[${post.bbsPstOid}]])">
+
+                    <p class="thumbnail_img">
+                        <img th:if="${post.thmbPath != null and post.thmbPath != ''}"
+                             th:src="@{|${basicFilePath}${post.thmbPath}|}"
+                             th:attr="onerror=|this.src='@{/admin/images/Thumbnail_img.png}'|"
+                             th:alt="${post.bbsPstTtl}"
+                             style="width: 100%; aspect-ratio: 900/600; object-fit: cover;">
+
+                        <img th:unless="${post.thmbPath != null and post.thmbPath != ''}"
+                             th:src="@{/admin/images/Thumbnail_img.png}"
+                             alt="이미지 준비중"
+                             style="width: 100%; aspect-ratio: 900/600; object-fit: cover;">
+                    </p>
+
+                    <p class="thumbnail_text">
+                        <span th:text="${post.bbsPstTtl}"
+                              style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.4; max-height: 2.8em;">
+                            제목
+                        </span>
+                    </p>
+
+                    <p class="etc_text">
+                        <span th:text="${#temporals.format(post.regDt, 'yyyy-MM-dd')}">2025-10-15</span>
+                        <em class="ml5">
+                            <b>조회수</b> <span th:text="${post.inqCnt}">0</span>
+                        </em>
+                    </p>
+                </a>
+            </th:block>
+        </div>
+    </div>
+
+    <div id="paging_wrap" class="paging_wrap">
+        <a href="javascript:" class="first page_first">첫 페이지</a>
+        <a href="javascript:" class="previous page_prev">전 페이지</a>
+        <div class="namber pagination_container"></div>
+        <a href="javascript:" class="next page_next">다음 페이지</a>
+        <a href="javascript:" class="last page_last">끝 페이지</a>
+    </div>
+
+</div>
+
+<script layout:fragment="main_scripts" th:inline="javascript">
+    const galleryBoard = {
+        state: {
+            strgFilePath: /*[[${basicFilePath}]]*/ '',
+            DEFAULT_IMG: /*[[@{/admin/images/Thumbnail_img.png}]]*/ contextPath + '/admin/images/Thumbnail_img.png',
+            all: /*[[${boardPostList}]]*/ {},
+            config: /*[[${boardInfo}]]*/ {},
+            reqDto: /*[[${boardRequestDto}]]*/ {},
+            page: /*[[${boardPostList.pageNum}]]*/ 1,
+            total: /*[[${boardPostList.total}]]*/ 0,
+            pages: /*[[${boardPostList.pages}]]*/ 1,
+            size: /*[[${boardInfo.pageCnt}]]*/ 10
+        },
+
+        getSearchStateId: function() {
+            return 'portal_gallery_board_' + this.state.config.bbsOid;
+        },
+
+        init: function() {
+            const _this = this;
+            const keywordInput = document.getElementById('keyword');
+            if(keywordInput) {
+                keywordInput.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") { _this.state.page = 1; _this.getListData(); }
+                });
+            }
+            _this.initEvent();
+
+            // 검색조건 복원
+            _this.fnRestoreState();
+
+            _this.initPagination();
+        },
+
+        initEvent: function(){
+            const _this = this;
+            document.querySelector('#gallerySearchBtn').addEventListener('click', function(){
+                _this.state.page = 1;
+                _this.getListData();
+            });
+        },
+
+        initPagination: function() {
+            const _this = this;
+            
+            if (!_this.state.all) return;
+            
+            uiCommon.pagination.render({
+                currentPage: _this.state.page,
+                totalPages: _this.state.pages,
+                onPageChange: function(page) {
+                	_this.state.pageIndex = page;
+                    _this.getListData(page);
+                }
+            });
+        },
+
+        /**
+         * 썸네일 리스트 HTML
+         */
+        renderList: function(list) {
+            const container = document.getElementById('galleryListContainer');
+            const totalDisplay = document.getElementById('totalCountDisplay');
+            if(totalDisplay) totalDisplay.innerText = this.state.total;
+
+            if (!list || list.length === 0) {
+                container.innerHTML = `
+                    <div class="no_data_msg" style="width:100%; text-align:center; padding:80px 0; border-bottom:1px solid #e1e1e1;">
+                        <p>등록된 게시글이 없습니다.</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            list.forEach(post => {
+                let imgSrc = this.state.DEFAULT_IMG;
+                if (post.thmbPath) {
+                    // 경로 중복 슬래시(/) 방지 처리
+                    const base = this.state.strgFilePath;
+                    const path = post.thmbPath;
+                    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+                    const cleanPath = path.startsWith('/') ? path : '/' + path;
+                    imgSrc = cleanBase + cleanPath;
+                }
+
+                let dateStr = post.regDt;
+                if(Array.isArray(post.regDt)) {
+                    const y = post.regDt[0];
+                    const m = String(post.regDt[1]).padStart(2, '0');
+                    const d = String(post.regDt[2]).padStart(2, '0');
+                    dateStr = `${y}-${m}-${d}`;
+                } else if(typeof post.regDt === 'string') {
+                    dateStr = post.regDt.substring(0, 10);
+                }
+
+                html += `
+                    <a class="thumbnail_inner" href="javascript:;" onclick="galleryBoard.moveDetail(${post.bbsPstOid})">
+                        <p class="thumbnail_img">
+                            <img src="${imgSrc}"
+                                 alt="${post.bbsPstTtl}"
+                                 style="width: 100%; aspect-ratio: 900/600; object-fit: cover;"
+                                 onerror="this.onerror=null; this.src='${this.state.DEFAULT_IMG}';">
+                        </p>
+                        <p class="thumbnail_text">
+                            <span style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.4; max-height: 2.8em;">
+                                ${post.bbsPstTtl}
+                            </span>
+                        </p>
+                        <p class="etc_text">
+                            <span>${dateStr}</span>
+                            <em class="ml5">
+                                <b>조회수</b> <span>${post.inqCnt}</span>
+                            </em>
+                        </p>
+                    </a>
+                `;
+            });
+            container.innerHTML = html;
+        },
+
+        /**
+         * 목록 데이터 조회
+         */
+        getListData: async function (page) {
+            const _this = this;
+
+            if (page) _this.state.page = page;
+            SearchState.saveForm(_this.getSearchStateId(), '.board_search', { page: _this.state.page });
+
+            const keyword = document.getElementById('keyword').value;
+            const searchType = document.getElementById('searchType').value;
+            const categoryEl = document.getElementById('searchCategory');
+            const category = categoryEl ? categoryEl.value : '';
+
+            const params = new URLSearchParams({
+                bbsOid: _this.state.config.bbsOid,
+                menuCd: _this.state.reqDto.menuCd,
+                page: _this.state.page,
+                size: _this.state.size,
+                keyword: keyword,
+                searchType: searchType,
+                ctgry: category
+            });
+
+            SearchState.updateUrl(params);
+
+            try {
+                // API 호출
+                const response = await API.get('/api/common/board/list/filter?' + params);
+
+                _this.state.page = response.pageNum;
+                _this.state.total = response.total;
+                _this.state.pages = response.pages;
+
+                _this.renderList(response.list);
+
+                _this.initPagination();
+
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+            }
+        },
+
+        moveDetail: async function(bbsPstOid) {
+            const _this = this;
+
+            await _this.updateViewCount(bbsPstOid);
+
+            const menuCd = this.state.reqDto.menuCd;
+            const bbsOid = this.state.config.bbsOid;
+            location.href = `${contextPath}/board/post?menuCd=${menuCd}&bbsOid=${bbsOid}&bbsPstOid=${bbsPstOid}`;
+        },
+
+        updateViewCount: async function (bbsPstOid) {
+            if(!bbsPstOid) return;
+            const _this = this;
+
+            try {
+                const param = {
+                    bbsPstOid: bbsPstOid,
+                    menuCd: _this.state.reqDto.menuCd
+                }
+
+                await API.patch('/api/common/board/view-count', param);
+            } catch (error) {
+                console.error('조회수 증가 실패:', error);
+            }
+        },
+
+        /**
+         * 검색조건 복원
+         */
+        fnRestoreState: function () {
+            const _this = this;
+
+            // 1. URL 파라미터로 복원
+            const _fieldMap = { keyword: 'keyword', searchType: 'searchType', ctgry: 'searchCategory' };
+            const urlPage = SearchState.restoreFromUrl(_fieldMap);
+            if (urlPage !== null) {
+                _this.state.page = urlPage;
+            } else {
+                // 2. sessionStorage 로 복원
+                const saved = SearchState.restoreForm(_this.getSearchStateId(), '.board_search');
+                if (saved) {
+                    _this.state.page = saved._extra.page || 1;
+                }
+            }
+
+            // 3. 뒤로가기 / 앞으로가기 시
+            SearchState.handlePopState(_fieldMap, 'page', function(page) {
+                _this.state.page = page;
+                _this.getListData();
+            });
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        galleryBoard.init();
+    });
+</script>
+
+</body>
+</html>

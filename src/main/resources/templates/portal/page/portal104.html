@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소개 > 인사말</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <div class="content_wrap">
+        <h3 class="stit">인사말</h3>
+        <div class="greeting_wrap">
+            <span><img th:src="@{/portal/images/img_greeting.png}" alt="국가생명윤리정책원장 홍창권 사진"></span>
+            <div class="greeting_text">
+                <strong><em>안녕하십니까?</em><br>국가생명윤리정책원장 홍창권입니다.</strong>
+                국가생명윤리정책원은 2011년 12월 설립되어 비록 만 12년이라는 짧은 기간이지만, 국가 경제 발전과 사회의 다변화에 따라 발생하는 의·생명 관련한 많은 사업을 하여 왔습니다.<br><br>현재 세계는 의학과 생명과학의 눈부신 발전으로 하루하루가 다르게 변화하고 있습니다. 우리 대한민국 역시 경제 발전과 더불어 세계 최고 수준의 학문적 지식을 바탕으로 높은 수준의 의·생명 및 의료 기술을 보유하게 되었습니다. 이러한 발전이 현실에 적용되는 데에는 사회적 책임 인식의 기초위에 윤리적인 고려와 생명 존엄의 중요성을 먼저 생각하여야 하지만, 연구나 의료 현장의 활성화와 나아가 국가 의료 발전도 균형감 있게 고려되어야 할 것입니다.<br><br>생명 윤리와 연구의 활성화라는 두 가지 사항을 조화롭고 완벽하게 만족시킬 수는 없겠지만, 국가생명윤리정책원은 국가의 생명 윤리 정책을 지원하면서, 윤리적인 연구의 수행과 그 활성화를 위하여 고려될 수 있는 합리적이고 현실적인 방안을 찾기 위해 노력하겠습니다. 또한, 우리 국민의 존엄한 삶의 마무리를 위해서도 현 제도를 유지, 보완하면서 앞으로 우리 사회가 나아가야 할 방향에 대해 깊이 숙고하고 최선의 길을 찾아볼 수 있도록 노력하겠습니다.<br><br>국가생명윤리정책원은 생명 윤리 제도의 확립과 관리를 통해 인간 존엄의 가치 실현을 선도한다는 비전을 실행하여, 생명 윤리 정책에 대한 제도적 여건 조성과 관리를 통해 생명 존중 사회를 구현하기 위해 최선을 다하겠습니다.<br><br>감사합니다.
+                <p>국가생명윤리정책원장 <b>홍창권</b></p>
+            </div>
+        </div>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal104 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal104.init();
+    });
+</script>
+</body>
+</html>

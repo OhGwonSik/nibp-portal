@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > 카드뉴스목록 > 카드뉴스 상세정보</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="sub_cont_wrap">
+    <div class="table_layout02 mb10">
+        <table>
+            <caption>카드뉴스 상세정보</caption>
+            <colgroup>
+                <col style="width: 100px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row">제목</th>
+                <td id="admin617_2_cn_nm"></td>
+            </tr>
+            <tr>
+                <th scope="row">공개여부</th>
+                <td id="admin617_2_open_yn"></td>
+            </tr>
+            <tr>
+                <th scope="row">내용</th>
+                <td id="admin617_2_content"></td>
+            </tr>
+            <tr>
+                <th scope="row">썸네일</th>
+                <td>
+                    <div id="admin617_2_thumbnail_alt_text" style="margin-bottom: 10px; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">
+                        <strong>대체 텍스트:</strong> <span id="admin617_2_thumbnail_alt_value">-</span>
+                    </div>
+                    <div class="table_layout">
+                        <table>
+                            <caption>첨부파일 : 파일명, 파일사이즈, 업로드일자, 다운로드</caption>
+                            <colgroup>
+                                <col style="width: auto;">
+                                <col style="width: 15%;">
+                                <col style="width: 20%;">
+                                <col style="width: 15%;">
+                            </colgroup>
+                            <thead>
+                            <tr>
+                                <th scope="col">파일명</th>
+                                <th scope="col">파일사이즈</th>
+                                <th scope="col">업로드일자</th>
+                                <th scope="col">다운로드</th>
+                            </tr>
+                            </thead>
+                            <tbody id="admin617_2_thumbnail_tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">파일첨부</th>
+                <td>
+                    <div class="table_layout">
+                        <table>
+                            <caption>첨부파일 : 파일명, 대체텍스트, 파일사이즈, 업로드일자, 다운로드</caption>
+                            <colgroup>
+                                <col style="width: auto;">
+                                <col style="width: 25%;">
+                                <col style="width: 15%;">
+                                <col style="width: 20%;">
+                                <col style="width: 15%;">
+                            </colgroup>
+                            <thead>
+                            <tr>
+                                <th scope="col">파일명</th>
+                                <th scope="col">대체 텍스트</th>
+                                <th scope="col">파일사이즈</th>
+                                <th scope="col">업로드일자</th>
+                                <th scope="col">다운로드</th>
+                            </tr>
+                            </thead>
+                            <tbody id="admin617_2_file_tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="btn_wrap mt20">
+        <a id="admin617_2_btn_update" href="javascript:;" class="btn_basic bg_type01">수정</a>
+        <a th:href="@{/admin/page/admin617}" class="btn_basic bg_type02">목록</a>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin617_2 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            cardNewsOid: null,             // 카드뉴스번호
+            strgFilePath: /*[[${basicFilePath}]]*/''
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // URL 파라미터에서 cardNewsOid 가져오기
+            const urlParams = new URLSearchParams(window.location.search);
+            this.state.cardNewsOid = parseInt(urlParams.get('cardNewsOid'));
+
+            // 이벤트 바인딩
+            this.initEvent();
+
+            // 데이터 로드
+            if (this.state.cardNewsOid) {
+                this.fnLoadData(this.state.cardNewsOid);
+            }
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 수정 버튼 클릭
+            document.getElementById("admin617_2_btn_update").addEventListener("click", function (e) {
+                e.preventDefault();
+
+                if (_this.state.cardNewsOid) {
+                    window.location.href = contextPath + '/admin/page/admin617-1?cardNewsOid=' + _this.state.cardNewsOid;
+                }
+            });
+        },
+
+        /**
+         * 데이터 로드
+         */
+        fnLoadData: async function (cardNewsOid) {
+            const _this = this;
+            try {
+                const data = await API.get('/api/admin/admin617/select?cardNewsOid=' + cardNewsOid);
+
+                // 제목
+                document.getElementById('admin617_2_cn_nm').textContent = data.cardNewsNm || '-';
+
+                // 공개여부
+                document.getElementById('admin617_2_open_yn').textContent =
+                    data.openYn === 'Y' ? '공개' : '비공개';
+
+                // 내용
+                document.getElementById('admin617_2_content').textContent = data.smry || '-';
+
+                // 썸네일 정보 표시
+                if (data.files && data.files.length > 0 && data.thmbPath) {
+                    // 썸네일 파일 찾기
+
+                    const thumbnailFile = data.files.find(file => {
+                        return file.thmbYn === 'Y';
+                    });
+
+                    if (thumbnailFile) {
+                        _this.fnRenderThumbnail(thumbnailFile);
+                    }
+                }
+
+                // 파일 정보 표시 (썸네일 제외)
+                if (data.files && data.files.length > 0) {
+                    // 썸네일이 아닌 파일만 필터링
+                    const attachFiles = data.files.filter(file => {
+                        return file.thmbYn === 'N';
+                    });
+
+                    if (attachFiles.length > 0) {
+                        _this.fnRenderFileList(attachFiles);
+                    }
+                }
+
+            } catch (error) {
+                console.error(error);
+                uiCommon.fnShowAlertModal('데이터를 불러오는데 실패했습니다.', () => {
+                    window.location.href = contextPath + '/admin/page/admin617';
+                });
+            }
+        },
+
+        /**
+         * 썸네일 렌더링
+         */
+        fnRenderThumbnail: function (file) {
+            // 대체 텍스트 표시
+            const altTextValue = document.getElementById('admin617_2_thumbnail_alt_value');
+            altTextValue.textContent = file.imgSbstTxtCn || '-';
+
+            const tbody = document.getElementById('admin617_2_thumbnail_tbody');
+            tbody.innerHTML = '';
+
+            const strgFilePath = this.state.strgFilePath;
+            const strgFileNm = file.orgnlFileNm || file.strgFileNm || '';
+            const fileRow = `
+                <tr>
+                    <td><div class="tal">${strgFileNm}</div></td>
+                    <td>${common.bytesToMB(file.strgFileCpct || 0)}</td>
+                    <td>${common.formatDate(file.regDt)}</td>
+                    <td><a href="${strgFilePath}${file.strgSmlFilePath}/${file.strgSmlFileNm}" class="a_link" download='${file.orgnlFileNm}'>다운로드</a></td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', fileRow);
+        },
+
+        /**
+         * 파일 목록 렌더링
+         */
+        fnRenderFileList: function (files) {
+            const tbody = document.getElementById('admin617_2_file_tbody');
+            tbody.innerHTML = '';
+
+            const strgFilePath = this.state.strgFilePath;
+            let html = '';
+            files.forEach(file => {
+                const strgFileNm = file.orgnlFileNm || file.strgFileNm || '';
+                const imgSbstTxtCn = file.imgSbstTxtCn || '-';
+                html += `
+                    <tr>
+                        <td><div class="tal">${strgFileNm}</div></td>
+                        <td>${imgSbstTxtCn}</td>
+                        <td>${common.bytesToMB(file.strgFileCpct || 0)}</td>
+                        <td>${common.formatDate(file.regDt)}</td>
+                        <td><a href="${strgFilePath}${file.strgFilePath}/${file.strgFileNm}" class="a_link" download='${file.orgnlFileNm}'>다운로드</a></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        admin617_2.init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.common.organization.mapper.OrganizationMapper">
+
+    <!-- ResultMap 정의 -->
+    <resultMap id="OrgChartMap" type="egovframework.common.organization.dto.OrganizationDTO">
+        <id property="deptOid" column="dept_oid"/>
+        <result property="deptNm" column="dept_nm"/>
+        <result property="upDeptOid" column="up_dept_oid"/>
+        <result property="sortSeq" column="sort_seq"/>
+        <result property="useYn" column="use_yn"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        
+        <collection property="members" ofType="egovframework.common.organization.dto.DeptMemberDTO">
+            <id property="deptMmbrOid" column="dept_mmbr_oid"/>
+            <result property="deptOid" column="member_dept_oid"/>
+            <result property="userNm" column="user_nm"/>
+            <result property="telno" column="telno"/>
+            <result property="jbgd" column="jbgd"/>
+            <result property="indctSeq" column="indct_seq"/>
+            <result property="chrgJob" column="chrg_job"/>
+        </collection>
+    </resultMap>
+
+    <!-- 전체 조직도 조회 (부서 + 멤버) -->
+    <select id="selectOrgChart" resultMap="OrgChartMap">
+        /* selectOrgChart */
+        SELECT
+            d.dept_oid,
+            d.dept_nm,
+            d.up_dept_oid,
+            d.sort_seq,
+            d.use_yn,
+            d.reg_dt,
+            d.mdfcn_dt,
+            dm.dept_mmbr_oid,
+            dm.dept_oid as member_dept_oid,
+            dm.user_nm,
+            dm.telno,
+            dm.jbgd,
+            dm.indct_seq,
+            dm.chrg_job
+        FROM ${schema}.dept d
+        LEFT JOIN ${schema}.dept_mmbr dm ON d.dept_oid = dm.dept_oid
+        WHERE d.use_yn = 'Y'
+        ORDER BY
+            (d.up_dept_oid IS NOT NULL),  -- FALSE(0)=NULL 먼저, TRUE(1)=NULL 아님 나중
+            d.up_dept_oid,
+            d.sort_seq,
+            d.dept_oid,
+            dm.indct_seq,
+            dm.chrg_job,
+            dm.user_nm
+    </select>
+
+</mapper>

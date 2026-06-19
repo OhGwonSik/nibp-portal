@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>본인인증 완료</title>
+</head>
+<body>
+<script th:inline="javascript">
+    // 팝업을 연 부모 창의 콜백 함수 호출
+    if (window.opener && window.opener.changePwdNiceAuthCallback) {
+        const result = {
+            name: /*[[${name}]]*/ '',
+            birth: /*[[${birth}]]*/ '',
+            mobileNo: /*[[${mobileNo}]]*/ ''
+        };
+        window.opener.changePwdNiceAuthCallback(result);
+    }
+    // 팝업 닫기
+    window.close();
+</script>
+</body>
+</html>

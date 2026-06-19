@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.portal.opinion.mapper.OpinionMapper">
+
+    <insert id="insertPublicDataOpinion" parameterType="egovframework.portal.opinion.domain.PublicDataOpinionSaveDTO" useGeneratedKeys="true" keyProperty="pblDataOpnnOid" keyColumn="pbl_data_opnn_oid">
+    	/* insertPublicDataOpinion */
+    	INSERT INTO ${schema}.pbl_data_opnn(
+    		pbl_data_opnn_ttl, pbl_data_opnn_cn, pbl_data_opnn_cn_txt
+    	)
+    	VALUES(
+    		#{pblDataOpnnTtl}, #{pblDataOpnnCn}, #{pblDataOpnnCnTxt}
+    	)
+    </insert>
+</mapper>

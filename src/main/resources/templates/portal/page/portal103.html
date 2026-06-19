@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소개 > 정책원 소개 > CI 소개</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">CI 소개</h3>
+    <h4 class="sstit">KoNIBP 시그니처</h4>
+    <p>국가생명윤리정책원의 CI에는 과학과 철학, 종교, 심리학 등 생명 존중을 위해 고려되어야 할 모든 학문이 잘 감긴 실타래처럼 단단하게 힘을 모으고 끊임없이 협력하여 생명존중을 위한 다양한 정책을 연구하겠다는 연구원들의 의지를 담고 있다. 보라색은 과학과 기술 분야를, 오렌지색은 철학, 종교, 심리학 등의 분야를 의미하며, 청록색은 가장 존중되어야 할 소중한 생명을 의미한다.</p>
+    <div class="btn_wrap mt30">
+        <a th:href="@{/api/common/file/ci/download}"
+           class="ci_download">
+            <span>CI 다운로드</span>
+        </a>
+    </div>
+    <h4 class="sstit">로고타입</h4>
+    <div class="ci_wrap">
+        <ul>
+            <li><img th:src="@{/portal/images/img_ci01.png}" alt="국가생명윤리정책원 로고타입 1"></li>
+            <li><img th:src="@{/portal/images/img_ci02.png}" alt="국가생명윤리정책원 로고타입 2"></li>
+            <li><img th:src="@{/portal/images/img_ci03.png}" alt="국가생명윤리정책원 로고타입 3"></li>
+            <li><img th:src="@{/portal/images/img_ci04.png}" alt="국가생명윤리정책원 로고타입 4"></li>
+        </ul>
+    </div>
+    <h4 class="sstit">엠블럼 타입</h4>
+    <div class="ci_wrap">
+        <ul>
+            <li><img th:src="@{/portal/images/img_ci05.png}" alt="국가생명윤리정책원 엠블럼 타입"></li>
+        </ul>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal103 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal103.init();
+    });
+</script>
+</body>
+</html>

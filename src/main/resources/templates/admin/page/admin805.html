@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>로그관리 > 권한변경이력</title>
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div id="admin805SearchWrap" class="search_wrap">
+        <ul>
+			<li>
+                <label for="admin805_reg_dt_st">변경일</label>
+                <div class="flex_col">
+                    <span class="datepicker">
+                        <input type="text" id="admin805_reg_dt_st" class="datepick">
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="시작일 선택" title="시작일 선택">
+                    </span>
+                    ~
+                    <span class="datepicker">
+                        <input type="text" id="admin805_reg_dt_ed" class="datepick">
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="종료일 선택" title="종료일 선택">
+                    </span>
+                </div>
+            </li>
+            <li>
+                <label for="searchType">검색어</label>
+                <select id="searchType">
+                    <option value="chnrgUserId">변경자 ID</option>
+                    <option value="trgtUserId">대상 사용자 ID</option>
+                    <option value="prmsnType">권한 타입</option>
+                </select>
+                <input type="text" id="searchValue" placeholder="검색어 입력">
+            </li>
+            <li>
+                <label for="changeType">변경 유형</label>
+                <select id="changeType">
+                    <option value="">전체</option>
+                    <option value="ADD">부여</option>
+                    <option value="MODIFY">변경</option>
+                    <option value="REMOVE">말소</option>
+                </select>
+            </li>
+        </ul>
+        <div class="s_wrap"><a class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_desc">
+            <p>총 <strong id="total_count"></strong>건</p>
+            <div class="table_top_btn">
+                <a href="javascript:;" id="admin805exlDownBtn" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+            </div>
+        </div>
+        <div class="table_layout02 list_type mb20">
+            <table>
+                <caption>권한변경이력 목록</caption>
+                <colgroup>
+                    <col style="width: 60px;">
+                    <col style="width: 10%;">
+                    <col style="width: 10%;">
+                    <col style="width: 15%;">
+                    <col style="width: 10%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 15%;">
+                    <col style="width: auto;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">번호</th>
+                    <th scope="col">변경자 ID</th>
+                    <th scope="col">대상 사용자 ID</th>
+                    <th scope="col">메뉴명</th>
+                    <th scope="col">권한 타입</th>
+                    <th scope="col">이전 값</th>
+                    <th scope="col">변경 값</th>
+                    <th scope="col">변경 유형</th>
+                    <th scope="col">변경일시</th>
+                    <th scope="col">변경 사유</th>
+                </tr>
+                </thead>
+                <tbody id="permission_log_list_container"></tbody>
+            </table>
+        </div>
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin805 = {
+        state: {
+            list: [],
+            pageNum: 1,
+            pageCnt: 10,
+            pages: 1,
+            total: 0,
+            searchParams: {}
+        },
+
+        init: function () {
+            this.setDefaultDates();
+            this.initDatePicker();
+            this.initEvent();
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin805', '.search_wrap');
+            if (saved) {
+                this.state.pageNum = saved._extra.pageNum || 1;
+            }
+
+            this.search();
+        },
+
+        setDefaultDates: function() {
+        	document.getElementById("admin805_reg_dt_st").value = common.formatDateOffset(-15);
+            document.getElementById("admin805_reg_dt_ed").value = common.formatDateOffset();
+        },
+
+        initDatePicker: function() {
+            const _this = this;
+            uiCommon.datepicker.init('#admin805_reg_dt_st', {
+                onSelect: function(selectedDate) {
+                    const startDate = $(this).datepicker('getDate');
+                    $('#admin805_reg_dt_ed').datepicker('option', 'minDate', startDate);
+                    _this.state.pageNum = 1;
+                    _this.search();
+                }
+            });
+            uiCommon.datepicker.init('#admin805_reg_dt_ed', {
+                onSelect: function(selectedDate) {
+                    const endDate = $(this).datepicker('getDate');
+                    $('#admin805_reg_dt_st').datepicker('option', 'maxDate', endDate);
+                    _this.state.pageNum = 1;
+                    _this.search();
+                }
+            });
+        },
+
+        fetchList: async function (params) {
+            SearchState.saveForm('admin805', '.search_wrap', { pageNum: this.state.pageNum });
+
+            try {
+                const page = await API.get('/api/admin/admin805/permission-change-log/list', params,  {showLoading: true});
+                this.state.list = page.list || [];
+                this.state.pageNum = page.pageNum || 1;
+                this.state.pageCnt = page.pageCnt || 10;
+                this.state.pages = page.pages || 1;
+                this.state.total = page.total || 0;
+            } catch (error) {
+                console.error('Failed to fetch list:', error);
+            }
+        },
+
+        initEvent: function () {
+            const self = this;
+            document.querySelector(".btn_search").addEventListener("click", function (e) {
+                e.preventDefault();
+                self.state.pageNum = 1;
+                self.search();
+            });
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("admin805SearchWrap").addEventListener('keydown', e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    self.state.pageNum = 1;
+                    self.search();
+                }
+            });
+            // 검색영역 변경 이벤트
+            document.getElementById("admin805SearchWrap").addEventListener('change', e => {
+                if (e.target.matches('select, input[type="radio"]')) {
+                    e.preventDefault();
+                    self.state.pageNum = 1;
+                    self.search();
+                }
+            });
+
+         // 엑셀 다운로드 버튼 클릭
+            $("#admin805exlDownBtn").off("click").on("click", async function (e) {
+                e.preventDefault();
+
+                let excelExportYm = '';
+                let isValidYm = false;
+
+                while (!isValidYm) {
+                    excelExportYm = await uiCommon.fnShowPromptModal('연월을 입력해 주세요.', {
+                        title: '엑셀 다운로드 요청',
+                        defaultValue: '',
+                        placeholder: '예: 2026-02 또는 202602',
+                    });
+
+                    if(excelExportYm === null) return;
+
+                    const ymRegex = /^(19|20)\d{2}-?(0[1-9]|1[0-2])$/;
+                    const trimmedVal = excelExportYm.trim();
+
+                    if (ymRegex.test(trimmedVal)) {
+                        isValidYm = true;
+                        excelExportYm = trimmedVal.replace(/-/g, '');
+                    } else {
+                        await new Promise((resolve) => {
+                            uiCommon.fnShowAlertModal('형식이 올바르지 않습니다.\nYYYY-MM 또는 YYYYMM 형식으로 입력해 주세요.', resolve);
+                        });
+                    }
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                const reason = await uiCommon.fnShowPromptModal('사유를 입력해 주세요.', {
+                    title: '엑셀 다운로드 요청',
+                    defaultValue: '',
+                    placeholder: '사유 입력',
+                });
+
+                if (reason === null) return;
+
+                if (reason.trim() === '') {
+                    uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                    return;
+                }
+
+                if (reason.trim().length < 2) {
+                    uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                    return;
+                }
+
+                const params = {
+                    excelExportYm: excelExportYm,
+                    searchType: document.querySelector("#searchType").value,
+                    searchValue: document.querySelector("#searchValue").value.trim(),
+                    changeType: document.querySelector("#changeType").value,
+                    reason: reason.trim()
+                };
+
+                try {
+                    await API.excelDownload('/api/admin/admin805/permission-change-log/excel/export', params, {showLoading: true});
+                } catch(err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal("[error] : " + err);
+                }
+            });
+        },
+
+        search: function(pageNum, pageSize) {
+            const self = this;
+
+            if (pageNum !== undefined) {
+                self.state.pageNum = pageNum;
+            }
+            if (pageSize !== undefined) {
+                self.state.pageCnt = pageSize;
+            }
+
+            const startDate = document.getElementById('admin805_reg_dt_st').value.trim();
+            const endDate = document.getElementById('admin805_reg_dt_ed').value.trim();
+
+            self.state.searchParams = {
+                startDate: startDate + " 00:00:00",
+                endDate: endDate + " 23:59:59",
+                searchType: document.querySelector("#searchType").value,
+                searchValue: document.querySelector("#searchValue").value.trim(),
+                chgType: document.querySelector("#changeType").value,
+                page: self.state.pageNum,
+                size: self.state.pageCnt
+            };
+
+            self.fetchList(self.state.searchParams)
+                    .then(() => {
+                        self.renderTable();
+                        self.renderPagination();
+                    })
+                    .catch(err => {
+                        console.error(err);
+                    });
+        },
+
+        goToPage: function(page) {
+            this.search(page, this.state.pageCnt);
+        },
+
+        renderPagination: function () {
+            const self = this;
+            const totalCount = this.state.total;
+            const totalPages = Math.ceil(totalCount / this.state.pageCnt);
+
+            uiCommon.pagination.render({
+                currentPage: self.state.pageNum,
+                totalPages: totalPages,
+                onPageChange: function (page) {
+                    self.state.pageNum = page;
+                    self.search(page, self.state.pageCnt);
+                }
+            });
+            document.getElementById("total_count").textContent = totalCount;
+        },
+
+        renderTable: function () {
+            const tbody = document.querySelector("#permission_log_list_container");
+            tbody.innerHTML = "";
+
+            const list = this.state.list;
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="tac">조회된 결과가 없습니다.</td></tr>`;
+                return;
+            }
+
+            let num = this.state.total - ((this.state.pageNum-1) * this.state.pageCnt);
+
+            let html = '';
+            list.forEach(item => {
+                const chgDt = item.chgDt ? new Date(item.chgDt).toLocaleString() : '';
+                const chgTypeText = item.chgType === 'ADD' ? '부여' :
+                        item.chgType === 'MODIFY' ? '변경' :
+                                item.chgType === 'REMOVE' ? '말소' : item.chgType;
+
+                html += `
+                    <tr>
+                        <td class="tac">${num--}</td>
+                        <td class="tac">${item.chnrgUserId || ''}</td>
+                        <td class="tac">${item.trgtUserId || ''}</td>
+                        <td class="tal">${item.menuNm || ''}</td>
+                        <td class="tac">${item.prmsnType || ''}</td>
+                        <td class="tac">${item.oldVl || '-'}</td>
+                        <td class="tac">${item.newVl || '-'}</td>
+                        <td class="tac">${chgTypeText}</td>
+                        <td class="tac">${chgDt}</td>
+                        <td class="tal">${item.rsn || '-'}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+    };
+
+    $(document).ready(function () {
+        admin805.init();
+    });
+</script>
+</body>
+</html>

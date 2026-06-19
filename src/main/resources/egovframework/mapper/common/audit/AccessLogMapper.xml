@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.common.audit.mapper.AccessLogMapper">
+
+	<insert id="insertAccessLog" parameterType="egovframework.common.audit.domain.ApiAccessLog">
+		<!-- insertAccessLog -->
+		INSERT INTO ${schema}.user_acs_log (
+			user_oid,
+			user_id,
+			acs_type,
+			rqt_uri,
+			rqt_mthd,
+			rqt_qry,
+			rqt_bdy_sz,
+			stts_cd,
+			rspns_bdy_sz,
+			rspns_time_ms,
+			error_msg,
+			rfpr_url,
+			rfpr_type,
+			srch_kywd,
+            ip_addr,
+			user_agt,
+			brwsr_nm,
+			brwsr_ver,
+            os_nm,
+			os_ver,
+			dvc_type,
+            ssn_id,
+			reg_id,
+			reg_dt
+		)
+		VALUES (
+			#{userOid},
+			#{userId},
+			#{acsType},
+			#{rqtUri},
+			#{rqtMthd},
+			#{rqtQry},
+			#{rqtBdySz},
+			#{sttsCd},
+			#{rspnsBdySz},
+			#{rspnsTimeMs},
+			#{errorMsg},
+			#{rfprUrl},
+			#{rfprType},
+			#{srchKywd},
+			#{ipAddr},
+			#{userAgt},
+			#{brwsrNm},
+			#{brwsrVer},
+			#{osNm},
+			#{osVer},
+			#{dvcType},
+			#{ssnId},
+			IFNULL(#{regId}, 'SYSTEM'),
+			IFNULL(#{regDt}, NOW())
+		)
+	</insert>
+</mapper>

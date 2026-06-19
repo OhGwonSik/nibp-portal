@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.portal.popup.mapper.PopupMapper">
+
+    <!-- 파일 ResultMap -->
+    <resultMap id="fileResultMap" type="egovframework.common.file.domain.FileDTO">
+        <id property="fileOid" column="file_oid"/>
+        <result property="tblNm" column="tbl_nm"/>
+        <result property="tblOid" column="tbl_oid"/>
+        <result property="orgnlFileNm" column="orgnl_file_nm"/>
+        <result property="strgFileNm" column="strg_file_nm"/>
+        <result property="strgFilePath" column="strg_file_path"/>
+        <result property="strgFileCpct" column="strg_file_cpct"/>
+        <result property="fileTypeNm" column="file_type_nm"/>
+        <result property="fileType" column="file_type"/>
+        <result property="thmbYn" column="thmb_yn"/>
+        <result property="imgSbstTxtCn" column="img_sbst_txt_cn"/>
+        <result property="dwnldCnt" column="dwnld_cnt"/>
+        <result property="atchFileSeq" column="atch_file_seq"/>
+        <result property="useYn" column="f_use_yn"/>
+    </resultMap>
+
+    <resultMap id="popupWithFilesResultMap" type="egovframework.portal.popup.dto.PopupDTO">
+        <id property="popupOid" column="popup_oid"/>
+        <result property="popupTtl" column="popup_ttl"/>
+        <result property="popupType" column="popup_type"/>
+        <result property="popupCn" column="popup_cn"/>
+        <result property="popupImgFilePath" column="popup_img_file_path"/>
+        <result property="popupUrlAddr" column="popup_url_addr"/>
+        <result property="popupBgngDt" column="popup_bgng_dt"/>
+        <result property="popupEndDt" column="popup_end_dt"/>
+        <result property="pstnX" column="pstn_x"/>
+        <result property="pstnY" column="pstn_y"/>
+        <result property="sizeW" column="size_w"/>
+        <result property="sizeH" column="size_h"/>
+        <result property="openYn" column="open_yn"/>
+        <result property="useYn" column="use_yn"/>
+        <result property="regId" column="reg_id"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnId" column="mdfcn_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        <collection property="attachments" resultMap="fileResultMap"/>
+    </resultMap>
+
+    <select id="selectPopupList" resultMap="popupWithFilesResultMap">
+        SELECT
+            p.popup_oid,
+            p.popup_ttl,
+            p.popup_type,
+            p.popup_cn,
+            p.popup_img_file_path,
+            p.popup_url_addr,
+            p.popup_bgng_dt,
+            p.popup_end_dt,
+            p.pstn_x,
+            p.pstn_y,
+            p.size_w,
+            p.size_h,
+            p.open_yn,
+            p.use_yn,
+            p.reg_id,
+            p.reg_dt,
+            p.mdfcn_id,
+            p.mdfcn_dt,
+            f.file_oid,
+            f.tbl_nm,
+            f.tbl_oid,
+            f.orgnl_file_nm,
+            f.strg_file_nm,
+            f.strg_file_path,
+            f.strg_file_cpct,
+            f.file_type_nm,
+            f.file_type,
+            f.thmb_yn,
+            f.img_sbst_txt_cn,
+            f.dwnld_cnt,
+            f.atch_file_seq,
+            f.use_yn AS f_use_yn
+        FROM
+            ${schema}.popup p
+        LEFT JOIN
+            ${schema}.file f ON f.tbl_oid = p.popup_oid
+                AND f.tbl_nm = 'popup'
+                AND f.use_yn = 'Y'
+        WHERE
+            p.use_yn = 'Y'
+            AND p.open_yn = 'Y'
+            AND CURDATE() <![CDATA[>=]]> p.popup_bgng_dt
+            AND (p.popup_end_dt IS NULL OR p.popup_end_dt <![CDATA[>=]]> CURDATE())
+        ORDER BY
+            p.popup_oid DESC, f.atch_file_seq ASC
+    </select>
+</mapper>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>NICE 본인인증 성공 - 관리자 비밀번호 재설정</title>
+    <script type="text/javascript" th:inline="javascript">
+        /*<![CDATA[*/
+        window.onload = function () {
+            var result = {
+                success: true,
+                message: '본인인증이 완료되었습니다.'
+            };
+
+            try {
+                if (window.opener && !window.opener.closed) {
+                    // 관리자 비밀번호 재설정 본인인증 성공 콜백 호출
+                    if (typeof window.opener.adminResetPwdNiceAuthCallback === 'function') {
+                        window.opener.adminResetPwdNiceAuthCallback(result);
+                    } else {
+                        alert('본인인증이 완료되었습니다.');
+                    }
+                } else {
+                    alert('본인인증이 완료되었습니다.');
+                }
+            } catch (e) {
+                alert('본인인증이 완료되었습니다.');
+            } finally {
+                window.close();
+            }
+        }
+        /*]]>*/
+    </script>
+</head>
+<body>
+로딩 중...
+</body>
+</html>

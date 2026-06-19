@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${boardInfo.bbsNm}">FAQ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit" th:text="${boardInfo.bbsNm}">FAQ</h3>
+    <div class="sub_tab_menu" th:if="${boardInfo.ctgryYn == 'Y' and boardInfo.ctgryList != null}">
+        <ul id="category_tabs">
+            <li class="on"><a href="javascript:;" data-category="">전체</a></li>
+            <li th:each="cat : ${#strings.arraySplit(#strings.replace(#strings.replace(#strings.replace(boardInfo.ctgryList, '(', ''), ')', ''), '''', ''), ',')}" >
+                <a href="javascript:;" th:data-category="${#strings.trim(cat)}" th:text="${#strings.trim(cat)}"></a>
+            </li>
+        </ul>
+    </div>
+    <div class="board_search mb10" th:if="${boardInfo.srchUseYn == 'Y'}">
+        <p class="count">총 <strong class="color_01" id="faq_total_count" th:text="${boardPostList.total}">0</strong> 건</p>
+        <fieldset>
+            <legend>FAQ 검색</legend>
+            <input type="text" id="faq_keyword" title="검색어를 입력해주세요." class="wp200">
+            <button id="faq_btn_search" class="btn_basic_ss">검색</button>
+        </fieldset>
+    </div>
+    <dl class="webtong_faq" id="faq_list">
+        <th:block th:if="${boardPostList == null or boardPostList.list == null or boardPostList.list.isEmpty()}">
+            <dt><a href="javascript:;" title="">조회된 결과가 없습니다.</a></dt>
+        </th:block>
+
+        <th:block th:if="${boardPostList != null and boardPostList.list != null}">
+            <th:block th:each="item : ${boardPostList.list}">
+                <dt th:data-no="${item.bbsPstOid}">
+                    <!-- <span th:if="${item.upendFixYn == 'Y'}" class="badge bg_red mr5"></span> TODO 추후 고정으로 바꾸기 -->
+                    <a href="javascript:;" title="답변 열기" th:text="${item.bbsPstTtl}">질문</a>
+                </dt>
+                <dd>
+                    <div class="in_content">
+                        <div th:if="${item.bbsPstCn != null}" th:utext="${item.bbsPstCn}" class="post-content">답변 내용</div>
+                    </div>
+                </dd>
+            </th:block>
+        </th:block>
+    </dl>
+    <div id="paging_wrap" class="paging_wrap">
+        <a href="javascript:" class="first page_first">첫 페이지</a>
+        <a href="javascript:" class="previous page_prev">전 페이지</a>
+        <div class="namber pagination_container"></div>
+        <a href="javascript:" class="next page_next">다음 페이지</a>
+        <a href="javascript:" class="last page_last">끝 페이지</a>
+    </div>
+</div>
+
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const faq_board = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: /*[[${boardPostList}]]*/ {},
+            config: /*[[${boardInfo}]]*/ {},
+            reqDto: /*[[${boardRequestDto}]]*/ {},
+            pageIndex: 1,
+            pageCnt: /*[[${boardInfo.pageCnt}]]*/ 10,
+            pagingCnt: /*[[${boardInfo.pagingCnt}]]*/ 5,
+            selectedCategory: ''
+        },
+
+        /**
+         * 초기 로드
+         */
+        getSearchStateId: function() {
+            return 'portal_faq_board_' + this.state.config.bbsOid;
+        },
+
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm(_this.getSearchStateId(), '.board_search');
+            if (saved) {
+                _this.state.pageIndex = saved._extra.pageIndex || 1;
+            }
+
+            _this.renderPagination();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // FAQ 아코디언 클릭 이벤트
+            $(document).on('click', '.webtong_faq dt', function () {
+                const $dt = $(this);
+                const $a = $dt.find('a');
+                const $dd = $dt.next('dd');
+                const isOpen = $dd.is(':visible');
+
+                // 모두 닫기
+                $('.webtong_faq dt')
+                        .removeClass('active')
+                        .find('a')
+                        .attr('title', '답변 열기');
+                $('.webtong_faq dd').slideUp();
+
+                // 이미 열려있으면 그대로 닫기만
+                if (isOpen) {
+                    return;
+                }
+
+                // 열기
+                $dt.addClass('active');
+                $dd.slideDown();
+                $a.attr('title', '답변 닫기');
+            });
+
+            // 분류 탭 클릭 이벤트
+            $(document).on('click', '#category_tabs a', function (e) {
+                e.preventDefault();
+
+                const category = $(this).data('category') || '';
+                const url = new URL(window.location.href);
+
+                if (!category) url.searchParams.delete('category');
+                else url.searchParams.set('category', category);
+
+                window.location.href = url.toString();
+            });
+
+            // 검색 버튼 클릭 이벤트
+            const searchBtn = document.getElementById('faq_btn_search');
+            if (searchBtn) {
+                searchBtn.addEventListener('click', function () {
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                });
+            }
+
+            // 검색어 입력 시 엔터키 이벤트
+            const keywordInput = document.getElementById('faq_keyword');
+            if (keywordInput) {
+                keywordInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        _this.state.pageIndex = 1;
+                        _this.getListData();
+                    }
+                });
+            }
+        },
+
+        /**
+         * FAQ 목록 조회
+         */
+        getListData: async function () {
+            const _this = this;
+            SearchState.saveForm(_this.getSearchStateId(), '.board_search', { pageIndex: _this.state.pageIndex });
+
+            const keywordInput = document.getElementById('faq_keyword');
+
+            const param = new URLSearchParams({
+                bbsOid: _this.state.config.bbsOid,
+                page: _this.state.pageIndex,
+                size: _this.state.pageCnt,
+                menuCd: _this.state.reqDto.menuCd,
+                keyword: keywordInput ? keywordInput.value.trim() : '',
+                searchType: 'all', // 질문 제목 + 답변 내용 모두 검색
+                ctgry: _this.state.selectedCategory
+            });
+
+            try {
+                const response = await API.get('/api/common/board/list/filter?' + param);
+                _this.state.all = response;
+                _this.renderFaqList();
+                _this.renderPagination();
+            } catch (error) {
+                console.error('FAQ 목록 조회 실패:', error);
+            }
+        },
+
+        /**
+         * FAQ 목록 렌더링
+         */
+        renderFaqList: function () {
+            const _this = this;
+            const container = document.getElementById('faq_list');
+            container.innerHTML = '';
+
+            // 총 건수 업데이트
+            const totalCountEl = document.getElementById('faq_total_count');
+            if (totalCountEl) {
+                totalCountEl.textContent = _this.state.all ? _this.state.all.total : 0;
+            }
+
+            const list = _this.state.all ? _this.state.all.list : [];
+
+            if (!list || list.length === 0) {
+                container.innerHTML = '<dt><a href="javascript:;" title="">조회된 결과가 없습니다.</a></dt>';
+                return;
+            }
+
+            // 상단고정 글과 일반 글 분리
+            const pinnedList = list.filter(item => item.upendFixYn === 'Y');
+            const normalList = list.filter(item => item.upendFixYn !== 'Y');
+            const sortedList = [...pinnedList, ...normalList];
+
+            let html = '';
+            sortedList.forEach(function (item) {
+
+                let badgeHtml = '';
+
+                const dtHtml = `
+                    <dt data-no="${item.bbsPstOid}">
+                        ${badgeHtml} <a href="javascript:;" title="답변 열기">${item.bbsPstTtl}</a>
+                    </dt>
+                `;
+
+                // 답변 내용 처리
+                const answerContent = item.bbsPstCn
+                        ? item.bbsPstCn
+                        : '-';
+
+                const ddHtml = `
+                    <dd>
+                        <div class="in_content">
+                            <div>${answerContent}</div>
+                        </div>
+                    </dd>
+                `;
+
+                html += dtHtml + ddHtml;
+            });
+            container.innerHTML = html;
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            if (!_this.state.all) {
+                return;
+            }
+
+            const totalPages = _this.state.all.pages || 1;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: totalPages,
+                blockSize: _this.state.pagingCnt,
+                onPageChange: function(page) {
+                    _this.state.pageIndex = page;
+                    _this.getListData();
+                }
+            });
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        faq_board.init();
+    });
+</script>
+</body>
+</html>

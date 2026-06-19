@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 관리자 관리 > 관리자상세정보</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <h3 class="stit">관리자 상세정보</h3>
+        <!-- hidden: userOid -->
+        <input type="hidden" id="admin801_2_user_no" th:value="${userOid}"/>
+        <div class="table_layout02">
+            <table>
+                <caption>관리자 상세정보</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row" class="point">성명(한글)</th>
+                    <td><span id="lbl_user_nm_kr"></span></td>
+                    <th scope="row" class="bl point">성명(영문)</th>
+                    <td><span id="lbl_user_nm_en"></span></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point">생년월일</th>
+                    <td><span id="lbl_brdt"></span></td>
+                    <th scope="row" class="point bl">아이디</th>
+                    <td><span id="lbl_user_id"></span></td>
+                </tr>
+                <tr>
+                    <th scope="row">등록일시</th>
+                    <td colspan="3"><span id="lbl_reg_dt"></span></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point">이메일</th>
+                    <td colspan="3"><span id="lbl_email"></span></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point">휴대폰</th>
+                    <td colspan="3"><span id="lbl_mpno"></span></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point">부서</th>
+                    <td><span id="lbl_dept_nm"></span></td>
+                    <th scope="row" class="bl point">직위</th>
+                    <td><span id="lbl_pstn_nm"></span></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point">상태</th>
+                    <td><span id="lbl_use_yn"></span></td>
+                    <th scope="row" class="bl point">개인정보취급권한</th>
+                    <td>
+                        <span id="lbl_privacy_yn"></span>
+                        <span class="ml10">(시작일: <span id="lbl_privacy_start_dt"></span> / 종료일: <span id="lbl_privacy_end_dt"></span>)</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="admin801_2_btn_unlock" class="btn_basic bg_type02" style="display: none;">계정 잠금 해제</a>
+            <a href="javascript:;" id="admin801_2_btn_close" class="btn_basic bg_type01">목록</a>
+            <a href="javascript:;" id="admin801_2_btn_edit" class="btn_basic bg_type02">수정</a>
+        </div>
+    </div>
+</div>
+
+<!-- 스크립트 -->
+<script layout:fragment="scripts" th:inline="javascript">
+    let admin801Detail = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: null,  // 조회한 데이터
+            userOid: null
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function() {
+            // 데이터 조회
+            this.getUserDetail();
+
+            // 이벤트 바인딩
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function() {
+            const _this = this;
+
+            // 목록 버튼 클릭
+            document.getElementById("admin801_2_btn_close").addEventListener("click", function (e) {
+                e.preventDefault();
+                window.location.href = contextPath + "/admin/page/admin801";
+            });
+
+            // 수정 버튼 클릭
+            document.getElementById("admin801_2_btn_edit").addEventListener("click", function (e) {
+                e.preventDefault();
+                const userOid = _this.state.userOid;
+                if (!userOid) {
+                    uiCommon.fnShowAlertModal("사용자 번호가 없습니다.");
+                    return;
+                }
+                window.location.href = contextPath + "/admin/page/admin801-1?userOid=" + encodeURIComponent(userOid);
+            });
+
+            // 계정 잠금 해제 버튼 클릭
+            document.getElementById("admin801_2_btn_unlock").addEventListener("click", async function (e) {
+                e.preventDefault();
+                await _this.unlockAccount();
+            });
+        },
+
+        /**
+         * 사용자 번호 조회
+         */
+        fnGetUserNo: function() {
+            const params = new URLSearchParams(window.location.search);
+            const fromQuery = params.get("userOid");
+            if (fromQuery) return fromQuery;
+
+            const fromHidden = document.getElementById("admin801_2_user_no").value;
+            return fromHidden || null;
+        },
+
+        /**
+         * 상세 데이터 조회
+         */
+        getUserDetail: async function() {
+            const _this = this;
+            const userOid = this.fnGetUserNo();
+
+            if (!userOid) {
+                uiCommon.fnShowAlertModal("잘못된 접근입니다. 사용자 번호가 없습니다.");
+                window.location.href = contextPath + "/admin/page/admin801";
+                return;
+            }
+
+            _this.state.userOid = userOid;
+
+            try {
+                const response = await API.get('/api/admin/admin801/users/detail?userOid=' + userOid);
+
+                if (!response) {
+                    uiCommon.fnShowAlertModal("상세 정보를 불러오지 못했습니다.");
+                    return;
+                }
+
+                _this.state.all = response;
+                _this.renderTable();
+            } catch (error) {
+                console.error('상세 조회 중 오류 발생:', error);
+                uiCommon.fnShowAlertModal("상세 조회 중 오류가 발생했습니다.");
+            }
+        },
+
+        /**
+         * 테이블 렌더링
+         */
+        renderTable: function() {
+            document.getElementById("lbl_user_nm_kr").textContent = this.state.all.userNmKorn || ''; // 한글 이름
+            document.getElementById("lbl_user_nm_en").textContent = this.state.all.userNmEng || ''; // 영어 이름
+            document.getElementById("lbl_brdt").textContent = this.state.all.brdt
+                    ? common.formatDate(this.state.all.brdt)
+                    : ''; // 생년월일
+            document.getElementById("lbl_user_id").textContent = this.state.all.userId || ''; // 사용자 ID
+            document.getElementById("lbl_email").textContent = (this.state.all.emlLcal && this.state.all.emlDmn)
+                    ? common.joinEmail(this.state.all.emlLcal, this.state.all.emlDmn)
+                    : ''; // 이메일
+            document.getElementById("lbl_mpno").textContent = (this.state.all.mpnoPfx && this.state.all.mpnoMid && this.state.all.mpnoSfx)
+                    ? common.joinPhoneNumber(this.state.all.mpnoPfx, this.state.all.mpnoMid, this.state.all.mpnoSfx)
+                    : ''; // 휴대폰 번호
+            document.getElementById("lbl_dept_nm").textContent = this.state.all.deptNm || ''; // 부서명
+            document.getElementById("lbl_pstn_nm").textContent = this.state.all.jbpsNm || ''; // 직급
+            document.getElementById("lbl_reg_dt").textContent = this.state.all.regDt
+                    ? common.formatDateTime(this.state.all.regDt)
+                    : ''; // 등록일
+            document.getElementById("lbl_use_yn").textContent = this.state.all.useYn === 'Y' ? '활성' : '비활성' // 사용여부
+            document.getElementById("lbl_privacy_yn").textContent = this.state.all.prvcUseYn === 'Y' ? '활성' : '비활성'; // 개인정보취급여부
+            document.getElementById("lbl_privacy_start_dt").textContent = this.state.all.prvcStartDt ? common.formatDate(this.state.all.prvcStartDt) : '-';
+            document.getElementById("lbl_privacy_end_dt").textContent = this.state.all.prvcEndDt ? common.formatDate(this.state.all.prvcEndDt) : '-';
+
+            // 계정 잠금 상태 처리
+            const loginFailCnt = this.state.all.lgnFailCnt || 0;
+            const unlockBtn = document.getElementById("admin801_2_btn_unlock");
+
+            if (loginFailCnt >= 5) {
+                unlockBtn.style.display = 'inline-block';
+            } else {
+                unlockBtn.style.display = 'none';
+            }
+        },
+
+        /**
+         * 계정 잠금 해제
+         */
+        unlockAccount: async function() {
+            const _this = this;
+            const userOid = _this.fnGetUserNo();
+
+            if (!userOid) {
+                uiCommon.fnShowAlertModal("사용자 번호가 없습니다.");
+                return;
+            }
+
+            await uiCommon.fnShowConfirmModal("계정 잠금을 해제하시겠습니까?",
+                async () => {
+                    uiCommon.fnHideConfirmModal();
+                    try {
+                        await API.post('/api/admin/admin801/users/unlock', {
+                            userOid: userOid
+                        });
+
+                        uiCommon.fnShowAlertModal("계정 잠금이 해제되었습니다.", async () => {
+                            await _this.getUserDetail();
+                        });
+                    } catch (error) {
+                        console.error('계정 잠금 해제 중 오류 발생:', error);
+                    }
+                }
+            );
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+        admin801Detail.init();
+    });
+</script>
+
+</body>
+</html>

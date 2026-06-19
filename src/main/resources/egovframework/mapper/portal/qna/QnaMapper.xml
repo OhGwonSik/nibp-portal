@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.portal.qna.mapper.QnaMapper">
+
+    <resultMap id="qnaListResultMap" type="egovframework.portal.qna.dto.QnaDTO">
+        <id property="qnaOid" column="qna_oid"/>
+        <result property="upQnaOid" column="up_qna_oid"/>
+        <result property="userId" column="user_id"/>
+        <result property="wrtrNm" column="wrtr_nm"/>
+        <result property="pswd" column="pswd"/>
+        <result property="qnaTtl" column="qna_ttl"/>
+        <result property="ntcCn" column="ntc_cn"/>
+        <result property="ntcCnTxt" column="ntc_cn_txt"/>
+        <result property="ansYn" column="ans_yn"/>
+        <result property="prvtPstYn" column="prvt_pst_yn"/>
+        <result property="useYn" column="use_yn"/>
+        <result property="inqCnt" column="inq_cnt"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+    </resultMap>
+
+    <!-- Q&A 게시판 게시글 목록 조회 with Filter -->
+    <select id="selectQnaPostListWithFilter" resultMap="qnaListResultMap">
+        SELECT
+        qna_oid,
+        up_qna_oid,
+        user_id,
+        wrtr_nm,
+        pswd,
+        qna_ttl,
+        ntc_cn,
+        ntc_cn_txt,
+        ans_yn,
+        prvt_pst_yn,
+        use_yn,
+        inq_cnt,
+        reg_dt,
+        mdfcn_dt
+        FROM
+        ${schema}.qna
+        <where>
+            AND up_qna_oid IS NULL
+            <if test="keyword != null and keyword != ''">
+                AND
+                <choose>
+                    <when test="searchType == 'qnaTtl'">
+                        qna_ttl LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'ntcCn'">
+                        ntc_cn_txt LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'all'">
+                        (qna_ttl LIKE CONCAT('%', #{keyword}, '%')
+                        OR ntc_cn_txt LIKE CONCAT('%', #{keyword}, '%'))
+                    </when>
+                </choose>
+            </if>
+            <if test="ctgry != null and ctgry != ''">
+            	AND ctgry = #{ctgry}
+            </if>
+        </where>
+        ORDER BY
+        qna_oid DESC
+    </select>
+
+    <resultMap id="qnaQuestionResultMap" type="egovframework.portal.qna.dto.QnaDTO">
+        <!-- 질문 컬럼 매핑 -->
+        <id property="qnaOid" column="qna_oid"/>
+        <result property="userId" column="user_id"/>
+        <result property="wrtrNm" column="wrtr_nm"/>
+        <result property="ctgry" column="ctgry"/>
+        <result property="pswd" column="pswd"/>
+        <result property="qnaTtl" column="qna_ttl"/>
+        <result property="ntcCn" column="ntc_cn"/>
+        <result property="ntcCnTxt" column="ntc_cn_txt"/>
+        <result property="ansYn" column="ans_yn"/>
+        <result property="prvtPstYn" column="prvt_pst_yn"/>
+        <result property="useYn" column="use_yn"/>
+        <result property="inqCnt" column="inq_cnt"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+
+        <!-- 답변 컬럼 매핑 -->
+        <collection property="answers" ofType="egovframework.portal.qna.dto.QnaDTO">
+            <id property="qnaOid" column="item_qna_no"/>
+            <result property="upQnaOid" column="up_qna_oid"/>
+            <result property="userId" column="item_user_id"/>
+            <result property="wrtrNm" column="item_writer_nm"/>
+            <result property="qnaTtl" column="item_title"/>
+            <result property="ntcCn" column="item_content"/>
+            <result property="regDt" column="item_reg_dt"/>
+            <result property="mdfcnDt" column="item_upd_dt"/>
+
+            <!-- 답변 첨부파일 컬럼 매핑 -->
+            <collection property="attachments" ofType="egovframework.common.file.domain.FileDTO">
+                <id property="fileOid" column="file_oid"/>
+                <result property="tblNm" column="tbl_nm"/>
+                <result property="tblOid" column="tbl_oid"/>
+                <result property="orgnlFileNm" column="orgnl_file_nm"/>
+                <result property="strgFileNm" column="strg_file_nm"/>
+                <result property="strgFilePath" column="strg_file_path"/>
+                <result property="strgFileCpct" column="strg_file_cpct"/>
+                <result property="fileTypeNm" column="file_type_nm"/>
+                <result property="fileType" column="file_type"/>
+                <result property="atchFileSeq" column="atch_file_seq"/>
+                <result property="useYn" column="file_use_yn"/>
+                <result property="regId" column="file_reg_user_id"/>
+                <result property="regDt" column="file_reg_dt"/>
+                <result property="mdfcnId" column="file_upd_user_id"/>
+                <result property="mdfcnDt" column="file_upd_dt"/>
+            </collection>
+        </collection>
+
+        <!-- 질문 첨부파일 컬럼 매핑 -->
+        <collection property="attachments" ofType="egovframework.common.file.domain.FileDTO">
+            <id property="fileOid" column="file_oid"/>
+            <result property="tblNm" column="tbl_nm"/>
+            <result property="tblOid" column="tbl_oid"/>
+            <result property="orgnlFileNm" column="orgnl_file_nm"/>
+            <result property="strgFileNm" column="strg_file_nm"/>
+            <result property="strgFilePath" column="strg_file_path"/>
+            <result property="strgFileCpct" column="strg_file_cpct"/>
+            <result property="fileTypeNm" column="file_type_nm"/>
+            <result property="fileType" column="file_type"/>
+            <result property="atchFileSeq" column="atch_file_seq"/>
+            <result property="useYn" column="file_use_yn"/>
+            <result property="regId" column="file_reg_user_id"/>
+            <result property="regDt" column="file_reg_dt"/>
+            <result property="mdfcnId" column="file_upd_user_id"/>
+            <result property="mdfcnDt" column="file_upd_dt"/>
+        </collection>
+    </resultMap>
+
+    <!-- Q&A 게시판 게시글 단건 조회 -->
+    <select id="selectQnaById" resultMap="qnaQuestionResultMap">
+        SELECT
+            -- 질문(헤더) 컬럼
+            q.qna_oid,
+            q.user_id,
+            q.wrtr_nm,
+            q.ctgry,
+            q.pswd,
+            q.qna_ttl,
+            q.ntc_cn,
+            q.ntc_cn_txt,
+            q.ans_yn,
+            q.prvt_pst_yn,
+            q.use_yn,
+            q.inq_cnt,
+            q.reg_dt,
+            q.mdfcn_dt,
+
+            -- 답변(아이템) 컬럼
+            a.qna_oid AS item_qna_no,
+            a.up_qna_oid,
+            a.user_id AS item_user_id,
+            a.qna_ttl AS item_title,
+            a.wrtr_nm AS item_writer_nm,
+            a.ntc_cn AS item_content,
+            a.reg_dt AS item_reg_dt,
+            a.mdfcn_dt AS item_upd_dt
+        FROM ${schema}.qna q
+        LEFT JOIN ${schema}.qna a
+          ON q.qna_oid = a.up_qna_oid
+        WHERE q.qna_oid = #{qnaOid}
+    </select>
+
+    <!-- Q&A 등록 -->
+    <insert id="insertQna" parameterType="egovframework.portal.qna.dto.QnaInsertDTO" useGeneratedKeys="true" keyProperty="qnaOid">
+        INSERT INTO ${schema}.qna (
+            up_qna_oid,
+            user_id,
+            wrtr_nm,
+            ctgry,
+            pswd,
+            qna_ttl,
+            ntc_cn,
+            ntc_cn_txt,
+            ans_yn,
+            prvt_pst_yn,
+            reg_dt,
+            mdfcn_dt
+        ) VALUES (
+            #{upQnaOid},
+            #{userId},
+            #{wrtrNm},
+            #{ctgry},
+            #{pswd},
+            #{qnaTtl},
+            #{ntcCn},
+            #{ntcCnTxt},
+            'N',
+            #{prvtPstYn},
+            NOW(),
+            NOW()
+        )
+    </insert>
+    
+    <update id="updateQna" parameterType="egovframework.portal.qna.dto.QnaInsertDTO">
+    	UPDATE ${schema}.qna
+    		SET wrtr_nm = #{wrtrNm}
+    			, qna_ttl = #{qnaTtl}
+    			, ntc_cn = #{ntcCn}
+    			, ntc_cn_txt = #{ntcCnTxt}
+    			, prvt_pst_yn = #{prvtPstYn}
+    			, mdfcn_dt = NOW()
+    	WHERE
+    		qna_oid = #{qnaOid}
+    </update>
+
+    <update id="updateUpQnaUseYn" parameterType="egovframework.portal.qna.dto.QnaInsertDTO">
+    	UPDATE ${schema}.qna
+    		SET use_yn = 'Y'
+    			, mdfcn_dt = NOW()
+    	WHERE
+    		qna_no = #{parentNo}
+    </update>
+
+    <!-- QnA 비밀번호 검증 -->
+    <select id="checkQnAPassword" resultType="egovframework.portal.qna.dto.QnaDTO">
+    	SELECT
+    		qna_oid, pswd
+    	FROM
+    		${schema}.qna
+    	WHERE
+    		qna_oid = #{qnaOid}
+    		AND use_yn = 'Y'
+    </select>
+    
+    <!-- Q&A 만족도 평가 여부 확인 -->
+	<select id="selectSatisfactionCountByQnaOid" parameterType="egovframework.portal.qna.dto.QnaDTO" resultType="int">
+	    SELECT
+	    	COUNT(*)
+	    FROM
+	    	${schema}.qna_dgstfn_evl
+	    WHERE
+	    	tbl_nm = #{tblNm}
+	    	AND tbl_oid = #{tblOid}
+	    	AND stts != 'PENDING'
+	</select>
+	
+	<!-- Q&A 만족도 평가 저장 -->
+	<update id="updateSatisfactionCountByQnaOid" parameterType="egovframework.portal.qna.dto.QnaDTO">
+		UPDATE ${schema}.qna_dgstfn_evl
+			SET stts = #{stts}
+				, chc = #{chc}
+				, mdfcn_id = #{updId}
+				, mdfcn_dt = NOW()
+		WHERE
+			tbl_nm = #{tblNm}
+			AND tbl_oid = #{tblOid}
+	</update>
+</mapper>

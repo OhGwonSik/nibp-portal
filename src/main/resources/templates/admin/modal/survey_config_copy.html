@@ -1,0 +1,124 @@
+<th:block th:fragment="survey_config_copy" xmlns:th="http://www.thymeleaf.org">
+    <div id="survey_config_copy" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap">
+                <h1 class="p_tit">설문 복사</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <div class="table_layout02 mb10">
+                                <table>
+                                    <caption>설문 복사</caption>
+                                    <colgroup>
+                                        <col style="width: 140px;">
+                                        <col style="width: auto;">
+                                    </colgroup>
+                                    <tbody>
+                                    <tr>
+                                        <th scope="row"><label for="surveyConfigCopyTitle">생성할 설문 명칭</label></th>
+                                        <td><input type="text" name="" id="surveyConfigCopyTitle" placeholder="" value="" title="생성할 설문 명칭 입력"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn_wrap mt30">
+                        <a href="javascript:;" id="surveyConfigCopyBnt" class="btn_basic bg_type01">확인</a>
+                        <a href="javascript:;" id="surveyConfigCopyClose" class="btn_basic bg_type02 config_copy_close">취소</a>
+                    </div>
+                </div>
+                <a href="javascript:;" id="surveyConfigCopyCloseX" class="pop_close config_copy_close">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        let survey_config_copy = {
+
+            /**
+             * 상태
+             */
+            state: {
+				srvyOid : null
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function (srvyOid) {
+                uiCommon.fnShowModal('survey_config_copy');
+                
+                if (!srvyOid) {
+                    uiCommon.fnShowAlertModal("잘못된 접근입니다.", function(){
+                    	uiCommon.fnHideModal('survey_config_copy');
+                    });
+                    return;
+                }
+                this.init(srvyOid);
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function (srvyOid) {
+                // 이벤트 바인딩
+                this.state.srvyOid = srvyOid;
+                document.querySelector('#surveyConfigCopyTitle').value = '';
+                this.initEvent();
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function () {
+                const _this = this;
+                
+                $('#surveyConfigCopyCloseX').off('click').on('click', function(e) {
+                	e.preventDefault();
+                	
+                	_this.state.srvyOid = null;
+                    uiCommon.fnHideModal('survey_config_copy');
+                })
+                
+                $('#surveyConfigCopyClose').off('click').on('click', function(e) {
+                	e.preventDefault();
+                	
+                	_this.state.srvyOid = null;
+                    uiCommon.fnHideModal('survey_config_copy');
+                })
+                
+                document.querySelector('#surveyConfigCopyBnt').onclick = async function(e){
+                	e.preventDefault();
+
+                	const surveyConfigCopyTitle = document.querySelector('#surveyConfigCopyTitle').value;
+                	if(!surveyConfigCopyTitle.trim()){
+           	            uiCommon.fnShowAlertModal("설문이름을 작성해주세요.");
+           	            return;
+                	}
+
+					await survey_config_copy.fnSurveyCopy(surveyConfigCopyTitle);
+                };
+            },
+            
+            fnSurveyCopy: function(surveyConfigCopyTitle){
+           	    // 확인창
+           	    uiCommon.fnShowConfirmModal("설문을 복사하시겠습니까?", async () => {
+           	        uiCommon.fnHideConfirmModal();
+           	        try {
+           	            const result = await API.put("/api/admin/admin501/survey/copy", {
+           	                srvyOid: survey_config_copy.state.srvyOid,
+           	             	srvyTtl : surveyConfigCopyTitle
+           	            });
+           	            uiCommon.fnShowAlertModal("복사되었습니다.", () => {
+           	            	uiCommon.fnHideModal('survey_config_copy');
+           	                admin501.getListData(); // 목록 재조회
+           	            });
+           	        } catch (err) {
+           	            console.error(err);
+           	            uiCommon.fnShowAlertModal("복사 중 오류가 발생했습니다.");
+           	        }
+           	    });
+            }
+        };
+    </script>
+</th:block>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>관리자 아이디/비밀번호 찾기 - NIBP Portal</title>
+    <link rel="stylesheet" th:href="@{/admin/css/base.css}">
+    <link rel="stylesheet" th:href="@{/common/css/font.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/layer.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/style.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/tree.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/find_id_pwd.css}">
+    <link rel="stylesheet" th:href="@{/common/css/jquery-ui.css}">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+</head>
+<body class="bg_type">
+<div class="login_wrap">
+    <div class="login_inner">
+        <header class="login">
+            <h1><a th:href="@{/admin/login}">국가생명윤리정책원 관리자</a></h1>
+        </header>
+
+        <div class="find_id_pwd_wrap">
+            <h2>아이디/비밀번호 찾기</h2>
+
+            <div class="tab_menu" role="tablist" aria-label="아이디/비밀번호 찾기">
+                <ul id="find_tab_list">
+                    <li class="on" data-target="find_id_area">
+                        <a href="javascript:;"
+                           id="tab_find_id"
+                           role="tab"
+                           aria-controls="find_id_area"
+                           tabindex="0"
+                           title="선택됨">아이디 찾기</a>
+                    </li>
+                    <li data-target="find_pwd_area">
+                        <a href="javascript:;"
+                           id="tab_find_pwd"
+                           role="tab"
+                           aria-controls="find_pwd_area"
+                           tabindex="-1">비밀번호 찾기</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!--아이디 찾기-->
+            <div class="find_panel"
+                 id="find_id_area"
+                 role="tabpanel"
+                 aria-labelledby="tab_find_id">
+                <ul class="input_form">
+                    <li>
+                        <label for="find_id_name">성명</label>
+                        <input type="text" id="find_id_name" title="성명입력" placeholder="성명을 입력하세요">
+                    </li>
+                    <li>
+                        <label for="find_id_tel2">연락처</label>
+                        <div class="flex_col">
+                            <select title="연락처 앞자리" id="find_id_tel1">
+                                <option value="">선택</option>
+                                <option value="010">010</option>
+                                <option value="011">011</option>
+                                <option value="016">016</option>
+                                <option value="017">017</option>
+                                <option value="018">018</option>
+                                <option value="019">019</option>
+                            </select>
+                            -
+                            <input type="text" id="find_id_tel2" title="연락처 중간자리" maxlength="4">
+                            -
+                            <input type="text" id="find_id_tel3" title="연락처 뒷자리" maxlength="4">
+                        </div>
+                    </li>
+                    <li>
+                        <label for="find_id_email_local">이메일</label>
+                        <div class="flex_col">
+                            <input type="text" title="이메일 아이디 입력" id="find_id_email_local">
+                            @
+                            <input type="text" title="이메일 주소 입력" id="find_id_email_domain">
+                            <select title="이메일도메인" id="find_id_email_domain_select">
+                                <option value="direct">직접입력</option>
+                                <option value="naver.com">naver.com</option>
+                                <option value="daum.net">daum.net</option>
+                                <option value="gmail.com">gmail.com</option>
+                                <option value="hanmail.net">hanmail.net</option>
+                            </select>
+                        </div>
+                    </li>
+                </ul>
+                <p class="info_text"><em>*</em> 입력한 연락처, 이메일이 관리자 정보와 일치하여야 합니다.</p>
+
+                <div class="btn_wrap" id="find_id_btn_area">
+                    <a href="javascript:;" class="btn_basic btn_confirm" id="btn_find_id_confirm">확인</a>
+                    <a href="javascript:;" class="btn_basic btn_cancel" id="btn_find_id_cancel">취소</a>
+                </div>
+
+                <div class="result_box" id="find_id_result_area" style="display:none;">
+                    관리자 아이디는 <b id="find_id_result_text"></b>입니다.
+                </div>
+
+                <div class="btn_wrap" id="find_id_login_area" style="display:none;">
+                    <a href="javascript:;" class="btn_basic btn_login" id="btn_find_id_login">로그인</a>
+                </div>
+            </div>
+
+            <!--비밀번호 찾기-->
+            <div class="find_panel"
+                 id="find_pwd_area"
+                 role="tabpanel"
+                 aria-labelledby="tab_find_pwd"
+                 style="display:none;"
+                 aria-hidden="true"
+                 hidden>
+                <ul class="input_form">
+                    <li>
+                        <label for="find_pwd_user_id">아이디</label>
+                        <input type="text" id="find_pwd_user_id" title="아이디입력" placeholder="아이디를 입력하세요">
+                    </li>
+                    <li>
+                        <label for="find_pwd_name">성명</label>
+                        <input type="text" id="find_pwd_name" title="성명입력" placeholder="성명을 입력하세요">
+                    </li>
+                    <li>
+                        <label for="find_pwd_tel2">연락처</label>
+                        <div class="flex_col">
+                            <select title="연락처 앞자리" id="find_pwd_tel1">
+                                <option value="">선택</option>
+                                <option value="010">010</option>
+                                <option value="011">011</option>
+                                <option value="016">016</option>
+                                <option value="017">017</option>
+                                <option value="018">018</option>
+                                <option value="019">019</option>
+                            </select>
+                            -
+                            <input type="text" id="find_pwd_tel2" title="연락처 중간자리" maxlength="4">
+                            -
+                            <input type="text" id="find_pwd_tel3" title="연락처 뒷자리" maxlength="4">
+                        </div>
+                    </li>
+                    <li>
+                        <label for="find_pwd_email_local">이메일</label>
+                        <div class="flex_col">
+                            <input type="text" title="이메일 아이디 입력" id="find_pwd_email_local">
+                            @
+                            <input type="text" title="이메일 주소 입력" id="find_pwd_email_domain">
+                            <select title="이메일도메인" id="find_pwd_email_domain_select">
+                                <option value="direct">직접입력</option>
+                                <option value="naver.com">naver.com</option>
+                                <option value="daum.net">daum.net</option>
+                                <option value="gmail.com">gmail.com</option>
+                                <option value="hanmail.net">hanmail.net</option>
+                            </select>
+                        </div>
+                    </li>
+                </ul>
+                <p class="info_text"><em>*</em> 등록된 이메일로 임시 비밀번호가 전송됩니다.</p>
+
+                <div class="btn_wrap" id="find_pwd_btn_area">
+                    <a href="javascript:;" class="btn_basic btn_confirm" id="btn_find_pwd_confirm">확인</a>
+                    <a href="javascript:;" class="btn_basic btn_cancel" id="btn_find_pwd_cancel">취소</a>
+                </div>
+
+                <div class="result_box" id="find_pwd_result_area" style="display:none;">
+                    <ul class="help_text">
+                        <li>이메일로 임시 비밀번호가 전송되었습니다.</li>
+                        <li>임시 비밀번호로 로그인 후 비밀번호를 변경해 주세요.</li>
+                    </ul>
+                </div>
+
+                <div class="btn_wrap" id="find_pwd_login_area" style="display:none;">
+                    <a href="javascript:;" class="btn_basic btn_login" id="btn_find_pwd_login">로그인</a>
+                </div>
+            </div>
+
+            <div class="back_link">
+                <a th:href="@{/admin/login}">로그인 페이지로 돌아가기</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/modal :: modal}"></div>
+
+<script th:src="@{/common/js/jquery.min.js}"></script>
+<script th:src="@{/common/js/jquery-ui.js}"></script>
+<script th:src="@{/common/js/common.js}"></script>
+<script th:src="@{/common/js/style.js}"></script>
+<script th:src="@{/common/js/api.js}"></script>
+
+<script th:inline="javascript">
+    window.contextPath = /*[[${#httpServletRequest.contextPath}]]*/'';
+
+    const admin_find_id_pwd = {
+
+        state: {
+            verified: false,
+            verifyData: null
+        },
+
+        init: function () {
+            this.initEvent();
+            this.initEmailDomainSelect();
+            this.initTabsA11y();
+        },
+
+        initEmailDomainSelect: function () {
+            const findIdDomainInput = document.getElementById('find_id_email_domain');
+            const findIdDomainSelect = document.getElementById('find_id_email_domain_select');
+
+            if (findIdDomainInput && findIdDomainSelect) {
+                findIdDomainSelect.addEventListener('change', function () {
+                    const val = this.value;
+                    if (val === 'direct') {
+                        findIdDomainInput.value = '';
+                        findIdDomainInput.readOnly = false;
+                        findIdDomainInput.focus();
+                    } else {
+                        findIdDomainInput.value = val;
+                        findIdDomainInput.readOnly = true;
+                    }
+                });
+            }
+
+            const findPwdDomainInput = document.getElementById('find_pwd_email_domain');
+            const findPwdDomainSelect = document.getElementById('find_pwd_email_domain_select');
+
+            if (findPwdDomainInput && findPwdDomainSelect) {
+                findPwdDomainSelect.addEventListener('change', function () {
+                    const val = this.value;
+                    if (val === 'direct') {
+                        findPwdDomainInput.value = '';
+                        findPwdDomainInput.readOnly = false;
+                        findPwdDomainInput.focus();
+                    } else {
+                        findPwdDomainInput.value = val;
+                        findPwdDomainInput.readOnly = true;
+                    }
+                });
+            }
+        },
+
+        initTabsA11y: function () {
+            const _this = this;
+            const tabList = document.getElementById('find_tab_list');
+            const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+
+            tabs.forEach(function (tab) {
+                tab.addEventListener('keydown', function (e) {
+                    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+                    e.preventDefault();
+
+                    const idx = tabs.indexOf(tab);
+                    const next = (e.key === 'ArrowRight')
+                        ? tabs[(idx + 1) % tabs.length]
+                        : tabs[(idx - 1 + tabs.length) % tabs.length];
+
+                    next.focus();
+                });
+
+                tab.addEventListener('keydown', function (e) {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    const targetId = tab.getAttribute('aria-controls');
+                    if (targetId) _this.switchPanel(targetId);
+                });
+            });
+
+            if (tabList) {
+                tabList.addEventListener('click', function (e) {
+                    const a = e.target.closest('a[role="tab"]');
+                    if (!a) return;
+                    const targetId = a.getAttribute('aria-controls');
+                    if (!targetId) return;
+                    _this.switchPanel(targetId);
+                });
+            }
+
+            _this.switchPanel('find_id_area', false, true);
+        },
+
+        switchPanel: function (targetId, keepFocusOnTab, isInitial) {
+            const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+            const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+            tabs.forEach(function (tab) {
+                const selected = tab.getAttribute('aria-controls') === targetId;
+                tab.setAttribute('title', selected ? '선택됨' : '');
+                tab.setAttribute('tabindex', selected ? '0' : '-1');
+
+                const li = tab.closest('li');
+                if (li) {
+                    li.classList.toggle('on', selected);
+                    if (selected) tab.setAttribute('title', '선택됨');
+                    else tab.removeAttribute('title');
+                }
+            });
+
+            panels.forEach(function (panel) {
+                const active = panel.id === targetId;
+                if (active) {
+                    panel.style.display = '';
+                    panel.hidden = false;
+                    panel.setAttribute('aria-hidden', 'false');
+                } else {
+                    panel.style.display = 'none';
+                    panel.hidden = true;
+                    panel.setAttribute('aria-hidden', 'true');
+                }
+            });
+
+            if (isInitial) return;
+
+            const activeTab = tabs.find(t => t.getAttribute('aria-controls') === targetId);
+            if (keepFocusOnTab && activeTab) {
+                activeTab.focus();
+                return;
+            }
+
+            const activePanel = document.getElementById(targetId);
+            const firstFocusable = activePanel?.querySelector('input, select, textarea, button, a[href]');
+            if (firstFocusable) firstFocusable.focus();
+        },
+
+        initEvent: function () {
+            const _this = this;
+
+            // 아이디 찾기 버튼 이벤트
+            const btnFindIdConfirm = document.getElementById('btn_find_id_confirm');
+            const btnFindIdCancel  = document.getElementById('btn_find_id_cancel');
+            const btnFindIdLogin   = document.getElementById('btn_find_id_login');
+
+            if (btnFindIdConfirm) {
+                btnFindIdConfirm.addEventListener('click', function () {
+                    _this.handleFindId();
+                });
+            }
+
+            if (btnFindIdCancel) {
+                btnFindIdCancel.addEventListener('click', function () {
+                    _this.resetFindIdForm();
+                });
+            }
+
+            if (btnFindIdLogin) {
+                btnFindIdLogin.addEventListener('click', function () {
+                    location.href = contextPath + '/admin/login';
+                });
+            }
+
+            // 비밀번호 찾기 버튼 이벤트
+            const btnFindPwdConfirm = document.getElementById('btn_find_pwd_confirm');
+            const btnFindPwdCancel  = document.getElementById('btn_find_pwd_cancel');
+            const btnFindPwdLogin   = document.getElementById('btn_find_pwd_login');
+
+            if (btnFindPwdConfirm) {
+                btnFindPwdConfirm.addEventListener('click', function () {
+                    _this.handleFindPassword();
+                });
+            }
+
+            if (btnFindPwdCancel) {
+                btnFindPwdCancel.addEventListener('click', function () {
+                    _this.resetFindPwdForm();
+                });
+            }
+
+            if (btnFindPwdLogin) {
+                btnFindPwdLogin.addEventListener('click', function () {
+                    location.href = contextPath + '/admin/login';
+                });
+            }
+        },
+
+        handleFindId: async function () {
+            const name   = (document.getElementById('find_id_name')?.value || '').trim();
+            const tel1   = (document.getElementById('find_id_tel1')?.value || '').trim();
+            const tel2   = (document.getElementById('find_id_tel2')?.value || '').trim();
+            const tel3   = (document.getElementById('find_id_tel3')?.value || '').trim();
+            const emailLocal  = (document.getElementById('find_id_email_local')?.value || '').trim();
+            const emailDomain = (document.getElementById('find_id_email_domain')?.value || '').trim();
+
+            if (!name) { uiCommon.fnShowAlertModal("성명을 입력해 주세요."); return; }
+            if (!tel1 || !tel2 || !tel3) { uiCommon.fnShowAlertModal("연락처를 모두 입력해 주세요."); return; }
+            if (!emailLocal || !emailDomain) { uiCommon.fnShowAlertModal("이메일을 정확히 입력해 주세요."); return; }
+
+            const data = {
+                userName:  name,
+                emlLocal:  emailLocal,
+                emlDmn:    emailDomain,
+                mpnoPfx:   tel1,
+                mpnoMid:   tel2,
+                mpnoSfx:   tel3
+            };
+
+            try {
+                const result = await API.post("/auth/admin/find/id", data, {showLoading: true});
+                const userId = typeof result === "string" ? result : null;
+
+                if (!userId) {
+                    uiCommon.fnShowAlertModal("일치하는 관리자 정보가 없습니다.");
+                    return;
+                }
+
+                const resultTextEl  = document.getElementById("find_id_result_text");
+                const btnArea       = document.getElementById("find_id_btn_area");
+                const resultArea    = document.getElementById("find_id_result_area");
+                const loginArea     = document.getElementById("find_id_login_area");
+
+                if (resultTextEl) resultTextEl.textContent = userId;
+                if (btnArea) btnArea.style.display = "none";
+                if (resultArea) resultArea.style.display = "";
+                if (loginArea) loginArea.style.display = "";
+
+                document.getElementById('btn_find_id_login')?.focus();
+
+            } catch (err) {
+                if (err?.response?.data?.message) {
+                    uiCommon.fnShowAlertModal(err.response.data.message);
+                }
+            }
+        },
+
+        resetFindIdForm: function () {
+            const fields = ['find_id_name', 'find_id_tel1', 'find_id_tel2', 'find_id_tel3', 'find_id_email_local', 'find_id_email_domain'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = '';
+                    if (id === 'find_id_email_domain') el.readOnly = false;
+                }
+            });
+
+            const emailDomainSelect = document.getElementById('find_id_email_domain_select');
+            if (emailDomainSelect) emailDomainSelect.value = 'direct';
+
+            const btnArea    = document.getElementById('find_id_btn_area');
+            const resultArea = document.getElementById('find_id_result_area');
+            const loginArea  = document.getElementById('find_id_login_area');
+            const resultText = document.getElementById('find_id_result_text');
+
+            if (btnArea) btnArea.style.display = '';
+            if (resultArea) resultArea.style.display = 'none';
+            if (loginArea) loginArea.style.display = 'none';
+            if (resultText) resultText.textContent = '';
+
+            document.getElementById('find_id_name')?.focus();
+        },
+
+        handleFindPassword: async function () {
+            const _this = this;
+            const userId  = (document.getElementById('find_pwd_user_id')?.value || '').trim();
+            const name    = (document.getElementById('find_pwd_name')?.value || '').trim();
+            const tel1    = (document.getElementById('find_pwd_tel1')?.value || '').trim();
+            const tel2    = (document.getElementById('find_pwd_tel2')?.value || '').trim();
+            const tel3    = (document.getElementById('find_pwd_tel3')?.value || '').trim();
+            const emailLocal  = (document.getElementById('find_pwd_email_local')?.value || '').trim();
+            const emailDomain = (document.getElementById('find_pwd_email_domain')?.value || '').trim();
+
+            if (!userId) { uiCommon.fnShowAlertModal("아이디를 입력해 주세요."); return; }
+            if (!name) { uiCommon.fnShowAlertModal("성명을 입력해 주세요."); return; }
+            if (!tel1 || !tel2 || !tel3) { uiCommon.fnShowAlertModal("연락처를 모두 입력해 주세요."); return; }
+            if (!emailLocal || !emailDomain) { uiCommon.fnShowAlertModal("이메일을 정확히 입력해 주세요."); return; }
+
+            /* ===== 2차인증 비활성화 (주석 처리) — 복원 시 아래 블록 주석 해제 =====
+            // NICE 본인인증 시작
+            const niceResult = await this.startNiceAuth(userId);
+            if (!niceResult) {
+                return;
+            }
+
+            if (!this.state.verified) {
+                uiCommon.fnShowAlertModal("본인인증을 먼저 완료해 주세요.");
+                return;
+            }
+            ===== 2차인증 비활성화 끝 ===== */
+
+            const data = {
+                userId:    userId,
+                userName:  name,
+                emlLcal:   emailLocal,
+                emlDmn:    emailDomain,
+                mpnoPfx:   tel1,
+                mpnoMid:   tel2,
+                mpnoSfx:   tel3
+            };
+
+            try {
+                const result = await API.post("/auth/admin/find/password", data, {showLoading: true});
+
+                if (!result?.found) {
+                    uiCommon.fnShowAlertModal("입력하신 정보와 일치하는 관리자 계정을 찾을 수 없습니다.");
+                    return;
+                }
+
+                const btnArea    = document.getElementById("find_pwd_btn_area");
+                const resultArea = document.getElementById("find_pwd_result_area");
+                const loginArea  = document.getElementById("find_pwd_login_area");
+
+                if (btnArea) btnArea.style.display = "none";
+                if (resultArea) resultArea.style.display = "";
+                if (loginArea) loginArea.style.display = "";
+
+                document.getElementById('btn_find_pwd_login')?.focus();
+
+            } catch (err) {
+                if (err?.response?.data?.message) {
+                    uiCommon.fnShowAlertModal(err.response.data.message);
+                }
+            }
+            /* ===== 2차인증 비활성화 (주석 처리) =====
+            _this.resetState();
+            ===== 2차인증 비활성화 끝 ===== */
+        },
+
+        /* ===== 2차인증 비활성화 (주석 처리) — 복원 시 아래 블록 주석 해제 =====
+        resetState: function () {
+            this.state.verified = false;
+            this.state.verifyData = null;
+        },
+
+        startNiceAuth: function (userId) {
+            const _this = this;
+
+            return new Promise(function (resolve) {
+                try {
+                    const popupUrl = contextPath + "/api/common/portal/checkplus/main?purpose=ADMIN_RESET_PWD&userId=" + encodeURIComponent(userId);
+
+                    window.adminResetPwdNiceAuthCallback = function (result) {
+                        _this.state.verified = true;
+                        _this.state.verifyData = {
+                            name: result.name,
+                            birth: result.birth,
+                            mobileNo: result.mobileNo
+                        };
+                        uiCommon.fnShowAlertModal("본인인증이 완료되었습니다.", function () {
+                            resolve(true);
+                        });
+                    };
+
+                    window.adminResetPwdNiceAuthErrorCallback = function (result) {
+                        uiCommon.fnShowAlertModal(result.message || "본인인증에 실패했습니다.", function () {
+                            resolve(false);
+                        });
+                    };
+
+                    const popup = window.open(
+                        popupUrl,
+                        "adminResetPwdNiceAuthPopup",
+                        "width=430,height=640,scrollbars=yes,resizable=no"
+                    );
+
+                    if (!popup) {
+                        uiCommon.fnShowAlertModal("팝업이 차단되었습니다. 브라우저 팝업 허용 후 다시 시도해 주세요.", function () {
+                            resolve(false);
+                        });
+                        return;
+                    }
+
+                    var pollTimer = setInterval(function () {
+                        if (popup.closed) {
+                            clearInterval(pollTimer);
+                            if (!_this.state.verified) {
+                                uiCommon.fnShowAlertModal("본인인증이 완료되지 않았습니다.", function () {
+                                    resolve(false);
+                                });
+                            }
+                        }
+                    }, 500);
+                } catch (e) {
+                    console.error("본인인증 시작 중 오류:", e);
+                    uiCommon.fnShowAlertModal("본인인증 시작 중 오류가 발생했습니다.", function () {
+                        resolve(false);
+                    });
+                }
+            });
+        },
+        ===== 2차인증 비활성화 끝 ===== */
+
+        resetFindPwdForm: function () {
+            const fields = ['find_pwd_user_id', 'find_pwd_name', 'find_pwd_tel1', 'find_pwd_tel2', 'find_pwd_tel3', 'find_pwd_email_local', 'find_pwd_email_domain'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = '';
+                    if (id === 'find_pwd_email_domain') el.readOnly = false;
+                }
+            });
+
+            const emailDomainSelect = document.getElementById('find_pwd_email_domain_select');
+            if (emailDomainSelect) emailDomainSelect.value = 'direct';
+
+            const btnArea    = document.getElementById('find_pwd_btn_area');
+            const resultArea = document.getElementById('find_pwd_result_area');
+            const loginArea  = document.getElementById('find_pwd_login_area');
+
+            if (btnArea) btnArea.style.display = '';
+            if (resultArea) resultArea.style.display = 'none';
+            if (loginArea) loginArea.style.display = 'none';
+
+            document.getElementById('find_pwd_user_id')?.focus();
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        admin_find_id_pwd.init();
+    });
+</script>
+</body>
+</html>

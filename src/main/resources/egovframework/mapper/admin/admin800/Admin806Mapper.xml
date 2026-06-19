@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin800.mapper.Admin806Mapper">
+
+    <select id="selectPersonalInfoProcLogWithFilter" resultType="egovframework.admin.admin800.domain.Admin806VO">
+        SELECT
+        prvc_prcs_proc_log_oid AS prvcPrcsProcLogOid,
+        DATE_FORMAT(acs_dt, '%Y-%m-%d %H:%i:%s') AS acsDt,
+        acs_user_oid AS acsUserOid,
+        acs_id AS acsId,
+        ${schema}.fn_decrypt_aes(acs_ip, #{aesKey}) AS acsIp,
+        menu_nm AS menuNm,
+        flfmt_task_dtl AS flfmtTaskDtl,
+        ${schema}.fn_decrypt_aes(info_prcs_subj, #{aesKey}) AS infoPrcsSubj,
+        rsn,
+        DATE_FORMAT(reg_dt, '%Y-%m-%d %H:%i:%s') AS regDt,
+        reg_id AS regId
+        FROM
+        ${schema}.prvc_prcs_proc_log
+        <where>
+            <if test="filter.searchValue != null and filter.searchValue != ''">
+                AND UPPER(${schema}.fn_decrypt_aes(info_prcs_subj, #{aesKey})) LIKE CAST(CONCAT('%', UPPER(#{filter.searchValue}), '%') AS CHAR) collate utf8mb4_unicode_ci
+            </if>
+            <if test="filter.acsId != null and filter.acsId != ''">
+                AND UPPER(acs_id) LIKE CONCAT('%', UPPER(#{filter.acsId}), '%')
+            </if>
+            <if test="filter.menuNm != null and filter.menuNm != ''">
+                AND menu_nm LIKE CONCAT('%', #{filter.menuNm}, '%')
+            </if>
+            <if test="filter.flfmtTaskDtl != null and filter.flfmtTaskDtl != ''">
+                AND flfmt_task_dtl = #{filter.flfmtTaskDtl}
+            </if>
+            <if test="filter.startDate != null and filter.startDate != ''">
+                AND acs_dt <![CDATA[>=]]> STR_TO_DATE(#{filter.startDate}, '%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="filter.endDate != null and filter.endDate != ''">
+                AND acs_dt <![CDATA[<=]]> STR_TO_DATE(#{filter.endDate}, '%Y-%m-%d %H:%i:%s')
+            </if>
+			<if test="filter.excelExportYm != null and filter.excelExportYm != ''">
+			    AND reg_dt <![CDATA[>=]]> STR_TO_DATE(CONCAT(REPLACE(#{filter.excelExportYm}, '-', ''), '01'), '%Y%m%d')
+			    
+			    AND reg_dt <![CDATA[<]]> DATE_ADD(STR_TO_DATE(CONCAT(REPLACE(#{filter.excelExportYm}, '-', ''), '01'), '%Y%m%d'), INTERVAL 1 MONTH)
+			</if>              
+        </where>
+    </select>
+
+</mapper>

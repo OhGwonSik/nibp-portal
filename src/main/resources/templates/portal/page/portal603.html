@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소통·참여 > 신고</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">신고</h3>
+    <div class="overview_wrap bg_sub02">
+        <div class="overview_inner">
+            <strong>운영 목적</strong>
+            <p>국가생명윤리정책원 임직원이 직무를 수행함에 있어 우월적 지위ㆍ권한을 남용하여 약자에게 행하는 부당한 요구나 처우로 인해 국민의 신뢰를 저해하는 일들이 발생하지 않도록 클린신고센터를 운영하고 있습니다.</p>
+        </div>
+    </div>
+    <h4 class="sstit">신고 주체</h4>
+    <p>정책원 임직원으로부터 부당한 피해를 당한 국민은 누구나 신고할 수 있습니다.</p>
+    <h4 class="sstit">신고 대상</h4>
+    <p class="mb10">다음의 부당한 행위에 해당하는 경우 상담 조사를 신청할 수 있습니다.</p>
+    <div class="vision_wrap col5">
+        <ul>
+            <li><em>01</em><p>대금 미지급 및 부당 감액</p></li>
+            <li><em>02</em><p>불리한 계약 조건 강요</p></li>
+            <li><em>03</em><p>금품 및 향응 수수, 채용 청탁</p></li>
+            <li><em>04</em><p>사적 심부름 및 편의 제공 요구</p></li>
+            <li><em>05</em><p>부당한 인증 불허 및 지연</p></li>
+            <li><em>06</em><p>입찰 참가 자격 부당 제한</p></li>
+            <li><em>07</em><p>폭행 및 폭언 등 인격 모독</p></li>
+            <li><em>08</em><p>성희롱, 성추행, 성폭행 등</p></li>
+            <li><em>09</em><p>발주기관 위주 계약 제도 규정</p></li>
+            <li><em>10</em><p>상위법령 위반 불공정 특약 규정 등</p></li>
+        </ul>
+    </div>
+    <h4 class="sstit">신고 처리 절차</h4>
+    <p class="mb10">위반행위 신고는 누구나 가능합니다. 신고접수기관을 통해 신고가 이루어지면 조사, 감사 또는 수사를 통해 위반 사항이 확인되는 경우에 행위자의 징계 처분을 진행합니다. 징계가 결정되면 형사 처벌, 과태료 부과 등이 이루어지고 결과를 신고자에게 통보합니다.</p>
+    <div class="img_wrap purpose_wrap">
+        <img th:src="@{/portal/images/img_reporting.png}" class="pc" alt="하단 대체 텍스트 참조">
+        <img th:src="@{/portal/images/img_reporting_.png}" class="m" alt="하단 대체 텍스트 참조">
+        <ul class="hidden">
+            <li>누구나신고 가능</li>
+            <li>신고접수기관을 통해신고</li>
+            <li>조사, 감사, 수사를 통해 위반 사항 확인</li>
+            <li>행위자 징계 처분 진행</li>
+            <li>징계 결정 - 형사 처벌, 과태료 부과 등 결과 신고자에게 통보</li>
+        </ul>
+    </div>
+    <h4 class="sstit">신고자 보호</h4>
+    <p class="mb10">신고자는「부패방지 및 국민권익위원회의 설치와 운영에 관한 법률」에 따라 신분보장 및 비밀보장, 신변보호를 받으실 수 있습니다.</p>
+    <a th:href="@{/api/common/file/form/download/clean_guide}"
+       class="ci_download big">
+        <span>신고자 보호제도 안내 다운로드</span>
+    </a>
+    <h4 class="sstit">신고 방법</h4>
+    <p class="mb10">신고서 양식을 다운로드 후 신고자의 인적사항, 신고의 취지 및 이유, 신고대상 및 증거를 작성하여 신고자의 서명이 있는 문서를 제출해야 합니다.</p>
+    <div class="etc_box">
+        <ul>
+            <li><b>우편 및 방문</b> (04933) 서울특별시 광진구 능동로 400, 별관 2층 국가생명윤리정책원(중곡동, 보건복지행정타운) 감사실</li>
+            <li><b>이메일 접수</b> clean@nibp.kr</li>
+        </ul>
+        <a th:href="@{/api/common/file/form/download/clean_form}"
+           class="ci_download big">
+            <span>신고서 양식 다운로드</span>
+        </a>
+
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal603 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal603.init();
+    });
+</script>
+</body>
+</html>

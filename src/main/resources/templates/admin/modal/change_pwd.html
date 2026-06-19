@@ -1,0 +1,138 @@
+<th:block th:fragment="change_pwd" xmlns:th="http://www.thymeleaf.org">
+    <div id="change_pwd" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap">
+                <h1 class="p_tit">비밀번호 변경[대표홈페이지]</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <h3 class="mb10">비밀번호 변경</h3>
+                            <div class="table_layout02 mb10">
+                                <table>
+                                    <caption>회원상세정보</caption>
+                                    <colgroup>
+                                        <col style="width: 150px;">
+                                        <col style="width: auto;">
+                                    </colgroup>
+                                    <tbody>
+                                    <tr>
+                                        <th scope="row"><label for="ChangePwdCurrentPwd">현재 비밀번호</label></th>
+                                        <td>
+                                            <input type="password" name="" id="ChangePwdCurrentPwd" class="w100">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="ChangePwdNewPwd">새로운 비밀번호</label></th>
+                                        <td>
+                                            <input type="password" name="" id="ChangePwdNewPwd" class="w100">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="ChangePwdNewPwdConfirm">새로운 비밀번호 확인</label></th>
+                                        <td>
+                                            <input type="password" name="" id="ChangePwdNewPwdConfirm" class="w100">
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p>※ 8자 이상의 영문대문자, 영문소문자, 특수기호, 숫자 중 3가지 이상 조합</p>
+                        </div>
+                        <div class="btn_wrap mt30">
+                            <a href="javascript:;" id="ChangePwdBtn" class="btn_basic bg_type01">저장</a>
+                            <a href="javascript:;" id="ChangePwdCancelBtn" class="btn_basic bg_type02 btn_close_pwd">취소</a>
+                        </div>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close btn_close_pwd">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        const change_pwd = {
+
+            /**
+             * 상태
+             */
+            state: {
+                all: [],        // 전체
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function () {
+                uiCommon.fnShowModal('change_pwd');
+                this.init();
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function () {
+                // 이벤트 바인딩
+                this.initEvent();
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function (){
+                const _this = this;
+
+                // 닫기/취소 버튼 클릭
+                $(".btn_close_pwd").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    _this.closeModal();
+                });
+
+                document.getElementById("ChangePwdBtn").onclick = function (e) {
+                    e.preventDefault();
+                    _this.fetchChangePwd();
+                };
+            },
+            
+            fetchChangePwd: async function(){
+                const _this = this;
+                const data = {
+                    currentPwd: document.getElementById("ChangePwdCurrentPwd").value,
+                    newPwdConfirm : document.getElementById("ChangePwdNewPwdConfirm").value,
+                    newPswd : document.getElementById("ChangePwdNewPwd").value
+                }
+                if(!this.validateChangePwd(data)) {
+                    return;
+                }
+                try {
+                    const result = await API.post("/api/admin/mypage/updatePswd", data);
+                    uiCommon.fnShowAlertModal("수정이 완료되었습니다.");
+                    _this.closeModal();
+                } catch(e) {
+                    console.error("ChangePwd fetchChangePwd error", e);
+                }
+            },
+            validateChangePwd: function(data){
+                const currentPwd = data.currentPwd;
+                const newPswd = data.newPswd;
+                const newPwdConfirm = data.newPwdConfirm;
+
+                if(newPswd !== newPwdConfirm) {
+                    uiCommon.fnShowAlertModal("새로운 비밀번호와 확인비밀번호가 일치하지 않습니다.");
+                    return false;
+                }
+
+                if(!common.regPassword(newPswd)){
+                    uiCommon.fnShowAlertModal("비밀번호는 8자 이상의 영문대문자, 영문소문자, 특수기호, 숫자 중 3가지 이상 조합이어야 합니다.");
+                    return false;
+                }
+
+                return true;
+            },
+            closeModal: function(){
+                document.getElementById("ChangePwdCurrentPwd").value = "";
+                document.getElementById("ChangePwdNewPwdConfirm").value = "";
+                document.getElementById("ChangePwdNewPwd").value = "";
+                uiCommon.fnHideModal('change_pwd');
+            }
+        }
+    </script>
+</th:block>

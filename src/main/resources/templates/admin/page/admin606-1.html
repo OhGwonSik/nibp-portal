@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > FAQ > FAQ 등록/수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02">
+            <table>
+                <caption>FAQ등록</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row"><label for="admin606_1_question">질문</label></th>
+                    <td colspan="3"><input type="text" id="admin606_1_question" class="w100"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="admin606_1_cateNo">분류</label></th>
+                    <td>
+                        <select id="admin606_1_cateNo" title="분류 선택">
+                            <option value="">선택</option>
+                        </select>
+                    </td>
+                    <th scope="row" class="bl">공개여부</th>
+                    <td>
+                        <span class="radio-box"><input type="radio" id="admin606_1_open_y" name="admin606_1_open_yn" value="Y"><label for="admin606_1_open_y">공개</label></span>
+                        <span class="radio-box"><input type="radio" id="admin606_1_open_n" name="admin606_1_open_yn" value="N" checked=""><label for="admin606_1_open_n">비공개</label></span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="admin606_1_answer">답변</label></th>
+                    <td colspan="3"><textarea name="admin606_1_answer" id="admin606_1_answer" rows="30"></textarea></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="admin606_1_btn_save" class="btn_basic bg_type01">저장</a>
+            <a href="javascript:;" id="admin606_1_btn_cancel" class="btn_basic line_type02">취소</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin606_1 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            categories: null,   // 카테고리 목록
+            isEdit: false,      // 수정 여부
+            faqDtlOid: null,        // FAQ 번호
+
+            uploaderStorageKey: 'tempUploadKey_admin606',
+            uploadTargetId: null,
+            chunkSize: 2 * 1024 * 1024,
+            uploadUrl: '/api/common/file/chunk',
+            tempDeleteUrl: '/api/common/file/chunk/temp-file',
+            rfrncSeCd: 'FAQ',
+            isUploading: false,
+            existingFiles: [],
+            newFiles: [],
+            deleteAttachNos: [],
+            // CKEditor 업로드 이미지를 임시 보관하는 영역
+            editorFiles: [],
+            existingEditorFileKeys: [],
+            deleteEditorAttachNos: []
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            // URL 파라미터로 수정 여부 판단
+            const urlParams = new URLSearchParams(window.location.search);
+            this.state.faqDtlOid = urlParams.get('faqDtlOid');
+            this.state.isEdit = !!this.state.faqDtlOid;
+
+            // 이벤트 바인딩
+            this.initEvent();
+
+            // CKEditor 초기화 (완료 대기)
+            await this.initCkEditor();
+
+            // 카테고리 목록 조회
+            await this.getCategoryList();
+
+            // 수정이면 데이터 로드, 등록이면 폼 초기화
+            if (this.state.isEdit) {
+                await this.fnLoadData(this.state.faqDtlOid);
+            } else {
+                this.initFormData();
+            }
+            this.initUploaderTarget();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 저장 버튼 클릭
+            document.getElementById("admin606_1_btn_save").addEventListener("click", function (e) {
+                e.preventDefault();
+                
+                const payload = _this.fnBuildParam();
+                _this.prepareEditorDeletionPayload(CommonCKEditor.getContent('admin606_1_answer'));
+
+                // CommonCKEditor.saveWithFiles가 해당 객체를 multipart/form-data로 래핑한다.
+                const requestData = {
+                    faqCtgryOid: payload.faqCtgryOid,
+                    qstnCn: payload.qstnCn,
+                    openYn: payload.openYn,
+                    ansCn: CommonCKEditor.getContent('admin606_1_answer'),
+                    attachedFiles: _this.state.newFiles,
+                    deleteAttachNos: _this.state.deleteAttachNos,
+                    // 본문에 삽입된 CKEditor 이미지 정보 + 제거된 이미지 목록
+                    editorFiles: _this.state.editorFiles,
+                    deleteEditorAttachNos: _this.state.deleteEditorAttachNos
+                };
+
+                const faqDtlOid = _this.state.faqDtlOid;
+                if (faqDtlOid) {
+                    requestData.faqDtlOid = faqDtlOid;
+                }
+
+                const requestConfig = {
+                    url: faqDtlOid ? '/api/admin/admin606/faq/update' : '/api/admin/admin606/faq/save',
+                    method: faqDtlOid ? 'PATCH' : 'POST',
+                    editorId: 'admin606_1_answer',
+                    data: requestData,
+                    sendDataAsJsonBlob: true,
+                    onProgress: (p) => console.log('업로드 진행률:', p + '%'),
+                    onSuccess: () => uiCommon.fnShowAlertModal('등록되었습니다.', () => _this.fnGoToListPage()),
+                    onError: (xhr) => {
+                        const message = (xhr.responseJSON && xhr.responseJSON.validationErrors && API.formatValidationErrors(xhr.responseJSON.validationErrors)) ||
+                            (xhr.responseJSON && xhr.responseJSON.message) ||
+                            '저장에 실패했습니다.';
+                        uiCommon.fnShowAlertModal(message);
+                    }
+                };
+
+                CommonCKEditor.saveWithFiles(requestConfig);
+            });
+
+            // 취소 버튼 클릭
+            document.getElementById("admin606_1_btn_cancel").addEventListener("click", function (e) {
+                e.preventDefault();
+                uiCommon.fnShowConfirmModal('목록으로 이동하시겠습니까?', function () {
+                    uiCommon.fnHideConfirmModal();
+                    // 목록 페이지로 이동
+                    _this.fnGoToListPage();
+                })
+            });
+        },
+
+        /**
+         * CK Editor 초기화
+         */
+        initCkEditor: function () {
+            CommonCKEditor.destroy('admin606_1_answer');
+
+            document.getElementById('admin606_1_answer').style.display = 'block';
+            document.getElementById('admin606_1_answer').style.visibility = 'visible';
+
+            return CommonCKEditor.init({
+                editorId: 'admin606_1_answer',
+                content: '',
+                chunkUpload: {
+                    enabled: true,
+                    chunkUrl: '/api/common/file/tmp/ck-image/chunk',
+                    chunkSize: this.state.chunkSize,
+                    thresholdBytes: 5 * 1024 * 1024,
+                    onUploadComplete: (payload) => {
+                        // 업로드 방식과 무관하게 응답을 수집해 둔다.
+                        this.handleEditorUploadComplete(payload);
+                    }
+                },
+                config: {
+                    height: 500,
+                    allowedContent: true,
+                    removePlugins: "image",
+
+                    image2_alignClasses: [ 'image-left', 'image-center', 'image-right' ],
+                    image2_disableResizer: false,
+
+                    uploadImage_supportedTypes: /(jpeg|jpg|png|gif)$/i,
+                    uploadImage_maxSize: 52428800
+                }, 
+                onReady: function (editor) {
+                }
+            });
+
+        },
+        
+        /**
+         * 폼 입력값 초기화 - 등록
+         */
+        initFormData: function () {
+            document.getElementById('admin606_1_question').value = '';
+            document.getElementById('admin606_1_cateNo').value = '';
+            document.getElementById('admin606_1_open_n').checked = true;
+            CommonCKEditor.setContent('admin606_1_answer', '');
+        },
+
+        /**
+         * 카테고리 목록 조회
+         */
+        getCategoryList: async function () {
+            try {
+                const response = await API.get('/api/admin/admin606/category/list');
+
+                this.state.categories = response;
+                this.renderCategorySelect();
+            } catch (error) {
+                console.error('카테고리 조회 실패:', error);
+            }
+        },
+
+        /**
+         * 카테고리 셀렉트 박스 렌더링
+         */
+        renderCategorySelect: function () {
+            const select = document.getElementById('admin606_1_cateNo');
+            const categories = this.state.categories;
+
+            select.innerHTML = '<option value="">선택</option>';
+
+            if (categories && categories.length > 0) {
+                categories.forEach(function(category) {
+                    const option = document.createElement('option');
+                    option.value = category.faqCtgryOid;
+                    option.textContent = category.ctgryNm;
+                    select.appendChild(option);
+                });
+            }
+
+            // 수정 모드일 때 저장된 카테고리 선택
+            if (this.state.selectedCateNo) {
+                select.value = this.state.selectedCateNo;
+            }
+        },
+
+        /**
+         * 파라미터 생성
+         */
+        fnBuildParam: function () {
+            const cateNoValue = document.getElementById('admin606_1_cateNo').value;
+            return {
+                qstnCn: document.getElementById('admin606_1_question').value.trim(),
+                faqCtgryOid: cateNoValue ? parseInt(cateNoValue) : null,
+                ansCn: CommonCKEditor.getContent('admin606_1_answer'),
+                openYn: document.querySelector('input[name="admin606_1_open_yn"]:checked').value
+            };
+        },
+
+        /**
+         * FAQ 데이터 로드 - 수정
+         */
+        fnLoadData: async function (faqDtlOid) {
+            try {
+                const data = await API.get('/api/admin/admin606/select?faqDtlOid=' + faqDtlOid);
+
+                // 질문
+                document.getElementById('admin606_1_question').value = data.qstnCn || '';
+
+                // 카테고리
+                if (data.faqCtgryOid) {
+                    document.getElementById('admin606_1_cateNo').value = data.faqCtgryOid;
+                }
+
+                // 공개여부
+                if (data.openYn === 'Y') {
+                    document.getElementById('admin606_1_open_y').checked = true;
+                } else {
+                    document.getElementById('admin606_1_open_n').checked = true;
+                }
+
+                // 답변
+                CommonCKEditor.setContent('admin606_1_answer', data.ansCn || '');
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                // uiCommon.fnShowAlertModal('데이터를 불러오는데 실패했습니다.', () => this.fnGoToListPage());
+            }
+        },
+
+        /**
+         * FAQ 등록
+         */
+        fnCreateData: async function () {
+            const _this = this;
+
+            const formData = this.fnBuildParam();
+
+            try {
+                const response = await API.put('/api/admin/admin606/insert', formData);
+
+                if (response) {
+                    // 등록된 FAQ 번호
+                    const faqDtlOid = response;
+
+                    uiCommon.fnShowAlertModal('등록되었습니다.', function() {
+                        uiCommon.fnHideAlertModal();
+                        // 상세 페이지로 이동
+                        _this.fnGoToDetail(faqDtlOid);
+                    });
+                }
+            } catch (error) {
+                console.error('등록 실패:', error);
+
+                let errorMessage = '등록에 실패했습니다.';
+                if (error instanceof APIError) {
+                    if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        /**
+         * FAQ 수정
+         */
+        fnUpdateData: async function () {
+            const _this = this;
+
+            const formData = this.fnBuildParam();
+            formData.faqDtlOid = parseInt(this.state.faqDtlOid);
+
+            try {
+                await API.post('/api/admin/admin606/update', formData);
+                uiCommon.fnShowAlertModal('수정되었습니다.', function() {
+                    uiCommon.fnHideAlertModal();
+                    // 상세 페이지로 이동
+                    _this.fnGoToDetail(_this.state.faqDtlOid);
+                });
+            } catch (error) {
+                console.error('수정 실패:', error);
+
+                let errorMessage = '수정에 실패했습니다.';
+                if (error instanceof APIError) {
+                    if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+        
+        /**
+         * 페이지 이동 - FAQ 목록
+         */
+        fnGoToListPage: function () {
+            window.location.href = contextPath + '/admin/page/admin606';
+        },
+
+        /**
+         * 페이지 이동 - FAQ 상세
+         */
+        fnGoToDetail: function (faqDtlOid) {
+            window.location.href = contextPath + '/admin/page/admin606-2?faqDtlOid=' + faqDtlOid;
+        },
+
+        initUploaderTarget: function () {
+            if (this.state.faqDtlOid) {
+                this.state.uploadTargetId = this.state.faqDtlOid;
+            } else {
+                const storageKey = this.state.uploaderStorageKey;
+                let tempId = sessionStorage.getItem(storageKey);
+                if (!tempId) {
+                    tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+                    sessionStorage.setItem(storageKey, tempId);
+                }
+                this.state.uploadTargetId = tempId;
+            }
+        },
+
+        // CKEditor 업로드 응답(payload)을 admin 저장 요청용 포맷으로 축약한다.
+        handleEditorUploadComplete: function (payload) {
+            if (!payload || !payload.strgFilePath || !payload.strgFileNm) {
+                return;
+            }
+            const meta = {
+                originalStrgFileNm: payload.originalStrgFileNm || payload.strgFileNm,
+                storedStrgFileNm: payload.strgFileNm,
+                strgFilePath: payload.strgFilePath,
+                strgFileCpct: payload.strgFileCpct || null,
+                fileTypeNm: payload.fileTypeNm || this.extractFileExtension(payload.originalStrgFileNm || payload.strgFileNm)
+            };
+            this.upsertEditorFile(meta);
+        },
+
+        // 동일 경로/파일명은 덮어쓰고 나머지는 push한다.
+        upsertEditorFile: function (fileMeta) {
+            if (!fileMeta || !fileMeta.strgFilePath || !fileMeta.storedStrgFileNm) {
+                return;
+            }
+            const key = `${fileMeta.strgFilePath}__${fileMeta.storedStrgFileNm}`;
+            const idx = this.state.editorFiles.findIndex(item => `${item.strgFilePath}__${item.storedStrgFileNm}` === key);
+            if (idx > -1) {
+                this.state.editorFiles[idx] = fileMeta;
+            } else {
+                this.state.editorFiles.push(fileMeta);
+            }
+        },
+
+        extractFileExtension: function (fileName) {
+            if (!fileName) {
+                return '';
+            }
+            const pos = fileName.lastIndexOf('.');
+            return pos > -1 ? fileName.substring(pos + 1).toLowerCase() : '';
+        },
+
+        // 에디터 본문에서 img src를 모두 추출해 상대 경로/파일명 키 목록을 만든다.
+        extractImageKeysFromHtml: function (html) {
+            if (!html) {
+                return [];
+            }
+            const container = document.createElement('div');
+            container.innerHTML = html;
+            const nodes = Array.from(container.querySelectorAll('img[src]'));
+            const uniqueKeys = {};
+            const results = [];
+            nodes.forEach(img => {
+                const parsed = this.normalizeImageSrc(img.getAttribute('src'));
+                if (!parsed || uniqueKeys[parsed.key]) {
+                    return;
+                }
+                uniqueKeys[parsed.key] = true;
+                results.push(parsed);
+            });
+            return results;
+        },
+
+        // 절대경로/쿼리 등이 섞인 src를 /files 기준의 상대 경로 + 파일명으로 정규화한다.
+        normalizeImageSrc: function (src) {
+            if (!src || typeof src !== 'string') {
+                return null;
+            }
+            let cleaned = src.trim();
+            if (!cleaned || cleaned.indexOf('data:') === 0) {
+                return null;
+            }
+            const qIdx = cleaned.indexOf('?');
+            if (qIdx > -1) {
+                cleaned = cleaned.substring(0, qIdx);
+            }
+            const hashIdx = cleaned.indexOf('#');
+            if (hashIdx > -1) {
+                cleaned = cleaned.substring(0, hashIdx);
+            }
+            const origin = window.location.origin;
+            if (cleaned.startsWith(origin)) {
+                cleaned = cleaned.substring(origin.length);
+            }
+            const uploadsIdx = cleaned.indexOf('/files/');
+            if (uploadsIdx === -1) {
+                return null;
+            }
+            const relative = cleaned.substring(uploadsIdx + '/files/'.length);
+            const lastSlash = relative.lastIndexOf('/');
+            if (lastSlash === -1) {
+                return null;
+            }
+            const filePath = relative.substring(0, lastSlash);
+            const fileName = relative.substring(lastSlash + 1);
+            if (!filePath || !fileName) {
+                return null;
+            }
+            return {
+                strgFilePath: filePath.replace(/^\/+/, '').replace(/\\/g, '/'),
+                storedStrgFileNm: fileName,
+                key: this.buildEditorFileKey(filePath, fileName)
+            };
+        },
+
+        buildEditorFileKey: function (filePath, storedStrgFileNm) {
+            const normalizedPath = (filePath || '').replace(/^\/+/, '').replace(/\\/g, '/');
+            return `${normalizedPath}__${storedStrgFileNm}`;
+        },
+
+        // 수정 화면 진입 시 본문에 남아 있던 CKEditor 첨부(attachNo 포함) 목록을 기록해 둔다.
+        syncExistingEditorImages: function (content, attachments) {
+            this.state.existingEditorFileKeys = [];
+            if (!attachments || !attachments.length || !content) {
+                return;
+            }
+            const attachMap = {};
+            attachments.forEach(file => {
+                if (!file || !file.strgFilePath || !file.strgFileNm) {
+                    return;
+                }
+                const key = this.buildEditorFileKey(file.strgFilePath, file.strgFileNm);
+                attachMap[key] = file.fileOid;
+            });
+            const imageKeys = this.extractImageKeysFromHtml(content);
+            imageKeys.forEach(item => {
+                const fileOid = attachMap[item.key];
+                if (fileOid) {
+                    this.state.existingEditorFileKeys.push({
+                        key: item.key,
+                        fileOid: fileOid
+                    });
+                }
+            });
+        },
+
+        // 저장 직전에 본문을 재파싱해 제거된 CKEditor 첨부의 ID를 수집한다.
+        prepareEditorDeletionPayload: function (currentContent) {
+            const currentKeys = this.extractImageKeysFromHtml(currentContent);
+            const keySet = currentKeys.reduce((acc, item) => {
+                acc[item.key] = true;
+                return acc;
+            }, {});
+            const removed = this.state.existingEditorFileKeys
+                .filter(item => item && item.fileOid && !keySet[item.key])
+                .map(item => item.fileOid);
+            this.state.deleteEditorAttachNos = removed;
+        },
+
+        uploadChunkedFile: async function (file) {
+            if (!file || file.size === 0) {
+                throw new Error('비어있는 파일은 업로드할 수 없습니다.');
+            }
+
+            const chunkSize = this.state.chunkSize;
+            const totalChunks = Math.ceil(file.size / chunkSize);
+            const identifier = `${this.state.uploadTargetId}-${file.name}-${file.size}-${file.lastModified}`;
+            let uploadedInfo = null;
+
+            for (let chunkNumber = 1; chunkNumber <= totalChunks; chunkNumber++) {
+                const start = (chunkNumber - 1) * chunkSize;
+                const end = Math.min(file.size, start + chunkSize);
+                const chunk = file.slice(start, end);
+
+                const formData = new FormData();
+                formData.append('file', chunk, file.name);
+                formData.append('resumableChunkNumber', chunkNumber);
+                formData.append('resumableTotalChunks', totalChunks);
+                formData.append('resumableIdentifier', identifier);
+                formData.append('resumableFilename', file.name);
+                formData.append('strgFileCpct', file.size);
+                formData.append('targetId', this.state.uploadTargetId);
+                formData.append('rfrncSeCd', this.state.rfrncSeCd);
+
+                const response = await API.upload(this.state.uploadUrl, formData);
+
+                // 마지막 청크라면 서버 응답을 meta로 저장
+                if (chunkNumber === totalChunks && response) {
+                    uploadedInfo = {
+                        originalStrgFileNm: response.originalStrgFileNm,
+                        storedStrgFileNm: response.storedStrgFileNm,
+                        strgFilePath: response.strgFilePath,
+                        strgFileCpct: response.strgFileCpct,
+                        fileTypeNm: response.fileTypeNm || file.name.split('.').pop()
+                    };
+                }
+
+                this.updateUploadGuide(`${file.name} 업로드 중... (${chunkNumber}/${totalChunks})`);
+            }
+
+            return uploadedInfo;
+        },
+
+        deleteTempUploadedFile: function (fileInfo, useBeacon) {
+            if (!fileInfo) return Promise.resolve();
+            return fetch(this.state.tempDeleteUrl, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    strgFilePath: fileInfo.strgFilePath,
+                    storedStrgFileNm: fileInfo.storedStrgFileNm
+                }),
+                keepalive: !!useBeacon
+            }).then(res => {
+                if (!res.ok) {
+                    throw new Error('파일 삭제에 실패했습니다.');
+                }
+            });
+        },
+
+        cleanupTempFiles: function (useBeacon) {
+            if (!this.state.newFiles.length) {
+                return Promise.resolve();
+            }
+            const deletions = this.state.newFiles.map(fileInfo =>
+                this.deleteTempUploadedFile(fileInfo, useBeacon).catch((err) => {
+                    console.error(err);
+                })
+            );
+            this.state.newFiles = [];
+            return Promise.allSettled(deletions);
+        },
+
+        formatFileSize: function (bytes) {
+            if (!bytes) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        admin606_1.init();
+    });
+
+    
+    window.addEventListener('beforeunload', function () {
+        admin606_1.cleanupTempFiles(true);
+    });
+</script>
+</body>
+</html>

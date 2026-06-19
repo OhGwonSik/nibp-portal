@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.portal.survey.mapper.SurveyMapper">
+
+	<!-- 메인포탈 설문 리스트 조회 -->
+	<select id="selectSurveyListWithFilter" resultType="egovframework.portal.survey.domain.SurveyInfoDTO">
+		/* selectSurveyListWithFilter */
+		SELECT
+			ts.srvy_oid, ts.srvy_ttl
+			, ts.srvy_bgng_dt, ts.srvy_end_dt
+			, COUNT(tsq.srvy_qitem_oid) AS qst_cnt
+			, CASE 
+		        WHEN CURDATE() <![CDATA[ < ]]> ts.srvy_bgng_dt THEN 'WAIT'
+		        WHEN CURDATE() BETWEEN ts.srvy_bgng_dt AND ts.srvy_end_dt THEN 'ING'
+		        WHEN CURDATE()  <![CDATA[ > ]]> ts.srvy_end_dt THEN 'END'
+		      END AS stts
+			, (IF(ts.atch1_file_oid IS NOT NULL, 1, 0) + IF(ts.atch2_file_oid IS NOT NULL, 1, 0)) AS file_cnt
+		FROM
+			${schema}.srvy ts
+		LEFT JOIN ${schema}.srvy_qitem tsq ON
+			tsq.srvy_oid = ts.srvy_oid
+			AND tsq.srvy_qitem_type IS NOT NULL
+		WHERE
+			ts.srvy_stts NOT IN ('DEL','REG')
+			AND ts.srvy_type = 'COMMON'
+			<if test='srvyOid != null and srvyOid != 0'>
+				AND ts.srvy_oid = #{srvyOid}
+			</if>
+			<if test='keyword != null and keyword != ""'>
+				AND ts.srvy_ttl LIKE CONCAT('%', #{keyword} ,'%')
+			</if>
+		GROUP BY
+			ts.srvy_oid, ts.srvy_ttl
+			, ts.srvy_bgng_dt, ts.srvy_end_dt
+			, CASE 
+		        WHEN CURDATE() <![CDATA[ < ]]> ts.srvy_bgng_dt THEN 'WAIT'
+		        WHEN CURDATE() BETWEEN ts.srvy_bgng_dt AND ts.srvy_end_dt THEN 'ING'
+		        WHEN CURDATE() <![CDATA[ > ]]> ts.srvy_end_dt THEN 'END'
+		      END
+		ORDER BY
+			ts.srvy_oid DESC
+	</select>
+	
+	<select id="selectSurveyDateInfo" parameterType="egovframework.portal.survey.domain.SurveyParticipateDTO" resultType="map">
+		/* selectSurveyDateInfo */
+	    SELECT 
+	        srvy_bgng_dt,
+	        srvy_end_dt,
+	        srvy_stts,
+	        CASE 
+	            WHEN CURDATE() <![CDATA[ < ]]>  srvy_bgng_dt THEN 'BEFORE'
+	            WHEN CURDATE() <![CDATA[ > ]]> srvy_end_dt THEN 'CLOSED'
+	            ELSE 'PROG'
+	        END AS date_stat
+	    FROM ${schema}.srvy
+	    WHERE srvy_oid = #{srvyOid}
+	</select>	
+	
+	<select id="selectSurveyParticipatedYn" parameterType="egovframework.portal.survey.domain.SurveyParticipateDTO" resultType="int">
+		/* selectSurveyParticipatedYn */
+	    SELECT
+	    	COUNT(*)
+	    FROM
+	    	${schema}.srvy_rspdnt
+	    WHERE
+	    	srvy_oid = #{srvyOid}
+			AND ip_addr = #{ipAddr}
+			AND cmpl_yn = 'Y'
+	</select>
+	
+	
+	<select id="selectSurveyDetail" parameterType="egovframework.portal.survey.domain.SurveyInfoDTO" resultType="egovframework.portal.survey.domain.PortalSurveyDTO">
+		/* selectSurveyDetail */
+		SELECT
+			srvy_oid, srvy_ttl, srvy_bgng_dt, srvy_end_dt, srvy_type
+			, srvy_trgt, nm_clct_yn, gndr_clct_yn, inst_clct_yn
+			, mpno_clct_yn, eml_clct_yn, addr_clct_yn
+			, srvy_cn, atch_file_use_yn, atch1_file_ttl, atch1_file_oid
+			, atch2_file_ttl, atch2_file_oid
+			, CASE 
+				WHEN srvy_stts = 'DEL' THEN '미사용'
+				ELSE '사용'
+			  END AS srvy_stts
+			, rspns_cnt, reg_id, reg_dt, mdfcn_id, mdfcn_dt
+		FROM
+			${schema}.srvy
+		<where>
+			<if test='srvyOid != null and srvyOid !=""'>
+				AND srvy_oid = #{srvyOid}
+			</if>		
+		</where>
+		ORDER BY
+			srvy_oid DESC
+	</select>
+	
+	<select id="selectSurveyQstList" parameterType="egovframework.portal.survey.domain.SurveyInfoDTO" resultType="egovframework.portal.survey.domain.SurveyQuestionDTO">
+		/* selectUserSurveyQstList */
+		SELECT
+	        q.srvy_qitem_oid, q.srvy_oid, q.up_srvy_qitem_oid, q.srvy_qitem_seq
+	        , q.srvy_qitem_ttl, q.srvy_qitem_type, q.esntl_yn, q.plrl_chc_yn
+	        , q.lmt_yn, q.etc_add_yn, q.likert_min, q.likert_max
+	        , q.likert_min_lbl, q.likert_max_lbl, q.srvy_qitem_lmt
+	        , q.reg_id, q.mdfcn_id,
+	        CASE
+	            WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NULL THEN 0 WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NOT NULL THEN 1 WHEN p.srvy_qitem_type IS NULL THEN 1                                 ELSE 2                                                        END AS level,
+	        CASE
+	            WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NULL THEN CONCAT('CH', q.srvy_qitem_seq)
+	            WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NOT NULL THEN CAST(q.srvy_qitem_seq AS CHAR)
+	            WHEN p.up_srvy_qitem_oid IS NULL AND p.srvy_qitem_type IS NULL THEN CAST(q.srvy_qitem_seq AS CHAR)
+	            ELSE CONCAT(p.srvy_qitem_seq, '-', q.srvy_qitem_seq)
+	        END AS displayQNo,
+	        CASE
+	            WHEN q.up_srvy_qitem_oid IS NULL THEN NULL
+	            WHEN p.up_srvy_qitem_oid IS NULL AND p.srvy_qitem_type IS NULL THEN CONCAT('CH', p.srvy_qitem_seq)
+	            ELSE CAST(p.srvy_qitem_seq AS CHAR)
+	        END AS parentDisplayQNo
+	    FROM ${schema}.srvy_qitem q
+	    LEFT JOIN ${schema}.srvy_qitem p ON q.up_srvy_qitem_oid = p.srvy_qitem_oid
+	    LEFT JOIN ${schema}.srvy_qitem gp ON p.up_srvy_qitem_oid = gp.srvy_qitem_oid
+	    WHERE q.srvy_oid = #{srvyOid}
+	    ORDER BY
+	        /* 최상위 그룹핑 (Root Sequence) */
+	        /* 목적: 모든 항목을 '최상위 챕터 또는 독립 문항'의 순번으로 묶음 */
+	        CASE 
+	            WHEN gp.srvy_qitem_oid IS NOT NULL THEN gp.srvy_qitem_seq   <!-- Lv.2 (조부모의 순번 사용) -->
+	            WHEN p.srvy_qitem_oid IS NOT NULL  THEN p.srvy_qitem_seq    <!-- Lv.1 (부모의 순번 사용) -->
+	            ELSE q.srvy_qitem_seq                               <!-- Lv.0 또는 독립 Lv.1 (내 순번 사용) -->
+	        END ASC,
+	        /* 그룹 내 상위 문항 정렬 (Parent Sequence) */
+	        /* 목적: 챕터(Lv.0)를 가장 위로 올리고, 그 다음 Lv.1 문항들을 정렬함 */
+	        CASE 
+	            WHEN q.up_srvy_qitem_oid IS NULL AND q.srvy_qitem_type IS NULL THEN 0 <!-- Lv.0 (챕터) -->
+	            WHEN gp.srvy_qitem_oid IS NOT NULL THEN p.srvy_qitem_seq                 <!-- Lv.2 (부모 문항의 순번 따라감) -->
+	            ELSE q.srvy_qitem_seq                                            <!-- Lv.1 (내 순번 사용) -->
+	        END ASC,
+	        /* 하위 문항 정렬 (Leaf Sequence) */
+	        /* 목적: 같은 부모 문항을 가진 Lv.2 항목들끼리의 최종 순서를 결정 */
+	        CASE 
+	            WHEN gp.srvy_qitem_oid IS NOT NULL THEN q.srvy_qitem_seq <!-- Lv.2 (내 순번으로 정렬) -->
+	            ELSE 0 
+	        END ASC
+	</select>
+	
+	<select id="selectOptList" parameterType="list" resultType="egovframework.portal.survey.domain.SurveyOptionDTO">
+		/* selectUserOptList */
+	    SELECT
+			srvy_qitem_opt_oid, srvy_qitem_oid, srvy_qitem_opt_seq, srvy_qitem_opt_txt
+			, srvy_qitem_opt_img_file_oid, etc_opt_yn, rspns_cnt
+			, reg_id, reg_dt, mdfcn_id, mdfcn_dt
+	    FROM ${schema}.srvy_qitem_opt
+	    WHERE srvy_qitem_oid IN
+	    <foreach collection="srvyQitemOidList" item="srvyQitemOid" open="(" separator="," close=")">
+	        #{srvyQitemOid}
+	    </foreach>
+	    ORDER BY srvy_qitem_opt_seq
+	</select>
+	
+	<insert id="insertSurveyRspd" parameterType="egovframework.portal.survey.domain.SurveySubmitReqDTO" useGeneratedKeys="true" keyProperty="srvyRspdntOid" keyColumn="srvy_rspdnt_oid">
+	    /* insertSurveyRspd */
+		INSERT INTO ${schema}.srvy_rspdnt(
+		          srvy_oid, user_oid, srvy_rspdnt_nm, srvy_rspdnt_gndr
+		        , srvy_rspdnt_inst, srvy_rspdnt_mpno, srvy_rspdnt_eml, srvy_rspdnt_addr
+		        , cmpl_yn, cmpl_dt, ip_addr
+		        , reg_id, reg_dt, mdfcn_id, mdfcn_dt
+		    )
+		    VALUES(
+		          #{srvyOid}, #{userOid}, NULLIF(#{userInfo.srvyRspdntNm}, '')
+		        , NULLIF(#{userInfo.srvyRspdntGndr}, '')
+		        , NULLIF(#{userInfo.srvyRspdntInst}, '')
+		        , NULLIF(#{userInfo.srvyRspdntMpno}, '')
+		        , NULLIF(#{userInfo.srvyRspdntEml}, '')
+		        , NULLIF(#{userInfo.srvyRspdntAddr}, '')
+		        , 'Y'
+		        , now()
+		        , #{ipAddr}
+		        , #{regId}
+		        , now()
+		        , #{mdfcnId}
+		        , now()
+		    )
+		</insert>
+	
+	<insert id="insertSurveyResp" parameterType="egovframework.portal.survey.domain.SurveyRespDTO" useGeneratedKeys="true" keyProperty="srvyRspnsOid" keyColumn="srvy_rspns_oid">
+	    /* insertSurveyResp */
+	    INSERT INTO ${schema}.srvy_rspns (
+	          srvy_rspdnt_oid, srvy_qitem_oid, srvy_qitem_opt_oid
+	        , srvy_rspns_txt, srvy_rspns_no , srvy_rspns_rank
+	        , srvy_rspns_file_no
+	        , reg_id, reg_dt, mdfcn_id, mdfcn_dt
+	    )
+	    VALUES (
+	          #{srvyRspdntOid}, #{srvyQitemOid}, #{srvyQitemOptOid}, #{srvyRspnsTxt}
+	        , #{srvyRspnsNo}, #{srvyRspnsRank}, #{srvyRspnsFileNo}
+	        , #{regId}, now(), #{mdfcnId}, now()
+	    )
+	</insert>	
+	
+</mapper>

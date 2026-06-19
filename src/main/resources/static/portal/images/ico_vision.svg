@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 24 24">
+  <defs>
+    <style>
+      .cls-1 {
+        stroke: #21204c;
+      }
+
+      .cls-1, .cls-2, .cls-3 {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2px;
+      }
+
+      .cls-2 {
+        stroke: #3282b8;
+      }
+
+      .cls-3 {
+        stroke: #fff;
+      }
+    </style>
+  </defs>
+  <!-- Generator: Adobe Illustrator 28.7.1, SVG Export Plug-In . SVG Version: 1.2.0 Build 142)  -->
+  <g>
+    <g id="_레이어_1" data-name="레이어_1">
+      <g>
+        <circle class="cls-3" cx="6" cy="17.5" r="5"/>
+        <circle class="cls-3" cx="18" cy="17.5" r="5"/>
+        <path class="cls-3" d="M23,16.5V6.5c0-3-1-4-3-5"/>
+        <path class="cls-3" d="M1,16.5V6.5c0-3,1-4,3-5"/>
+        <path class="cls-3" d="M6,15.5c1.1,0,2,.9,2,2"/>
+        <path class="cls-3" d="M18,15.5c1.1,0,2,.9,2,2"/>
+      </g>
+      <circle class="cls-1" cx="501.3" cy="1035.8" r="5"/>
+      <circle class="cls-1" cx="501.3" cy="1035.8" r="5"/>
+      <path class="cls-1" d="M502.8,1043.3v-10c0-3-1-4-3-5"/>
+      <path class="cls-1" d="M499.8,1043.3v-10c0-3,1-4,3-5"/>
+      <path class="cls-2" d="M500.3,1034.8c1.1,0,2,.9,2,2"/>
+      <path class="cls-2" d="M500.3,1034.8c1.1,0,2,.9,2,2"/>
+    </g>
+  </g>
+</svg>

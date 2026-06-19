@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <title>교육안내 > 공지사항 > 공지사항 상세</title>
+	<th:block th:if="${NoticePost?.openYn == 'N'}">
+	    <meta name="robots" content="noindex, nofollow">
+	</th:block>
+	<th:block th:unless="${NoticePost?.openYn == 'N'}">
+		<meta name="title" 
+	          th:if="${NoticePost?.ntcNm != null}" 
+	          th:content="${NoticePost.ntcNm}">    
+		<meta name="description" 
+		      th:if="${NoticePost?.ntcCnTxt != null}" 
+		      th:content="${#strings.abbreviate(
+		          T(egovframework.common.util.HtmlUtil).stripHtml(
+		              T(egovframework.common.util.HtmlUtil).htmlDecode(NoticePost.ntcCnTxt)
+		          ), 160)}">
+	</th:block>    
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap"><h3 class="stit">공지사항</h3>
+    <div class="board_wrap">
+        <div class="board_view">
+            <div class="board_view_header">
+                <h4 class="title" th:text="${NoticePost.ntcNm}"></h4>
+                <em class="board_date">등록일 <em th:text="${#temporals.format(NoticePost.regDt, 'yyyy-MM-dd')}"></em></em>
+            </div>
+            <div class="board_content post-content" th:utext="${NoticePost.ntcCn}"></div>
+            <div class="attachment">
+                <h5>첨부파일</h5>
+                <span th:if="${#lists.isEmpty(NoticePost.attachments)}">첨부파일이 없습니다.</span>
+
+                <ul th:if="${NoticePost.attachments != null and !#lists.isEmpty(NoticePost.attachments)}">
+                    <li th:each="file : ${NoticePost.attachments}">
+                        <a th:href="@{|${basicFilePath}${file.strgFilePath}/${file.strgFileNm}|}" class="file_link" th:attr="download=${file.orgnlFileNm}">
+                            <i class="ico_file">첨부아이콘</i>
+                            <span th:text="${file.orgnlFileNm}"></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="btn_wrap mt20">
+                <a th:href="@{/board/notice}" class="btn_basic">목록</a>
+            </div>
+        </div>
+        <div class="pagination">
+            <p class="prev">
+                <span class="name">이전글</span>
+                <span class="text">
+                    <a class="link" th:if="${NoticePost.prevNotice != null}"
+                       th:href="@{/board/notice/post(ntcOid=${NoticePost.prevNotice.ntcOid})}"
+                       th:text="${NoticePost.prevNotice.ntcNm}"></a>
+                    <em th:unless="${NoticePost.prevNotice != null}">현재 페이지가 첫번째 페이지입니다.</em>
+                </span>
+            </p>
+            <p class="next">
+                <span class="name">다음글</span>
+                <span class="text">
+                    <a class="link" th:if="${NoticePost.nextNotice != null}"
+                       th:href="@{/board/notice/post(ntcOid=${NoticePost.nextNotice.ntcOid})}"
+                       th:text="${NoticePost.nextNotice.ntcNm}"></a>
+                    <em th:unless="${NoticePost.nextNotice != null}">현재 페이지가 마지막 페이지입니다.</em>
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript"></script>
+</body>
+</html>

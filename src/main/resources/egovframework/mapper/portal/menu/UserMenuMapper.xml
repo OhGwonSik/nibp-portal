@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.portal.menu.mapper.UserMenuMapper">
+
+    <!--사용자 메뉴 목록 조회-->
+    <select id="selectMenuList" parameterType="String" resultType="egovframework.portal.menu.domain.UserMenuDTO">
+        SELECT
+            menu_oid,
+            menu_nm,
+            menu_page,
+            menu_cd,
+            menu_url,
+            up_menu_oid,
+            menu_lv,
+            menu_seq,
+            menu_type,
+            menu_auth_lv,
+            bbs_use_yn,
+            prvc_use_yn,
+            expsr_yn,
+            use_yn,
+            npag_yn,
+            icon_nm,
+            expsr_yn,
+            menu_expln,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        FROM ${schema}.menu
+        WHERE menu_auth_lv = #{menuAuthLv}
+          AND use_yn = 'Y'
+        ORDER BY menu_lv, menu_seq
+    </select>
+
+    <select id="selectMenuByMenuCd" resultType="egovframework.portal.menu.domain.UserMenuDTO">
+        <!-- selectMenuByMenuCd -->
+        SELECT
+        menu_oid,
+        menu_nm,
+        menu_page,
+        menu_cd,
+        menu_url,
+        up_menu_oid,
+        menu_lv,
+        menu_seq,
+        menu_type,
+        menu_auth_lv,
+        bbs_use_yn,
+        prvc_use_yn,
+        expsr_yn,
+        npag_yn,
+        use_yn,
+        icon_nm,
+        menu_expln,
+        reg_id,
+        reg_dt,
+        mdfcn_id,
+        mdfcn_dt
+        FROM
+        ${schema}.menu
+        WHERE
+        use_yn  = 'Y'
+        AND
+        menu_cd = #{menuCd}
+    </select>
+
+    <!--게시판 메뉴 상세 조회-->
+    <select id="selectMenuByBoardInfo" resultType="egovframework.portal.menu.domain.UserMenuDTO">
+        SELECT
+        menu_oid,
+        menu_nm,
+        menu_page,
+        menu_cd,
+        menu_url,
+        up_menu_oid,
+        menu_lv,
+        menu_seq,
+        menu_type,
+        menu_auth_lv,
+        bbs_use_yn,
+        prvc_use_yn,
+        expsr_yn,
+        use_yn,
+        npag_yn,
+        icon_nm,
+        menu_expln,
+        reg_id,
+        reg_dt,
+        mdfcn_id,
+        mdfcn_dt
+        FROM
+        ${schema}.menu
+        WHERE
+        use_yn  = 'Y'
+        AND
+        menu_cd = #{menuCd}
+    </select>
+    
+    <!--동적 게시판 메뉴-게시판 연결 검증-->
+    <select id="selectValidBoardMenu" resultType="egovframework.portal.menu.domain.UserMenuDTO">
+        SELECT m.menu_oid, m.menu_nm, m.menu_page, m.menu_cd, m.menu_url,
+               m.up_menu_oid, m.menu_lv, m.menu_seq, m.menu_type,
+               m.menu_auth_lv, m.bbs_use_yn, m.prvc_use_yn, m.expsr_yn,
+               m.use_yn, m.npag_yn, m.icon_nm, m.menu_expln,
+               m.reg_id, m.reg_dt, m.mdfcn_id, m.mdfcn_dt
+        FROM ${schema}.menu m
+        INNER JOIN ${schema}.bbs b ON m.bbs_oid = b.bbs_oid
+        WHERE m.menu_cd    = #{menuCd}
+          AND m.use_yn     = 'Y'
+          AND m.bbs_use_yn = 'Y'
+          AND b.bbs_oid    = #{bbsOid}
+          AND b.use_yn     = 'Y'
+    </select>
+
+    <!-- 전체 1레벨 메뉴 목록 COMMON, HIDDEN 제외 (통합검색 분류 카테고리용) -->
+    <select id="selectRootMenuList" resultType="egovframework.portal.menu.domain.UserMenuDTO">
+    	/* selectRootMenuList */
+    	SELECT 
+		    menu_oid,
+		    menu_nm,
+		    menu_seq
+		FROM
+			${schema}.menu
+		WHERE
+			menu_lv = 1
+			AND use_yn = 'Y'
+			AND expsr_yn = 'Y'
+			AND menu_auth_lv = 'COMMON'
+			AND menu_type != 'HIDDEN'
+		ORDER BY menu_seq ASC
+    </select>
+</mapper>

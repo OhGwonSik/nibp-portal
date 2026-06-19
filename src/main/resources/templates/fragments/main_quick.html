@@ -1,0 +1,21 @@
+<div class="quick_sise_wrap" th:fragment="main_quick">
+    <div class="quick_side_inner">
+        <!--<a href="https://www.lst.go.kr/main/main.do" target="_blank" title="새창열림"><span>연명의료결정제도 보러가기</span></a>
+        <a th:href="@{/board(bbsOid=34, menuCd='BOARD34')}"><span>생명윤리 언론동향</span></a>-->
+        <div class="quick_box">
+            <a href="javascript:;">QUICK</a>
+            <div class="quick_link_box">
+                <strong>QUICK MENU</strong>
+                <div class="quick_link_inner">  
+                    <a th:href="@{/board/notice}">공지사항</a>
+                    <a th:href="@{/board(bbsOid=21, menuCd='BOARD21')}">채용공고</a>
+                    <a th:href="@{/page/portal105}">조직구성</a>
+                    <a th:href="@{/page/portal401}">경영공시</a>
+                    <a th:href="@{/page/portal603}">클린신고</a>
+                </div>  
+                <a href="javascript:;" class="quick_close">퀵메뉴 닫기</a>
+            </div>
+        </div>
+        <a href="javascript:;" class="btn_more" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" title="맨위로 이동"></a>
+    </div>
+</div>

@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin600.mapper.Admin610Mapper">
+
+	<!--Q&A 목록 조회-->
+	<resultMap id="QnaQuestionResultMap" type="egovframework.admin.admin600.domain.Admin610VO">
+		<!-- 질문 컬럼 매핑 -->
+		<id property="qnaOid" column="qna_oid"/>
+		<result property="userId" column="user_id"/>
+		<result property="wrtNm" column="wrt_nm"/>
+		<result property="pswd" column="pswd"/>
+		<result property="qnaTtl" column="qna_ttl"/>
+		<result property="qnaCn" column="qna_cn"/>
+		<result property="ctgry" column="ctgry"/>
+		<result property="ansYn" column="ans_yn"/>
+		<result property="prvtPstYn" column="prvt_pst_yn"/>
+		<result property="useYn" column="use_yn"/>
+		<result property="inqCnt" column="inq_cnt"/>
+		<result property="regDt" column="reg_dt"/>
+		<result property="mdfcnDt" column="mdfcn_dt"/>
+
+		<!-- 답변 컬럼 매핑 -->
+		<collection property="answers" ofType="egovframework.admin.admin600.domain.Admin610ItemVO">
+			<id property="qnaOid" column="item_qna_oid"/>
+			<result property="upQnaOid" column="up_qna_oid"/>
+			<result property="userId" column="item_user_id"/>
+			<result property="wrtNm" column="item_writer_nm"/>
+			<result property="qnaTtl" column="item_title"/>
+			<result property="qnaCn" column="item_content"/>
+			<result property="regDt" column="item_reg_dt"/>
+			<result property="mdfcnDt" column="item_upd_dt"/>
+		</collection>
+	</resultMap>
+
+	<select id="selectAdmin610List" parameterType="egovframework.admin.admin600.domain.Admin610FilterDTO"  resultMap="QnaQuestionResultMap">
+		SELECT
+			-- 질문(헤더) 컬럼
+			q.qna_oid,
+			q.user_id,
+			q.wrt_nm,
+			q.pswd,
+			q.qna_ttl,
+			q.qna_cn,
+			q.ctgry,
+            cd.cd_nm AS ctgry_nm,
+			q.ans_yn,
+			q.prvt_pst_yn,
+			q.use_yn,
+			q.inq_cnt,
+			q.reg_dt,
+			q.mdfcn_dt,
+
+			-- 답변(아이템) 컬럼
+			a.qna_oid AS item_qna_oid,
+			a.up_qna_oid,
+			a.user_id AS item_user_id,
+			a.wrt_nm AS item_writer_nm,
+			a.qna_cn AS item_content,
+			a.reg_dt AS item_reg_dt,
+			a.mdfcn_dt AS item_upd_dt
+		FROM ${schema}.qna q
+		LEFT JOIN ${schema}.qna a
+		  ON q.qna_oid = a.up_qna_oid
+		LEFT JOIN ${schema}.grp_cd gc ON
+			gc.grp_cd = 'CATEGORY_TYPE'
+	     	AND gc.use_yn = 'Y'
+	    LEFT JOIN ${schema}.cd cd
+	      ON cd.grp_cd_oid = gc.grp_cd_oid
+	     AND cd.use_yn = 'Y'
+	     AND cd.cd_val = q.ctgry
+		<where>
+			q.up_qna_oid IS NULL
+			<if test="keyword != null and keyword != ''">
+				AND (
+					q.qna_oid LIKE CONCAT('%', #{keyword}, '%')
+					OR q.qna_ttl LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+			<if test="regDtSt != null and regDtEd != null">
+				AND DATE_FORMAT(q.reg_dt, '%Y-%m-%d') <![CDATA[ >= ]]> #{regDtSt}
+				AND DATE_FORMAT(q.reg_dt, '%Y-%m-%d') <![CDATA[ <= ]]> #{regDtEd}
+			</if>
+			<if test="ansYn != null and ansYn != ''">
+				AND q.ans_yn = #{ansYn}
+			</if>
+			<if test="ctgry != null and ctgry != ''">
+				AND q.ctgry = #{ctgry}
+			</if>
+		</where>
+		ORDER BY
+			q.reg_dt DESC, a.reg_dt
+	</select>
+
+	<!--Q&A 단건 조회-->
+	<select id="selectAdmin610" parameterType="Long" resultMap="QnaQuestionResultMap">
+		SELECT
+		-- 질문(헤더) 컬럼
+		q.qna_oid,
+		q.user_id,
+		q.wrt_nm,
+		q.pswd,
+		q.qna_ttl,
+		q.qna_cn,
+		q.ctgry,
+        cd.cd_nm AS ctgry_nm,
+		q.ans_yn,
+		q.prvt_pst_yn,
+		q.use_yn,
+		q.inq_cnt,
+		q.reg_dt,
+		q.mdfcn_dt,
+
+		-- 답변(아이템) 컬럼
+		a.qna_oid AS item_qna_oid,
+		a.up_qna_oid,
+		a.user_id AS item_user_id,
+		a.qna_ttl AS item_title,
+		a.wrt_nm AS item_writer_nm,
+		a.qna_cn AS item_content,
+		a.reg_dt AS item_reg_dt,
+		a.mdfcn_dt AS item_upd_dt
+		FROM ${schema}.qna q
+		LEFT JOIN ${schema}.qna a
+		ON q.qna_oid = a.up_qna_oid
+        LEFT JOIN ${schema}.grp_cd gc ON
+            gc.grp_cd = 'CATEGORY_TYPE'
+            AND gc.use_yn = 'Y'
+        LEFT JOIN ${schema}.cd cd
+          ON cd.grp_cd_oid = gc.grp_cd_oid
+         AND cd.use_yn = 'Y'
+         AND cd.cd_val = q.ctgry
+		WHERE q.qna_oid = #{qnaOid}
+	</select>
+
+	<!--Q&A 엑셀 다운로드용 목록 조회 (answers 필드 없이)-->
+	<select id="selectAdmin610ExcelList" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" resultType="egovframework.admin.admin600.domain.Admin610ExcelDTO">
+		SELECT
+			q.qna_oid AS qnaOid,
+            CASE
+            WHEN c.cd_nm IS NULL THEN '기타'
+            WHEN c.cd_nm = '기타' THEN c.cd_nm
+            ELSE CONCAT(c.cd_nm)
+            END AS ctgry,
+			q.qna_ttl AS qnaTtl,
+			q.reg_dt AS regDt,
+			(SELECT reg_dt FROM ${schema}.qna WHERE up_qna_oid = q.qna_oid AND use_yn = 'Y' ORDER BY reg_dt ASC LIMIT 1) AS answerRegDt,
+			q.ans_yn AS ansYn,
+			(SELECT wrt_nm FROM ${schema}.qna WHERE up_qna_oid = q.qna_oid AND use_yn = 'Y' ORDER BY reg_dt ASC LIMIT 1) AS answerWriterNm,
+			q.prvt_pst_yn AS secretYn,
+            CASE
+                WHEN q.prvt_pst_yn = 'Y' THEN '비공개'
+                WHEN q.prvt_pst_yn = 'N' THEN '공개'
+                ELSE ''
+            END AS secretYnStr,
+			q.inq_cnt AS inqCnt
+		FROM ${schema}.qna q
+        LEFT JOIN ${schema}.cd c
+            ON c.grp_cd_oid = 84
+            AND c.cd_val = q.ctgry
+            AND c.use_yn = 'Y'
+		<where>
+			q.up_qna_oid IS NULL
+			AND q.use_yn = 'Y'
+			<if test="keyword != null and keyword != ''">
+				AND (
+					q.qna_oid LIKE CONCAT('%', #{keyword}, '%')
+					OR q.qna_ttl LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+			<if test="ansYn != null and ansYn != ''">
+				AND q.ans_yn = #{ansYn}
+			</if>
+			<if test="regDtSt != null and regDtSt != ''">
+				AND q.reg_dt <![CDATA[ >= ]]> #{regDtSt}
+			</if>
+			<if test="regDtEd != null and regDtEd != ''">
+				AND q.reg_dt <![CDATA[ < ]]> DATE_ADD(#{regDtEd}, INTERVAL 1 DAY)
+			</if>
+			<if test="ctgry != null and ctgry != ''">
+				AND q.ctgry = #{ctgry}
+			</if>
+		</where>
+		ORDER BY
+			q.reg_dt DESC
+	</select>
+
+	<!-- Q&A 답변 등록 -->
+	<insert id="insertAdmin610" parameterType="egovframework.admin.admin600.domain.Admin610DTO" useGeneratedKeys="true" keyProperty="qnaOid">
+		INSERT INTO ${schema}.qna (
+			up_qna_oid
+			, user_id
+			, wrt_nm
+			, qna_ttl
+			, qna_cn
+			, ctgry
+			, ans_yn
+			, reg_dt
+			, mdfcn_dt
+		) VALUES (
+			#{upQnaOid}
+			, #{userId}
+			, #{wrtNm}
+			, #{qnaTtl}
+			, #{qnaCn}
+			, #{ctgry}
+			, #{ansYn}
+			, NOW()
+			, NOW()
+		)
+	</insert>
+
+    <!-- Q&A 비밀글 여부 확인 -->
+	<select id="selectParentSecretYn" parameterType="egovframework.admin.admin600.domain.Admin610DTO" resultType="String">
+		SELECT
+            prvt_cmnt_yn
+		FROM
+			${schema}.qna
+		WHERE
+			qna_oid = #{parentNo}
+	</select>
+
+	<!-- Q&A 만족도평가 insert : 디폴트 미응답 -->
+	<insert id="insertQnaSatisfaction" parameterType="egovframework.admin.admin600.domain.Admin610DTO">
+		INSERT INTO ${schema}.qna_dgstfn_evl (
+			  tbl_nm
+			, tbl_oid
+			, stts
+			, reg_id
+			, reg_dt
+		) VALUES (
+			  #{tblNm}
+			, #{tblOid}
+			, 'PENDING'
+			, #{regId}
+			, NOW()
+		)
+	</insert>
+
+	<!-- Q&A 답변 수정 -->
+	<update id="updateAdmin610" parameterType="egovframework.admin.admin600.domain.Admin610DTO">
+		UPDATE ${schema}.qna
+		<set>
+			<if test="userId != null">
+				user_id = #{userId},
+			</if>
+			<if test="wrtNm != null">
+				wrt_nm = #{wrtNm},
+			</if>
+			<if test="qnaTtl != null">
+				qna_ttl = #{qnaTtl},
+			</if>
+			<if test="qnaCn != null">
+				qna_cn = #{qnaCn},
+			</if>
+			<if test="ctgry != null">
+				ctgry = #{ctgry},
+			</if>
+			<if test="ansYn != null">
+				ans_yn = #{ansYn},
+			</if>
+			mdfcn_dt = NOW()
+		</set>
+		WHERE qna_oid = #{qnaOid}
+		AND up_qna_oid = #{upQnaOid}
+	</update>
+
+	<!-- Q&A 삭제 -->
+	<update id="deleteAdmin610" parameterType="egovframework.admin.admin600.domain.Admin610DeleteDTO">
+		UPDATE ${schema}.qna
+		SET
+			use_yn = 'N'
+			, mdfcn_dt = NOW()
+		WHERE qna_oid = #{qnaOid}
+	    OR up_qna_oid = #{qnaOid}
+	</update>
+
+    <!-- Q&A 만족도 조사 삭제 -->
+    <delete id="deleteAdmin610QnaSatisfaction" parameterType="egovframework.admin.admin600.domain.Admin610DeleteDTO">
+        DELETE
+        FROM ${schema}.qna_dgstfn_evl
+        WHERE
+            tbl_oid = #{qnaOid}
+    </delete>
+
+	<!-- Q&A 조회수 증가 -->
+	<update id="updateAdmin610inqCnt" parameterType="Long">
+		UPDATE ${schema}.qna
+		SET inq_cnt = inq_cnt + 1
+		WHERE qna_oid = #{qnaOid}
+	</update>
+
+	<!-- Q&A 답변여부 업데이트 -->
+	<update id="updateAdmin610AnswerYn" parameterType="Long">
+		UPDATE ${schema}.qna
+		SET use_yn = 'Y'
+          , ans_yn = 'Y'
+          , mdfcn_dt = NOW()
+		WHERE qna_oid = #{qnaOid}
+	</update>
+</mapper>

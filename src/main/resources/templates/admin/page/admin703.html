@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>통계 > 월별 응답 통계</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="search_wrap s_type">
+        <ul>
+            <li>
+                <label for="datepicker1">기간</label>
+                <div class="flex_col">
+                    <span class="datepicker">
+                        <input type="text" placeholder="시작월" id="datepicker1" readonly>
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                    </span> ~ 
+                    <span class="datepicker">
+                        <input type="text" placeholder="종료월" id="datepicker2" readonly>
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                    </span>
+                </div>
+            </li>
+        </ul>
+        <div class="s_wrap"><a id="admin703SearchBtn" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_top_btn">
+            <a href="javascript:;" id="admin703ExlDownBtn" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+        </div>
+        <div class="table_layout02 list_type mt10 mb20">
+            <table>
+                <caption>월별 응답 통계 테이블</caption>
+                <colgroup>
+                    <col style="width: auto;">
+                    <col style="width: 14%;">
+                    <col style="width: 14%;">
+                    <col style="width: 14%;">
+                    <col style="width: 14%;">
+                    <col style="width: 14%;">
+                    <col style="width: 14%;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">구분</th>
+                    <th scope="col">질의응답(안)<br>작성 건수</th>
+                    <th scope="col">질의응답(안)<br>작성 소요일</th>
+                    <th scope="col">질의응답(안)<br>평균 작성 소요일</th>
+                    <th scope="col">최종 질의응답<br>작성 건수</th>
+                    <th scope="col">최종 질의응답<br>작성 소요일</th>
+                    <th scope="col">최종 질의응답<br>평균 작성 소요일</th>
+                </tr>
+                </thead>
+                <tbody id="statListBody"></tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin703 = {
+    		
+    	state:{
+    		start : null,
+    		end : null,
+    		monthStart : null,
+    		monthEnd : null
+    	},
+
+        /**
+         * 초기화
+         */
+        init: async function () {
+            const _this = this;
+            
+            // 날짜 세팅 (기본: 최근 1년)
+            _this.setDefaultDates();
+            
+         	// Datepicker 초기화 및 이벤트 연결
+            _this.initDatePickers();
+         	
+            // 초기 데이터 조회
+            await _this.getList();
+
+            // 이벤트 바인딩
+            _this.initEvent();
+        },
+
+        /**
+         * 날짜 기본값 설정 (현재 월 ~ 1년 전)
+         */
+         setDefaultDates: function() {
+             const _this = this;
+             const today = new Date();
+             const lastYear = new Date();
+             lastYear.setFullYear(today.getFullYear() - 1);
+
+             const lastYearStr = lastYear.getFullYear() + '-' + (lastYear.getMonth() + 1).toString().padStart(2, '0');
+             const todayStr = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0');
+
+             // 화면에 값 입력
+             document.getElementById('datepicker1').value = lastYearStr;
+             document.getElementById('datepicker2').value = todayStr;
+
+             // 초기값을 변수에 백업
+             _this.state.start = lastYearStr;
+             _this.state.end = todayStr;
+             _this.state.monthStart = lastYearStr;
+             _this.state.monthEnd = todayStr;
+         },
+
+         /**
+          * Datepicker 초기화 및 유효성 검사 및 자동검색
+          */
+         initDatePickers: async function() {
+       	    const _this = this;
+
+       	    // 시작월 (datepicker1)
+       	    const monthOptions1 = uiCommon.monthpicker.getDefaultOptions('month');
+       	    if (_this.state.monthStart) {
+       	        const [y, m] = _this.state.monthStart.split('-').map(Number);
+       	        monthOptions1.startDate = new Date(y, m - 1, 1);
+       	    }
+       	    monthOptions1.onSelect = async function({date, formattedDate}) {
+       	        const endVal = document.getElementById('datepicker2').value;
+       	        const endPicker = document.getElementById('datepicker2')._airDatepicker;
+
+       	        // from이 to보다 크면 → to를 from과 같게 변경
+       	        if (endVal && formattedDate > endVal) {
+       	            if (endPicker) {
+       	                const [y, m] = formattedDate.split('-').map(Number);
+       	                endPicker.selectDate(new Date(y, m - 1, 1), {silent: true});
+       	                
+       	             	document.getElementById('datepicker2').value = formattedDate;
+       	            }
+       	            _this.state.monthEnd = formattedDate;
+       	        }
+
+       	        _this.state.monthStart = formattedDate;
+       	        await _this.getList();
+       	    };
+       	    uiCommon.monthpicker.init('#datepicker1', monthOptions1);
+
+       	    // 종료월 (datepicker2)
+       	    const monthOptions2 = uiCommon.monthpicker.getDefaultOptions('month');
+       	    if (_this.state.monthEnd) {
+       	        const [y, m] = _this.state.monthEnd.split('-').map(Number);
+       	        monthOptions2.startDate = new Date(y, m - 1, 1);
+       	    }
+       	    monthOptions2.onSelect = async function({date, formattedDate}) {
+       	        const startVal = document.getElementById('datepicker1').value;
+       	        const startPicker = document.getElementById('datepicker1')._airDatepicker;
+
+       	        // to가 from보다 작으면 → from을 to와 같게 변경
+       	        if (startVal && startVal > formattedDate) {
+       	            if (startPicker) {
+       	                const [y, m] = formattedDate.split('-').map(Number);
+       	                startPicker.selectDate(new Date(y, m - 1, 1), {silent: true});
+       	                
+       	             document.getElementById('datepicker1').value = formattedDate;
+       	            }
+       	            _this.state.monthStart = formattedDate;
+       	        }
+
+       	        _this.state.monthEnd = formattedDate;
+       	        await _this.getList();
+       	    };
+       	    uiCommon.monthpicker.init('#datepicker2', monthOptions2);
+       	},
+       	
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼 클릭
+            document.querySelector('#admin703SearchBtn').addEventListener('click', function() {
+                _this.getList();
+            });
+            
+            // 엑셀 다운로드 버튼 클릭
+            document.querySelector('#admin703ExlDownBtn').addEventListener('click', async function() {
+                const reason = await uiCommon.fnShowPromptModal('엑셀 다운로드 받으시겠습니까?', {
+                    qnaTtl: '엑셀 다운로드 요청',
+                    defaultValue: '',
+                    placeholder: '사유 입력',
+                });
+
+                
+                // 취소 시 조용히 종료
+                if (reason === null) {
+                    return;
+                }
+
+                // 빈 값 체크
+                if (reason.trim() === '') {
+                    uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                    return;
+                }
+
+                // 2자 미만 체크
+                if (reason.trim().length < 2) {
+                    uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                    return;
+                }
+
+				const params = {
+					pageId: 'admin703',
+					startYearMonth: document.getElementById('datepicker1').value,
+					endYearMonth: document.getElementById('datepicker2').value,
+					reason: reason
+				};
+
+				try {
+					await API.excelDownload('/api/admin/admin703/qna-stat/excel/export', params, {showLoading: true});
+				} catch(err) {
+					console.error(err);
+					uiCommon.fnShowAlertModal("[error] : " + err, () => uiCommon.fnHideAlertModal());
+				}
+            });
+        },
+
+        /**
+         * 목록 조회
+         */
+        getList: async function () {
+            const _this = this;
+
+            const startDate = document.getElementById('datepicker1').value;
+            const endDate = document.getElementById('datepicker2').value;
+
+            // YYYY-MM 형식으로 파라미터 설정
+            const params = {
+                startYearMonth: startDate,
+                endYearMonth: endDate
+            };
+            
+            try {
+                const response = await API.get('/api/admin/admin703/qna-stat/list', params , {showLoading: true});
+                _this.renderTable(response);
+            } catch (error) {
+                console.error('API 호출 오류:', error);
+                uiCommon.fnShowAlertModal('데이터 조회 중 오류가 발생했습니다.', error);
+            }
+        },
+
+        /**
+         * 테이블 렌더링
+         */
+        renderTable: function (list) {
+            const tbody = document.getElementById('statListBody');
+            let html = '';
+
+            if (!list || list.length === 0) {
+                html = '<tr><td colspan="7" class="nodata">데이터가 존재하지 않습니다.</td></tr>';
+            } else {
+                list.forEach(item => {
+                    // '전체' 행인지 확인
+                    const isTotalRow = (item.searchMonth === '전체');
+
+                    // 전체 행이면 tr에 bg_red 클래스
+                    const trClass = isTotalRow ? 'class="bg_red"' : '';
+                    
+                    // 구분 컬럼: 전체가 아니면 bg_blue 클래스
+                    const tdClass = isTotalRow ? '' : 'class="bg_blue"';
+
+                    html += `<tr ${trClass}>
+                                <td ${tdClass}>${item.searchMonth}</td>
+                                
+                                <td>${item.draftCnt}건</td>
+                                <td>${item.draftSumDays}일</td>
+                                <td>${item.draftAvgDays}일</td>
+                                
+                                <td>${item.finalCnt}건</td>
+                                <td>${item.finalSumDays}일</td>
+                                <td>${item.finalAvgDays}일</td>
+                             </tr>`;
+                });
+            }
+
+            tbody.innerHTML = html;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        admin703.init();
+    });
+</script>
+</body>
+</html>

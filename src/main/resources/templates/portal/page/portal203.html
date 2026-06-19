@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>사업 > 생명윤리 정책 개발 및 제도 지원 > 생명윤리법 지원 및 관리</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">생명윤리법 지원 및 관리</h3>
+    <div class="bg_box">
+        <ul class="text_list">
+            <li>생명윤리법 및 제도 관련 각종 가이드라인 제·개정</li>
+            <li>생명윤리법 및 관련 민원 질의 대응 지원 및 관리</li>
+            <!--TODO: 운영 반영 이후 bbsOid 확인 필요-->
+            <li><a th:href="@{/board(bbsOid=20, menuCd='BOARD20')}" class="link">생명윤리법 관련 Q&amp;A 관리</a></li>
+            <li>불법 생식세포 모니터링, 배아 보관 및 제공 현황 조사</li>
+            <li>종사자 대상 법률 및 제도 이해도 증진 활동(간담회, 설명회 등) 등 법 시행 지원 및 관리</li>
+        </ul>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal203 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal203.init();
+    });
+</script>
+</body>
+</html>

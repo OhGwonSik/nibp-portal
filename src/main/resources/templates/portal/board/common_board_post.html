@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <title th:text="${boardInfo.bbsNm} + ' > 상세'">게시판 상세</title>
+	<th:block th:if="${post?.prvtPstYn == 'Y' or post?.openYn == 'N'}">
+	    <meta name="robots" content="noindex, nofollow">
+	</th:block>
+	<th:block th:unless="${post?.prvtPstYn == 'Y' or post?.openYn == 'N'}">
+		<meta name="title" 
+	          th:if="${post?.bbsPstTtl != null}" 
+	          th:content="${post.bbsPstTtl}">    
+		<meta name="description" 
+		      th:if="${post?.bbsPstCnTxt != null}" 
+		      th:content="${#strings.abbreviate(
+		          T(egovframework.common.util.HtmlUtil).stripHtml(
+		              T(egovframework.common.util.HtmlUtil).htmlDecode(post.bbsPstCnTxt)
+		          ), 160)}">
+		<meta name="keywords" 
+		      th:if="${post?.kwrd != null and !#strings.isEmpty(post.kwrd)}" 
+		      th:content="${post.kwrd}">
+	</th:block>
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit" th:text="${boardInfo.bbsNm}">게시판</h3>
+
+    <div class="board_wrap">
+        <div class="board_view">
+            <div class="board_view_header">
+                <h4 class="title">
+                    <span th:if="${boardInfo.ctgryYn == 'Y' and post.ctgry != null}"
+                          th:text="'[' + ${post.ctgry} + '] '" class="c_blue02"></span>
+                    <span th:text="${post.bbsPstTtl}"></span>
+                </h4>
+
+                <div class="board_info_row" style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <!-- 마감일 (채용공고/입찰공고/사업실명제용) -->
+                    <th:block th:with="
+                        isRecruit=${boardInfo.bbsSubSeCd == 'RECRUITMENT'},
+                        isBid=${boardInfo.bbsSubSeCd == 'BID_ANNOUNCEMENT'},
+                        isProject=${boardInfo.bbsSubSeCd == 'PROJECT_REAL_NAME'},
+                        dateLabel=${isRecruit ? '모집기간' : (isBid ? '입찰기간' : '마감일')},
+                        formattedDate=${(isRecruit or isBid)
+                            ? (#temporals.format(post.bgngDt, 'yyyy-MM-dd') + ' ~ ' + #temporals.format(post.endDt, 'yyyy-MM-dd'))
+                            : #temporals.format(post.ddlnDt, 'yyyy-MM-dd')}">
+                        <span th:if="${boardInfo.ddlnDtExpsrYn == 'Y' and (post.ddlnDt != null or (post.bgngDt != null and post.endDt != null))}" class="mr10">
+                            <strong th:text="${dateLabel} + ':'">마감일:</strong> <span th:text="${formattedDate}"></span>
+                        </span>
+                    </th:block>
+                    <!-- 진행 상태 -->
+                    <span th:if="${boardInfo.prgrsSttsExpsrYn == 'Y' and post.stts != null}" class="mr10">
+                        <strong>진행 상태:</strong> <span th:text="${post.stts}"></span>
+                    </span>
+                    <span th:if="${boardInfo.wrtrExpsrYn == 'Y'}" class="mr10">
+                        <strong>작성자:</strong> <span th:text="${post.wrtrNm}"></span>
+                    </span>
+                    <span th:if="${boardInfo.wrtDtExpsrYn == 'Y'}" class="mr10">
+                        <strong>등록일:</strong> <span th:text="${#temporals.format(post.regDt, 'yyyy-MM-dd')}"></span>
+                    </span>
+                    <span th:if="${boardInfo.inqCntExpsrYn == 'Y'}" class="mr10">
+                        <strong>조회수:</strong> <span th:text="${post.inqCnt}"></span>
+                    </span>
+                    <!-- 모집유형 (채용공고용) -->
+                    <!--<span th:if="${boardInfo.bbsSubSeCd != null and boardInfo.bbsSubSeCd == 'RECRUITMENT'}" class="mr10">
+                        <strong>모집유형:</strong> <span th:text="${post.rcrtType == '전체' ? '신입, 경력' : post.rcrtType}"></span>
+                    </span>-->
+                </div>
+            </div>
+
+            <div class="board_content post-content" th:utext="${post.bbsPstCn}"></div>
+
+            <div class="attachment" th:if="${fileList != null and !fileList.isEmpty()}">
+                <h5>첨부파일</h5>
+                <ul>
+                    <li th:each="file : ${fileList}">
+                        <a th:href="@{|${basicFilePath}${file.strgFilePath}/${file.strgFileNm}|}"
+                           class="file_link"
+                           th:attr="download=${file.orgnlFileNm}">
+                            <i class="ico_file">💾</i>
+                            <span th:text="${file.orgnlFileNm}"></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="btn_wrap mt20">
+                <a href="javascript:" onclick="common_board_post.fnGoList();" class="btn_basic">목록</a>
+            </div>
+        </div>
+
+        <div class="pagination" th:if="${boardInfo.prevNextExpsrYn == 'Y'}">
+            <p class="prev">
+                <span class="name">이전글</span>
+                <span class="text">
+                    <a class="link" th:if="${prevBoardPost != null}"
+                       th:href="@{/board/post(menuCd=${boardRequestDto.menuCd}, bbsOid=${boardInfo.bbsOid}, bbsPstOid=${prevBoardPost.bbsPstOid})}"
+                       th:text="${prevBoardPost.bbsPstTtl}"></a>
+                    <em th:unless="${prevBoardPost != null}">이전글이 없습니다.</em>
+                </span>
+            </p>
+            <p class="next">
+                <span class="name">다음글</span>
+                <span class="text">
+                    <a class="link" th:if="${nextBoardPost != null}"
+                       th:href="@{/board/post(menuCd=${boardRequestDto.menuCd}, bbsOid=${boardInfo.bbsOid}, bbsPstOid=${nextBoardPost.bbsPstOid})}"
+                       th:text="${nextBoardPost.bbsPstTtl}"></a>
+                    <em th:unless="${nextBoardPost != null}">다음글이 없습니다.</em>
+                </span>
+            </p>
+        </div>
+
+        <div th:if="${boardInfo.cmntPsbltyYn == 'Y'}" class="comment_wrap mt30">
+            <h4>댓글 <span th:text="${commentList != null ? commentList.size() : 0}" style="color:#e60000; font-size:0.8em;"></span></h4>
+
+            <div class="comment_list">
+                <ul th:if="${commentList != null and !commentList.isEmpty()}">
+                    <li th:each="cmt : ${commentList}">
+                        <div class="info">
+                            <strong th:text="${cmt.wrtrNm}">익명</strong>
+                            <span class="date" th:text="${#temporals.format(cmt.regDt, 'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+                        <div class="txt" th:utext="${#strings.replace(cmt.bbsCmntCn, '', '<br>')}"></div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="comment_write">
+                <div class="inputs">
+                    <input type="text" id="cmt_writer" placeholder="작성자 이름" maxlength="20">
+                </div>
+                <textarea id="comment_content" placeholder="내용을 입력해주세요. (비방, 욕설은 삭제될 수 있습니다.)"></textarea>
+                <div class="btn_area">
+                    <button type="button" class="btn_basic_s" onclick="common_board_post.fnRegistComment()">등록</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const common_board_post = {
+        // 상태 관리 (서버 데이터를 JS 객체로 바인딩)
+        state: {
+            config: /*[[${boardInfo}]]*/ {},       // 게시판 설정
+            post: /*[[${post}]]*/ {},              // 현재 게시글
+            reqDto: /*[[${boardRequestDto}]]*/ {}, // 검색 조건 (페이지, 키워드 등)
+            files: /*[[${fileList}]]*/ [],          // 첨부파일 목록
+            strgFilePath: /*[[${basicFilePath}]]*/ {}
+        },
+
+        init: function () {
+
+        },
+
+        /**
+         * 목록으로 돌아가기
+         */
+        fnGoList: function () {
+            // state에 저장된 menuCd 가져오기
+            const menuCd = this.state.reqDto.menuCd;
+
+            // 요청하신 포맷 그대로 적용
+            window.location.href = contextPath + `/board?menuCd=${menuCd}&bbsOid=${this.state.config.bbsOid}`;
+        },
+
+        /**
+         * 댓글 저장
+         */
+        fnRegistComment: function() {
+
+            const _this = this;
+            const writerEl = document.getElementById('cmt_writer');
+            const contentEl = document.getElementById('comment_content');
+
+            // 필수 벨리데이션
+            if (!writerEl || !writerEl.value.trim()) {
+                uiCommon.fnShowAlertModal('작성자 이름을 입력해주세요.', function(){
+                    if(writerEl) writerEl.focus();
+                });
+                return;
+            }
+            if (!contentEl || !contentEl.value.trim()) {
+                uiCommon.fnShowAlertModal('내용을 입력해주세요.', function(){
+                    if(contentEl) contentEl.focus();
+                });
+
+                return;
+            }
+
+            uiCommon.fnShowConfirmModal('댓글을 등록하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+
+                const params = {
+                    bbsOid: _this.state.config.bbsOid,
+                    bbsPstOid: _this.state.post.bbsPstOid,
+                    wrtrNm: writerEl.value.trim(),
+                    bbsCmntCn: contentEl.value.trim(),
+                    menuCd: _this.state.reqDto.menuCd
+                };
+
+                try {
+                    await API.put('/api/common/board/comment/insert', params);
+                    uiCommon.fnShowAlertModal('댓글이 등록되었습니다.', function(){
+                        window.location.href = contextPath + `/board/post?menuCd=${_this.state.reqDto.menuCd}&bbsOid=${_this.state.config.bbsOid}&bbsPstOid=${_this.state.post.bbsPstOid}`;
+                    });
+                } catch (error) {
+                    console.error('삭제 실패:', error);
+                    uiCommon.fnShowAlertModal('삭제에 실패했습니다 : ', error);
+                }
+            });
+        }
+
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        common_board_post.init();
+    });
+</script>
+</body>
+</html>

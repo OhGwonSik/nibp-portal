@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소통·참여 > 국민제안</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">국민제안</h3>
+    <div class="human_intro_wrap">
+        <strong>제안제도란 국민이 정부시책이나 행정제도 및 그 운영의 개선을 목적으로 창의적인 의견이나 고안을 제출할 수 있는 제도입니다.<br>국가생명윤리정책원 기관 운영 전반과 생명윤리 분야에 대한 다양한 아이디어를 수렴하여 행정서비스 수준을 향상시키겠습니다.</strong>
+        <ul>
+            <li>- 상시 제안 제도 : 기관 운영 관련 사항, 생명윤리 및 연명의료결정제도 전반에 관한 아이디어나 의견을 상시로 제안</li>
+            <li>- 공모 제안 제도 : 기관 운영, 생명윤리 및 연명의료결정제도 관련한 특정 주제로 특정기간 공모하여 제안</li>
+        </ul>
+    </div>
+    <h4 class="sstit">제안제도 운영 절차</h4>
+    <div class="procedure_wrap">
+        <ul>
+            <li>
+                <div class="procedure_inner"><strong><em>01</em>제안 제출</strong>제안서를 작성하여 이메일 제출 (제안 제출 이메일: opinion@nibp.kr)</div>
+                <a th:href="@{/api/common/file/form/download/opinion}" class="ci_download mwp260">
+                    <span>제안서 양식 내려받기</span>
+                </a>
+            </li>
+            <li>
+                <div class="procedure_inner"><strong><em>02</em> 제안 접수</strong>
+                    제안제도 담당부서에서 제안서 접수<br>
+                    ※제안에 보완할 점이 있는 경우, 제안 제외사항 또는 민원에 해당하는 경우 보완요청 가능</div></li>
+            <li>
+                <div class="procedure_inner"><strong><em>03</em> 제안 심사</strong>
+                    실시가능성, 창의성, 효율성 및 효과성, 적용범위, 계속성 등을 기준으로 제안심사위원회에서 심사</div></li>
+            <li>
+                <div class="procedure_inner"><strong><em>04</em> 제안 채택</strong>
+                    제안심사를 통한 채택·불채택 여부 통지 (접수된 날로부터 30일 이내)<br>
+                    ※불채택 통지를 받은 제안자는 통지일로부터 15일 이내에 재심사 요청 가능
+                </div>
+                <a th:href="@{/api/common/file/form/download/request}" class="ci_download mwp260">
+                    <span>재심사 요청 양식 내려받기</span>
+                </a>
+            </li>
+        </ul>
+
+    </div>
+    <div class="bg_box mt30">
+        <p>※ (제안 제외사항) 제도 성격과 맞지않고 「국민제안규정」 등 상위규정에서 제안으로 간주하지 않는 경우 등은 제안에서 제외</p>
+        <ol>
+            <li>1. 제안이 추상적이어서 개선 효과를 기대할 수 없거나 실현 가능성이 매우 낮다고 판단되는 경우</li>
+            <li>2. 제안이 원 내 시행중이거나 이미 비슷한 제도가 있어서 실행에 대한 자원 낭비가 우려되는 경우</li>
+            <li>3. 제안이 개인 민원이거나 단순 불만 사항에 그치는 등 제도 성격과 맞지 않는 경우</li>
+            <li>4 .「국민제안규정」 및 「공무원제안규정」 제1장제2조에 준하는 사항</li>
+        </ol>
+        <div class="bg_box_fff">
+            <p class="mb10"><b>「국민제안규정」 및 「공무원제안규정」 제1장제2조</b></p>
+            <ol class="text_in">
+                <li>1. 다른 사람이 취득한 특허권ㆍ실용신안권ㆍ디자인권 또는 저작권에 속하는 것 또는 「국가공무원 직무발명의 처분ㆍ관리 및 보상 등에 관한 규정」에 따라 보상이 확정된 것</li>
+                <li>2. 접수하려는 기관이 이미 채택했던 제안과 내용이 동일한 것</li>
+                <li>3. 접수하려는 기관이 이미 시행 중인 사항이거나 기본 구상이 이와 유사한 것</li>
+                <li>4. 일반통념상 적용하기 어렵다고 판단되는 것</li>
+                <li>5. 단순한 주의환기·진정(陳情)·비판 또는 건의이거나 불만의 표시에 불과한 것</li>
+                <li>6. 특정개인·단체·기업 등의 수익사업과 그 홍보에 관한 것</li>
+                <li>7. 국가나 지방자치단체의 사무에 관한 사항이 아닌 것</li>
+            </ol>
+        </div>
+    </div>
+    <h4 class="sstit">제안제도 문의</h4>
+    <div class="information_wrap mt0">
+        <strong>제안제도 담당자</strong>
+        <p>02-737-8452 / opinion@nibp.kr</p>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal601 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal601.init();
+    });
+</script>
+</body>
+</html>

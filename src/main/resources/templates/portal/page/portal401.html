@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>정보공개 > 경영공시</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">경영공시</h3>
+    <div class="disclosure_wrap">
+        <div class="disclosure_inner">
+            <div class="disclosure_cont">
+                <strong>일반현황</strong>
+                <ul>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=10101" target="_blank" title="새창열림">일반현황</a></li>
+                </ul>
+            </div>
+            <div class="disclosure_cont">
+                <strong>대내외 평가</strong>
+                <ul>
+                    <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=B1210" target="_blank" title="새창열림">국회지적사항</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=B1220" target="_blank" title="새창열림">감사원 / 주무부처 지적사항</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C0000&amp;reportFormRootNo=B1230" target="_blank" title="새창열림">경영실적 평가결과</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=4270" target="_blank" title="새창열림">경영평가 지적사항</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C0000&amp;reportFormRootNo=B1240" target="_blank" title="새창열림">고객만족도 조사결과</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C0000&amp;reportFormRootNo=B1250" target="_blank" title="새창열림">감사직무실적 평가결과</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=43005,43006,43008" target="_blank" title="새창열림">이사회회의록, 내부감사결과</a></li>
+                </ul>
+            </div>
+            <div class="disclosure_cont">
+                <strong>정보공개</strong>
+                <ul>
+                    <li><a href="https://alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=B1030" target="_blank" title="새창열림">공개입찰</a></li>
+                    <li><a href="https://alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=70301,70302,70304,70303&amp;" target="_blank" title="새창열림">수의계약</a></li>
+                    <li><a href="https://alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=70312&amp;disclosureNo=" target="_blank" title="새창열림">혁신조달 구매실적</a></li>
+                    <li><a href="https://alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=70322&amp;disclosureNo=" target="_blank" title="새창열림">중증장애인 생산품 구매실적</a></li>
+                    <li><a href="https://alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=B1040" target="_blank" title="새창열림">자체 연구보고서</a></li>
+                    <li><a href="https://alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=B1260" target="_blank" title="새창열림">외부용역 연구보고서</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="disclosure_inner">
+            <div class="disclosure_cont">
+                <strong>기관운영</strong>
+                <ul>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2020" target="_blank" title="새창열림">임직원 수</a></li>
+                    <li><a href="https://alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=20305" target="_blank" title="새창열림">임원 현황</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2040" target="_blank" title="새창열림">신규채용, 청년인턴채용, 유연근무 현황</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2050" target="_blank" title="새창열림">임원연봉</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2060" target="_blank" title="새창열림">직원 평균보수</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=20701" target="_blank" title="새창열림">기관장 업무추진비</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=20801" target="_blank" title="새창열림">복리후생비</a></li>
+                    <li>
+                        <a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=63701" target="_blank" title="새창열림">그밖의 복리후생제도 등의 운영현황</a>
+                        <ul>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=63785,63786,63787" target="_blank" title="새창열림">제도운영 상황</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=63788" target="_blank" title="새창열림">노조운영 지원비</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=63789" target="_blank" title="새창열림">영리시설,장비운영권 노조위탁</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=63795" target="_blank" title="새창열림">단체협약상 별도 합의사항</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=63796" target="_blank" title="새창열림">단체협약외의 별도 합의사항</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=20905" target="_blank" title="새창열림">임원 국외출장 내역</a></li>
+                    <li>
+                        <a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2102" target="_blank" title="새창열림">노동조합 관련현황</a>
+                        <ul>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=21025" target="_blank" title="새창열림">복수노조 교섭창구 단일화 정보</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=21026" target="_blank" title="새창열림">단체협약</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=21027" target="_blank" title="새창열림">임금협약</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=21028" target="_blank" title="새창열림">노사협의회 의결사항</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=21110" target="_blank" title="새창열림">내부규정</a></li>
+                    <li>
+                        <a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2120" target="_blank" title="새창열림">징계현황</a>
+                        <ul>
+                            <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2121" target="_blank" title="새창열림">징계처분 결과</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2130" target="_blank" title="새창열림">소송 및 법률자문 현황</a>
+                        <ul>
+                            <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2131" target="_blank" title="새창열림">고문변호사 및 법률자문현황</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=2140" target="_blank" title="새창열림">일·가정 양립 지원제도 운영현황</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="disclosure_inner">
+            <div class="disclosure_cont">
+                <strong>주요사업 및 경영성과</strong>
+                <ul>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=3120" target="_blank" title="새창열림">요약 재무상태표</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=3130" target="_blank" title="새창열림">요약 손익계산서 (또는 요약 포괄손익계산서)</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=31401" target="_blank" title="새창열림">수입·지출현황</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=31501" target="_blank" title="새창열림">주요사업</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=3160" target="_blank" title="새창열림">투자집행내역</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=31701" target="_blank" title="새창열림">자본금 및 주주현황</a></li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=3180" target="_blank" title="새창열림">장단기 차입금현황</a></li>
+                    <li>
+                        <a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=31901" target="_blank" title="새창열림">투자 및 출자 현황</a>
+                        <ul>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=31925" target="_blank" title="새창열림">퇴직임원 채용현황</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=31935" target="_blank" title="새창열림">대규모 거래내역</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=31965" target="_blank" title="새창열림">신규시설 투자</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=32001" target="_blank" title="새창열림">연간 출연 및 증여</a></li>
+                    <li>
+                        <a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=32101" target="_blank" title="새창열림">경영부담비용추계</a>
+                        <ul>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=32135" target="_blank" title="새창열림">기타 경영상 부담이 될 사항</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=32605" target="_blank" title="새창열림">중장기 재무관리계획</a></li>
+                    <li><a href="javascript:;" target="_blank" title="새창열림">12개 주요기관의 상세부채 정보</a></li>
+                    <li>
+                        <a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=32211" target="_blank" title="새창열림">납세정보현황</a>
+                        <ul>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=32225" target="_blank" title="새창열림">세무확정내역</a></li>
+                            <li><a href="https://www.alio.go.kr/item/itemOrganList.do?apbaId=C1120&amp;reportFormRootNo=32226" target="_blank" title="새창열림">조세포탈현황(유죄판결 확정 내역)</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://www.alio.go.kr/item/itemReportTerm.do?apbaId=C1120&amp;reportFormRootNo=32301" target="_blank" title="새창열림">감사보고서</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="alio_wrap">
+        <div class="alio_inner">
+            <p><img th:src="@{/portal/images/mandisclosurelist_logo_01.png}" alt="공공기관 경영정보 공개시스템 로고"></p>
+            <a href="https://alio.go.kr/organ/organDisclosureDtl.do?apbaId=C1120" class="btn_basic btn_bg_type01 flex_shrink" target="_blank" title="새 창으로 열림">홈페이지 바로가기</a>
+        </div>
+        <div class="alio_inner">
+            <p><img th:src="@{/portal/images/mandisclosurelist_logo_02.png}" alt="알리오플러스 로고"></p>
+            <a href="https://www.alioplus.go.kr/" class="btn_basic btn_bg_type01 flex_shrink" target="_blank" title="새 창으로 열림">홈페이지 바로가기</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal401 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal401.init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 권한관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="divide_wrap">
+            <div id="admin803leftContent" class="left_content">
+                <div class="table_desc" style="gap: 4px;">
+                    <input type="text" name="" id="keyword" placeholder="아이디/성명 입력" value="" title="검색">
+                    <div class="table_top_btn">
+                        <label>상태</label>
+                        <select id="useYnUser" title="신청대상 선택">
+                            <option value="">전체</option>
+                            <option value="Y">활성</option>
+                            <option value="N">비활성</option>
+                        </select>
+                        <a href="javascript:;" id="admin803_btn_search" class="btn_basic bg_type01">검색</a>
+                    </div>
+                </div>
+                <p>총 <strong id="total_count"></strong>건</p>
+                <div class="table_layout02 list_type s_table mb10">
+                    <table>
+                        <caption>권한관리 목록</caption>
+                        <colgroup>
+                            <col style="width: 52px">
+                            <col style="width:30%">
+                            <col style="width:30%">
+                            <col style="width:30%">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th scope="col">선택</th>
+                            <th scope="col">아이디</th>
+                            <th scope="col">사용자명</th>
+                            <th scope="col">상태</th>
+                        </tr>
+                        </thead>
+                        <tbody id="admin803_account_list_tbody"></tbody>
+                    </table>
+                </div>
+                <div id="paging_wrap" class="paging_wrap">
+                    <a href="javascript:" class="first page_first">첫 페이지</a>
+                    <a href="javascript:" class="previous page_prev">전 페이지</a>
+                    <div class="namber pagination_container"></div>
+                    <a href="javascript:" class="next page_next">다음 페이지</a>
+                    <a href="javascript:" class="last page_last">끝 페이지</a>
+                </div>
+            </div>
+            <div class="right_content">
+                <div class="table_top_btn mb10">
+                    <a href="javascript:;" id="admin803_btn_copy_auth" class="btn_basic bg_type01">복사</a>
+                    <a href="javascript:;" id="admin803_btn_save" class="btn_basic bg_type01">저장</a>
+                </div>
+                <div class="table_layout02 list_type s_table mb10">
+                    <table>
+                        <caption>권한관리 목록</caption>
+                        <colgroup>
+                            <col style="width: auto">
+                            <col style="width: auto">
+                            <col style="width: auto">
+                            <col style="width: auto">
+                            <col style="width: 100px">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th scope="col">메뉴명</th>
+                            <th scope="col">메뉴코드</th>
+                            <th scope="col">권한부여일자</th>
+                            <th scope="col">권한만료일자</th>
+                            <th scope="col"><span class="s_check"><label class="toggle"><input type="checkbox" aria-label="설정 켜기/끄기" class="select_deselect"><span class="track"></span></label></span></th>
+                        </tr>
+                        </thead>
+                        <tbody id="admin803_menu_list_tbody"></tbody>
+                    </table>
+                </div>
+                <!--<div class="table_desc">
+                    <p>
+                        <strong class="c_gray">※ 개인정보취급권한</strong>
+                        <span class="radio-box ml15"><input type="radio" id="admin803_privacy_y" name="admin803_privacy_yn" value="Y"><label for="admin803_privacy_y">활성</label></span>
+                        <span class="radio-box"><input type="radio" id="admin803_privacy_n" name="admin803_privacy_yn" value="N"><label for="admin803_privacy_n">비활성</label></span>
+                    </p>
+                    <a href="javascript:;" id="admin803_btn_save_auth" class="btn_basic bg_type01">저장</a>
+                </div>-->
+            </div>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="admin_modal">
+    <th:block th:replace="~{admin/modal/copy_auth :: copy_auth}"></th:block>
+</th:block>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin803 = {
+
+        state: {
+            account: null,
+            menu: null,
+            pageIndex: 1,
+            pageCnt: 10
+        },
+
+        init: function () {
+            this.getAccountListData();
+            this.initEvent();
+        },
+
+        initEvent: function () {
+            const _this = this;
+
+            // 좌측 관리자 테이블
+            // 검색 버튼 클릭
+            document.querySelector("#admin803_btn_search")?.addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.state.pageIndex = 1;
+                _this.getAccountListData();
+
+                _this.state.menu = null;
+                document.querySelector('#admin803_menu_list_tbody').innerHTML = "";
+            });
+
+            // 관리자 선택
+            $(document).on("click", ".acc_check", function () {
+                const row = this.closest('tr');
+                const userId = row.querySelector('td:nth-child(2)').textContent.trim();
+                const userInfo = _this.fnFindUserByUserId(userId);
+                if (userInfo) {
+                    _this.getMenuListData(userId);
+
+                    // 개인정보취급권한 라디오 버튼 설정
+                    _this.fnSetPrivacyYn(userInfo.prvcUseYn);
+                }
+            });
+
+            // 복사 버튼 클릭
+            document.querySelector("#admin803_btn_copy_auth")?.addEventListener("click", function (e) {
+                e.preventDefault();
+                copy_auth.initModal();
+            });
+
+            // 우측 메뉴 테이블
+            // 저장 버튼 클릭
+            document.querySelector("#admin803_btn_save")?.addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnSaveMenuAuth();
+            });
+
+            // // 하단 권한 저장 버튼 클릭
+            // document.querySelector("#admin803_btn_save_auth")?.addEventListener("click", function (e) {
+            //     e.preventDefault();
+            //     _this.fnSavePrivacyAuth();
+            // });
+
+            // 토글 전체 선택/해제
+            $(document).on("change", ".select_deselect", function () {
+                const isChecked = this.checked;
+                document.querySelectorAll('.menu_auth_check').forEach(chk => {
+                    chk.indeterminate = false;
+                    chk.checked = isChecked;
+                });
+            });
+
+            // 개별 체크박스 변경 시
+            $(document).on("change", ".menu_auth_check", function () {
+                const isChecked = this.checked;
+                const currentRow = this.closest('tr');
+
+                // 1. 하위 메뉴 처리: 하위 메뉴가 있으면 모두 같은 상태로 변경
+                const hasSubMenus = currentRow.hasAttribute('data-id');
+                if (hasSubMenus) {
+                    const subMenuId = currentRow.getAttribute('data-id');
+                    _this.fnCheckAllSubMenus(subMenuId, isChecked);
+                }
+
+                // 2. 상위 메뉴 처리: 현재 메뉴가 하위 메뉴라면 상위 메뉴 체크 상태 업데이트
+                if (currentRow.hasAttribute('data-tg')) {
+                    _this.fnUpdateParentCheckbox(currentRow);
+                }
+
+                // 3. 전체 선택 체크박스 상태 업데이트
+                _this.fnUpdateAllCheck();
+            });
+
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("admin803leftContent").addEventListener('keydown', e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    _this.state.pageIndex = 1;
+                    _this.getAccountListData();
+                }
+            });
+            // 검색영역 변경 이벤트
+            document.getElementById("admin803leftContent").addEventListener('change', e => {
+                if (e.target.matches('select, input[type="radio"]') && !e.target.classList.contains('acc_check')) {
+                    e.preventDefault();
+                    _this.state.pageIndex = 1;
+                    _this.getAccountListData();
+                }
+            });
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            if (!this.state.account) return;
+
+            const totalPages = this.state.account.pages;
+
+            uiCommon.pagination.render({
+                currentPage: this.state.pageIndex,
+                totalPages: totalPages,
+                onPageChange: (page) => {
+                    this.state.pageIndex = page;
+                    this.getAccountListData();
+                }
+            });
+        },
+
+        /**
+         * 관리자 테이블 렌더링
+         */
+        renderAccountTable: function () {
+            const tbody = document.querySelector("#admin803_account_list_tbody");
+            tbody.innerHTML = "";
+
+            if (!this.state.account || !this.state.account.list || this.state.account.list.length === 0) {
+                tbody.innerHTML = `<tr><td class="tac" colspan="4">조회된 결과가 없습니다.</td></tr>`;
+                document.querySelector('#total_count').textContent = 0;
+                return;
+            }
+
+            let html = '';
+            this.state.account.list.forEach(item => {
+                html += `
+                <tr>
+                    <td><input type="radio" class="acc_check" name="acc_check"></td>
+                    <td class="tac">${item.userId || ""}</td>
+                    <td class="tac">${item.userNmKorn || ""}</td>
+                    <td class="tac">${common.formatActiveYn(item.useYn)}</td>
+                </tr>
+            `;
+            });
+            tbody.innerHTML = html;
+
+            document.querySelector('#total_count').textContent = this.state.account.total;
+        },
+
+        /**
+         * 관리자 목록 데이터 조회
+         */
+        getAccountListData: async function () {
+            const keyword = document.querySelector('#keyword').value.trim();
+            const useYnUser = document.querySelector('#useYnUser').value;
+
+            const param = {
+                page: this.state.pageIndex,
+                size: this.state.pageCnt,
+                keyword: keyword,
+                useYn: useYnUser
+            };
+
+            try {
+                const response = await API.post('/api/admin/admin803/account/list', param);
+
+                // 페이지 데이터에 저장
+                this.state.account = response;
+                this.renderAccountTable();
+                this.renderPagination();
+            } catch (error) {
+                console.error('관리자 목록 조회 실패:', error);
+            }
+        },
+
+        /**
+         * 메뉴 테이블 렌더링
+         */
+        renderMenuTable: function () {
+            const tbody = document.querySelector("#admin803_menu_list_tbody");
+
+            tbody.innerHTML = "";
+            document.querySelectorAll('.select_deselect').forEach(chk => chk.checked = false);
+
+            if (!this.state.menu || this.state.menu.length === 0) {
+                tbody.innerHTML = `<tr><td class="tac" colspan="3">조회된 결과가 없습니다.</td></tr>`;
+                return;
+            }
+
+            // 최상위 메뉴부터 렌더링 시작
+            tbody.innerHTML = this.renderMenuTree(this.state.menu, null, 1);
+
+            // 렌더링 후 2depth까지 자동으로 열기
+            this.openDefaultDepth();
+
+            // 렌더링 후 부모 체크박스 상태 초기화
+            this.initParentCheckboxStates();
+        },
+
+        /**
+         * 메뉴 테이블 2depth까지 열어두기
+         */
+        openDefaultDepth: function () {
+            // 1depth 토글 버튼들 찾기
+            document.querySelectorAll('#admin803_menu_list_tbody tr:not(.t_Depth)').forEach(tr => {
+                const toggle = tr.querySelector('.Depth > a');
+                if (toggle) {
+                    const id = toggle.id;
+                    // 하위 메뉴(2depth) 표시
+                    document.querySelectorAll(`tr.t_Depth[data-tg="${id}"]`).forEach(sub => {
+                        sub.style.display = "table-row";
+                    });
+                    // 토글 버튼 상태 변경
+                    toggle.classList.add("off");
+                    toggle.textContent = '닫힘';
+                }
+            });
+        },
+
+        /**
+         * 메뉴 트리 렌더링 (재귀)
+         */
+        renderMenuTree: function (menuList, parentId = null, level = 1) {
+            let html = '';
+            menuList.forEach(item => {
+
+                // depth 클래스 결정
+                let depthClass = 'Depth';
+                if (level === 2) depthClass += ' d_02';
+                if (level === 3) depthClass += ' d_03';
+
+                // 하위 메뉴 존재 여부
+                const hasSub = item.subMenus?.length > 0;
+
+                // 행 생성
+                html += `
+                <tr class="${level > 1 ? 't_Depth' : ''}"
+                    ${level > 1 && parentId ? `data-tg="${parentId}"` : ''}
+                    ${hasSub ? `data-id="d_0_${item.menuOid}"` : ''}
+                    data-menu-oid="${item.menuOid}"
+                    style="${level > 1 ? 'display:none;' : ''}">
+                    <td class="tal">
+                        <strong class="${depthClass}">
+                            ${hasSub ? `<a href="javascript:;" id="d_0_${item.menuOid}">열림</a>` : ''}
+                            ${item.menuNm || ''}
+                        </strong>
+                    </td>
+                    <td>${item.menuCd || ''}</td>
+                    <td>${item.authBgngDt || ''}</td>
+                    <td>${item.authEndDt || ''}</td>
+                    <td>
+                        <span class="s_check">
+                            <label class="toggle">
+                                <input type="checkbox"
+                                       data-menu-oid="${item.menuOid}"
+                                       class="menu_auth_check"
+                                       ${item.inqAuthrtYn === 'Y' ? 'checked' : ''}>
+                                <span class="track"></span>
+                            </label>
+                        </span>
+                    </td>
+                </tr>
+            `;
+
+                // 하위 메뉴가 있으면 재귀 호출
+                if (hasSub) {
+                    html += this.renderMenuTree(item.subMenus, `d_0_${item.menuOid}`, level + 1);
+                }
+            });
+            return html;
+        },
+
+        /**
+         * 메뉴 목록 데이터 조회
+         */
+        getMenuListData: async function (userId) {
+            const param = {
+                userId : userId
+            };
+            try {
+                const response = await API.post('/api/admin/admin803/menu/list', param);
+
+                // 페이지 데이터에 저장
+                this.state.menu = null;
+                this.state.menu = response;
+                this.renderMenuTable();
+
+            } catch (error) {
+                console.error('메뉴 목록 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('메뉴 목록 조회에 실패했습니다.');
+            }
+        },
+
+        /**
+         * userId로 사용자 정보 찾기
+         */
+        fnFindUserByUserId: function (userId) {
+            if (!this.state.account || !this.state.account.list) return null;
+            return this.state.account.list.find(user => user.userId === userId);
+        },
+
+        /**
+         * 개인정보취급권한 라디오 버튼 설정
+         */
+        fnSetPrivacyYn: function (privacyYn) {
+            // 모든 라디오 버튼 해제
+            document.querySelectorAll('[name="admin803_privacy_yn"]').forEach(radio => {
+                radio.checked = false;
+            });
+
+            // privacyYn 값에 따라 해당 라디오 버튼 선택
+            //     if (privacyYn === 'Y') {
+            //         document.getElementById('admin803_privacy_y').checked = true;
+            //     } else if (privacyYn === 'N') {
+            //         document.getElementById('admin803_privacy_n').checked = true;
+            //     }
+        },
+
+        /**
+         * 전체 선택 체크박스 상태 업데이트
+         */
+        fnUpdateAllCheck: function () {
+            const all = document.querySelectorAll('.menu_auth_check');
+            const checked = document.querySelectorAll('.menu_auth_check:checked');
+
+            document.querySelectorAll('.select_deselect').forEach(el => {
+                el.checked = (all.length > 0 && all.length === checked.length);
+            });
+        },
+
+        /**
+         * 하위 메뉴 모두 체크/해제
+         */
+        fnCheckAllSubMenus: function (subMenuId, isChecked) {
+            const subMenuRows = document.querySelectorAll(`tr.t_Depth[data-tg="${subMenuId}"]`);
+
+            subMenuRows.forEach(subRow => {
+                const subCheckbox = subRow.querySelector('.menu_auth_check');
+                if (subCheckbox) {
+                    subCheckbox.checked = isChecked;
+
+                    // 하위 메뉴도 또 하위 메뉴를 가질 수 있으므로 재귀적으로 처리
+                    if (subRow.hasAttribute('data-id')) {
+                        const subSubMenuId = subRow.getAttribute('data-id');
+                        this.fnCheckAllSubMenus(subSubMenuId, isChecked);
+                    }
+                }
+            });
+        },
+
+        /**
+         * 렌더링 후 부모 체크박스 상태 초기화
+         */
+        initParentCheckboxStates: function () {
+            // 모든 하위 메뉴를 찾아서 처리 (하위에서 상위로)
+            const allSubRows = Array.from(document.querySelectorAll('#admin803_menu_list_tbody tr.t_Depth[data-tg]'));
+
+            allSubRows.reverse().forEach(subRow => {
+                this.fnUpdateParentCheckbox(subRow);
+            });
+        },
+
+        /**
+         * 상위 메뉴 체크박스 상태 업데이트
+         */
+        fnUpdateParentCheckbox: function (currentRow) {
+            const parentId = currentRow.getAttribute('data-tg');
+            if (!parentId) return;
+
+            // 상위 메뉴 tr 찾기
+            const parentRow = document.querySelector(`tr[data-id="${parentId}"]`);
+            if (!parentRow) return;
+
+            // 같은 부모를 가진 모든 직계 자식 메뉴 찾기 (형제 tr)
+            const siblingRows = document.querySelectorAll(`tr.t_Depth[data-tg="${parentId}"]`);
+
+            // 모든 직계 자식의 체크박스 확인
+            let allChecked = true;
+            let anyChecked = false;
+
+            siblingRows.forEach(siblingRow => {
+                const siblingCheckbox = siblingRow.querySelector('.menu_auth_check');
+                if (siblingCheckbox) {
+                    if (siblingCheckbox.checked) {
+                        anyChecked = true;
+                    } else {
+                        allChecked = false;
+                    }
+                }
+            });
+
+            // 상위 메뉴 체크박스 상태 업데이트
+            const parentCheckbox = parentRow.querySelector('.menu_auth_check');
+            if (parentCheckbox) {
+                if (allChecked) {
+                    // 모든 자식이 체크 → 체크
+                    parentCheckbox.checked = true;
+                    parentCheckbox.indeterminate = false;
+                } else if (anyChecked) {
+                    // 일부 자식만 체크 → 중간 상태
+                    parentCheckbox.checked = false;
+                    parentCheckbox.indeterminate = true;
+                } else {
+                    // 모든 자식이 해제 → 해제
+                    parentCheckbox.checked = false;
+                    parentCheckbox.indeterminate = false;
+                }
+            }
+
+            // 상위 메뉴도 또 상위 메뉴를 가질 수 있으므로 재귀
+            if (parentRow.hasAttribute('data-tg')) {
+                this.fnUpdateParentCheckbox(parentRow);
+            }
+        },
+
+        /**
+         * 메뉴 권한 저장
+         */
+        fnSaveMenuAuth: async function () {
+            // 선택된 라디오 버튼 확인
+            const checkedRadio = document.querySelector('#admin803_account_list_tbody .acc_check:checked');
+            if (!checkedRadio) {
+                uiCommon.fnShowAlertModal('사용자를 선택해주세요.');
+                return;
+            }
+
+            // 선택된 row에서 userId 추출
+            const row = checkedRadio.closest('tr');
+            const userId = row.querySelector('td:nth-child(2)').textContent.trim();
+
+            // userId로 userOid 찾기
+            const userInfo = this.fnFindUserByUserId(userId);
+            if (!userInfo) {
+                uiCommon.fnShowAlertModal('사용자 정보를 찾을 수 없습니다.');
+                return;
+            }
+
+            // 체크박스에서 메뉴 권한 수집 (indeterminate도 Y로 처리)
+            const menuAuthChecks = document.querySelectorAll('.menu_auth_check');
+            const authList = Array.from(menuAuthChecks).map(chk => ({
+                menuOid: parseInt(chk.dataset.menuOid),
+                inqAuthrtYn: (chk.checked || chk.indeterminate) ? 'Y' : 'N',
+                userOid: userInfo.userOid
+            }));
+
+            const changeReason = await uiCommon.fnShowPromptModal('변경사유를 입력해주세요.', {
+                title: '변경사유',
+                defaultValue: '',
+                placeholder: '변경사유는 2자 이상 입력해주세요.'
+            });
+
+            // 취소 시 조용히 종료
+            if (changeReason === null) {
+                return;
+            }
+
+            // 빈 값 체크
+            if (changeReason.trim() === '') {
+                uiCommon.fnShowAlertModal('변경사유는 필수 입니다.');
+                return;
+            }
+
+            // 2자 미만 체크
+            if (changeReason.trim().length < 2) {
+                uiCommon.fnShowAlertModal('변경사유는 2자 이상 입력해주세요.');
+                return;
+            }
+
+            const param = {
+                authList: authList,
+                changeReason: changeReason
+            };
+
+            try {
+                const response = await API.patch('/api/admin/admin803/menu/update', param);
+                uiCommon.fnShowAlertModal('메뉴 권한이 저장되었습니다.');
+                this.getMenuListData(userId);
+            } catch (error) {
+                console.error('메뉴 권한 저장 실패:', error);
+
+                // APIError 객체에서 메시지 추출
+                let errorMessage = '메뉴 권한 저장에 실패했습니다.';
+                // 빈 값
+                if (error instanceof APIError && error.isValidationError()) {
+                    errorMessage = error.getUserMessage();
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        /**
+         * 개인정보취급권한 저장
+         */
+        // fnSavePrivacyAuth: async function () {
+        //     // 선택된 사용자 확인
+        //     const checkedRadio = document.querySelector('#admin803_account_list_tbody .acc_check:checked');
+        //     if (!checkedRadio) {
+        //         uiCommon.fnShowAlertModal('사용자를 선택해주세요.');
+        //         return;
+        //     }
+
+        //     // 선택된 row에서 userId 추출
+        //     const row = checkedRadio.closest('tr');
+        //     const userId = row.querySelector('td:nth-child(2)').textContent.trim();
+
+        //     // userId로 userOid 찾기
+        //     const userInfo = this.fnFindUserByUserId(userId);
+        //     if (!userInfo) {
+        //         uiCommon.fnShowAlertModal('사용자 정보를 찾을 수 없습니다.');
+        //         return;
+        //     }
+
+        //     // 선택된 개인정보취급권한 라디오 버튼 값 가져오기
+        //     const privacyYnRadio = document.querySelector('[name="admin803_privacy_yn"]:checked');
+        //     if (!privacyYnRadio) {
+        //         uiCommon.fnShowAlertModal('개인정보취급권한을 선택해주세요.');
+        //         return;
+        //     }
+
+        //     const param = {
+        //         userOid: userInfo.userOid,
+        //         privacyYn: privacyYnRadio.value
+        //     };
+
+        //     try {
+        //         const response = await API.patch('/api/admin/admin803/privacy/update', param);
+        //         uiCommon.fnShowAlertModal('개인정보취급권한이 저장되었습니다.');
+
+        //         // 목록 새로고침하여 변경된 값 반영
+        //         await this.getAccountListData();
+        //     } catch (error) {
+        //         console.error('개인정보취급권한 저장 실패:', error);
+
+        //         // APIError 객체에서 메시지 추출
+        //         let errorMessage = '개인정보취급권한 저장에 실패했습니다.';
+        //         if (error instanceof APIError && error.isValidationError()) {
+        //             errorMessage = error.getUserMessage();
+        //         }
+        //         uiCommon.fnShowAlertModal(errorMessage);
+        //     }
+        // }
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+        admin803.init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="egovframework.portal.user.mapper.UserMapper">
+    <insert id="insertUser"
+            parameterType="egovframework.portal.user.domain.User"
+            useGeneratedKeys="true"
+            keyProperty="userOid"
+            keyColumn="user_oid">
+        INSERT INTO ${schema}.user (
+                              user_nm_korn
+                            , user_nm_eng
+                            , brdt
+                            , user_id
+                            , pswd
+                            , eml_lcal
+                            , eml_dmn
+                            , mpno_pfx
+                            , mpno_mid
+                            , mpno_sfx
+                            , inst_oid
+                            , inst_nm
+                            , dept_cd
+                            , dept_nm
+                            , jbps_cd
+                            , jbps_nm
+                            , trms_agre_yn
+                            , prvc_pvsn_agre_yn
+                            , tdpty_pvsn_agre_yn
+                            , cnsgn_pvsn_agre_yn
+                            , reg_id
+                            , mdfcn_id
+                            , reg_dt
+        ) VALUES (
+                   #{userNmKorn}
+                 , #{userNmEng}
+                 , #{brdt}
+                 , #{userId}
+                 , #{pswd}
+                 , #{emlLcal}
+                 , #{emlDmn}
+                 , #{mpnoPfx}
+                 , #{mpnoMid}
+                 , #{mpnoSfx}
+                 , #{instOid}
+                 , #{instNm}
+                 , #{deptCd}
+                 , #{deptNm}
+                 , #{jbpsCd}
+                 , #{jbpsNm}
+                 , #{trmsAgreYn}
+                 , #{prvcPvsnAgreYn}
+                 , #{tdptyPvsnAgreYn}
+                 , #{cnsgnPvsnAgreYn}
+                 , #{userId}
+                 , #{userId}
+                 , NOW()
+                 )
+    </insert>
+
+    <!-- 수료증 등록 -->
+    <insert id="insertUserCertificate"
+            parameterType="egovframework.portal.user.domain.UserCertificateDto">
+        INSERT INTO ${schema}.user_certificate (
+            user_oid,
+            orgnl_file_nm,
+            strg_file_nm,
+            strg_file_path,
+            strg_file_cpct,
+            file_type_nm,
+            reg_id,
+            mdfcn_id,
+            reg_dt
+        )
+        VALUES (
+                   #{userOid},
+                   #{orgnlFileNm},
+                   #{strgFileNm},
+                   #{strgFilePath},
+                   #{strgFileCpct},
+                   #{fileTypeNm},
+                   #{regId},
+                   #{mdfcnId},
+                   NOW()
+               )
+    </insert>
+
+    <!-- 수강신청 - 유저의 수료증 유무 조회 -->
+    <select id="existsCertificateByUserNo" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM ${schema}.file
+            WHERE tbl_nm = 'user'
+                AND tbl_oid = #{userOid}
+                AND use_yn = 'Y'
+        )
+    </select>
+
+    <select id="selectCertificateByUserNo"
+            parameterType="long"
+            resultType="egovframework.portal.user.domain.UserCertificateDto">
+        SELECT
+            file_oid AS userCertificateNo,
+            tbl_oid AS userOid,
+            orgnl_file_nm AS orgnlFileNm,
+            strg_file_nm AS strgFileNm,
+            strg_file_path AS strgFilePath,
+            strg_file_cpct AS strgFileCpct,
+            file_type_nm AS fileTypeNm,
+            reg_id AS regId,
+            mdfcn_id AS mdfcnId
+        FROM ${schema}.file
+        WHERE tbl_nm = 'user'
+          AND tbl_oid = #{userOid}
+          AND file_type = 'ATTACHMENT'
+          AND use_yn = 'Y'
+        ORDER BY atch_file_seq ASC, reg_dt DESC
+        LIMIT 1
+    </select>
+
+    <!-- 사용자 아이디 중복 확인 - INSERT -->
+    <select id="countUserIdForInsert" parameterType="egovMap" resultType="int">
+        SELECT COUNT(1)
+        FROM ${schema}.user
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 사용자 아이디 중복 확인 - UPDATE -->
+    <select id="countUserIdForUpdate" parameterType="egovMap" resultType="int">
+        SELECT COUNT(1)
+        FROM ${schema}.user
+        WHERE user_id = #{userId}
+          AND user_oid != #{userOid}
+    </select>
+
+    <select id="countUserEmail"
+            parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap"
+            resultType="int">
+    SELECT COUNT(*)
+        FROM ${schema}.user
+        WHERE eml_lcal = #{emlLcal}
+        AND eml_dmn   = #{emlDmn}
+        AND use_yn = 'Y'
+        <!-- 수정 : 자기 자신은 제외 -->
+        <if test="userId != null and userId != ''">
+            AND user_id != #{userId}
+        </if>
+        <if test="userOid != null">
+            AND user_oid != #{userOid}
+        </if>
+    </select>
+
+    <!-- 본인인증 정보로 기가입 회원 체크 (이름 + 생년월일 + 전화번호) -->
+    <select id="countUserByIdentity"
+            parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap"
+            resultType="int">
+        SELECT COUNT(*)
+        FROM ${schema}.user
+        WHERE user_nm_korn = #{userNmKorn}
+          AND brdt = #{brdt}
+          AND mpno_pfx = #{mpnoPfx}
+          AND ${schema}.fn_decrypt_aes(mpno_mid, #{aesKey}) = CAST(#{mpnoMid} AS CHAR) collate utf8mb4_unicode_ci
+          AND mpno_sfx = #{mpnoSfx}
+          AND use_yn = 'Y'
+    </select>
+
+    <update id="updateUser" parameterType="egovframework.portal.user.domain.User">
+        UPDATE ${schema}.user
+        SET
+        user_nm_korn    = #{userNmKorn},
+        user_nm_eng    = #{userNmEng},
+        brdt          = #{brdt},
+        user_id       = #{userId},
+        eml_lcal     = #{emlLcal},
+        eml_dmn       = #{emlDmn},
+        mpno_pfx      = #{mpnoPfx},
+        mpno_mid      = #{mpnoMid},
+        mpno_sfx      = #{mpnoSfx},
+        inst_oid        = #{instOid},
+        inst_nm        = #{instNm},
+        dept_cd       = #{deptCd},
+        dept_nm       = #{deptNm},
+        jbps_cd       = #{jbpsCd},
+        jbps_nm       = #{jbpsNm},
+        eml_rcptn_agre_yn = #{emlRcptnAgreYn},
+        mdfcn_id   = #{userId},
+        mdfcn_dt        = NOW()
+        <if test="pswd != null and pswd != ''">
+            , pswd = #{pswd}
+        </if>
+        WHERE user_oid = #{userOid}
+    </update>
+
+    <select id="selectUserByUserNoDecrypted"
+            parameterType="map"
+            resultType="egovframework.portal.user.domain.User">
+
+        SELECT
+            user_oid,
+            user_nm_korn,
+            user_nm_eng,
+            brdt,
+            user_id,
+            pswd,
+            user_authrt,
+            user_type,
+            user_stts,
+
+            ${schema}.fn_decrypt_aes(eml_lcal, #{aesKey}) AS eml_lcal,
+            eml_dmn,
+
+            mpno_pfx,
+            ${schema}.fn_decrypt_aes(mpno_mid, #{aesKey}) AS mpno_mid,
+            mpno_sfx,
+
+            inst_oid,
+            inst_nm,
+            dept_cd,
+            dept_nm,
+            jbps_cd,
+            jbps_nm,
+            last_login_dt,
+            lgn_fail_cnt,
+            prvc_use_yn,
+            prvc_pvsn_agre_yn,
+            trms_agre_yn,
+            eml_rcptn_agre_yn,
+            use_yn,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+
+        FROM ${schema}.user
+        WHERE user_oid = #{userOid}
+          AND use_yn = 'Y'
+    </select>
+
+    <update id="updatePwd" parameterType="egovframework.portal.user.domain.UserDTO">
+        UPDATE
+            ${schema}.user
+        SET
+            pswd         = #{newPswd},
+            mdfcn_id = #{mdfcnId},
+            mdfcn_dt      = IFNULL(#{mdfcnDt}, NOW())
+        WHERE
+            user_oid = #{userOid}
+          AND user_id = #{mdfcnId}
+    </update>
+
+    <select id="getNextWithdrawSeq" resultType="String">
+        SELECT
+            CONCAT('del', LPAD(
+                COALESCE(
+                    (SELECT MAX(CAST(SUBSTRING(user_nm_eng, 4) AS UNSIGNED)) + 1
+                     FROM ${schema}.user
+                     WHERE user_nm_eng LIKE 'del%'
+                       AND user_nm_eng REGEXP '^del[0-9]+$'
+                       AND LENGTH(user_nm_eng) = 11),
+                    1
+                ), 8, '0'))
+    </select>
+
+    <update id="withdrawUser">
+        UPDATE ${schema}.user
+        SET
+            user_nm_korn            = CONCAT('탈퇴회원_', #{userOid}),
+            user_nm_eng            = #{delToken},
+            brdt                  = #{delToken},
+            pswd                   = #{dummyPassword},
+            user_stts           = 'EXPIRED',
+            eml_lcal             = #{delToken},
+            eml_dmn               = #{delToken},
+            mpno_pfx              = #{delToken},
+            mpno_mid              = #{delToken},
+            mpno_sfx              = #{delToken},
+            inst_oid                = #{delToken},
+            inst_nm                = #{delToken},
+            dept_cd               = #{delToken},
+            dept_nm               = #{delToken},
+            jbps_cd               = #{delToken},
+            jbps_nm               = #{delToken},
+            lgn_fail_cnt        = 0,
+            prvc_use_yn            = 'N',
+            cnsgn_pvsn_agre_yn   = 'N',
+            tdpty_pvsn_agre_yn    = 'N',
+            prvc_pvsn_agre_yn      = 'N',
+            trms_agre_yn         = 'N',
+            eml_rcptn_agre_yn         = 'N',
+            use_yn                = 'N',
+            mdfcn_id           = #{mdfcnId},
+            mdfcn_dt                = IFNULL(#{mdfcnDt}, NOW())
+        WHERE
+            user_oid = #{userOid}
+    </update>
+</mapper>

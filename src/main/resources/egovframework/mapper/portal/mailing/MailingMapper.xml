@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.portal.mailing.mapper.MailingMapper">
+
+    <!-- 메일링 신청 유무 확인 -->
+	<select id="selectActiveSubscriber" parameterType="egovframework.portal.mailing.domain.MailingRequestDTO" resultType="int">
+		/* selectActiveSubscriber */
+	    SELECT
+	    	COUNT(*)
+	    FROM
+	    	${schema}.eml_subs
+	    WHERE 
+			user_nm = #{userNm}
+			AND mpno_pfx = #{mpnoPfx}
+			AND mpno_mid = #{mpnoMid}
+			AND mpno_sfx = #{mpnoSfx}
+			AND eml_lcal = #{emlLcal}
+			AND eml_dmn = #{emlDmn}
+			AND sub_stat_cd = 'SUB'
+	</select>
+	
+	<!-- 이메일 인증 insert -->
+	<insert id="insertEmailAuth" parameterType="egovframework.portal.mailing.domain.MailingRequestDTO">
+		/* insertEmailAuth */
+	    INSERT INTO ${schema}.eml_cert (
+	        eml_lcal,
+	        eml_dmn,
+	        cert_cd
+	    ) VALUES (
+	        #{emlLcal}
+	        , #{emlDmn}
+	        , #{certCd}
+	    )
+	</insert>
+	
+	<!-- 이메일 인증내역 조회 -->
+	<select id="selectEmailAuthInfo" resultType="egovframework.portal.mailing.domain.MailingRequestDTO">
+		/* selectEmailAuthInfo */
+		SELECT 
+			eml_cert_oid, cert_cd, expire_dt
+		FROM
+			${schema}.eml_cert
+		WHERE
+			eml_lcal = #{emlLcal}
+			AND eml_dmn = #{emlDmn}
+			AND cert_stts_cd = 'PENDING'
+		ORDER BY
+			expire_dt DESC
+		LIMIT 1
+	</select>
+	
+	<!-- 이메일 인증 상태 변경 -->
+	<update id="updateEmailAuthStatusUsed" parameterType="long">
+	    UPDATE ${schema}.eml_cert
+	    SET cert_stts_cd = 'USED'
+	    WHERE eml_cert_oid = #{emlCertOid}
+	</update>
+	
+	<!-- 이메일 인증 로그 생성 -->
+	<insert id="insertEmailAuthLog" parameterType="egovframework.portal.mailing.domain.MailingRequestDTO">
+	    INSERT INTO ${schema}.eml_cert_log (
+	        eml_lcal,
+	        eml_dmn,
+	        eml_cert_stts_cd
+	    ) VALUES (
+	        #{emlLcal},
+	        #{emlDmn},
+	        #{emlCertSttsCd}
+	    )
+	</insert>
+	
+	<!-- 메일링 신청 -->
+	<insert id="insertMailingInfo" parameterType="egovframework.portal.mailing.domain.MailingRequestDTO">
+	    INSERT INTO ${schema}.eml_subs (
+	        user_nm,
+	        mpno_pfx,
+	        mpno_mid,
+	        mpno_sfx,
+	        eml_lcal,
+	        eml_dmn,
+	        inst_nm,
+	        jbps_nm,
+	        prvc_pvsn_agre_yn,
+	        apply_dt
+	    ) VALUES (
+	        #{userNm},
+	        #{mpnoPfx},
+	        #{mpnoMid},
+	        #{mpnoSfx},
+	        #{emlLcal},
+	        #{emlDmn},
+	        #{instNm},
+	        #{jbpsNm},
+	        #{prvcPvsnAgreYn},
+	        NOW()
+	    )
+	</insert>
+	
+	<update id="updateSubscriber" parameterType="egovframework.portal.mailing.domain.MailingRequestDTO">
+	    /* updateSubscriber */
+	    UPDATE ${schema}.eml_subs
+	    SET 
+	        eml_lcal = #{newEmlLocal}, 
+	        eml_dmn = #{newEmlDmn},
+	        <if test='instNm != null and instNm != ""'>
+	        	inst_nm = #{instNm},
+	        </if>
+    	    <if test='jbpsNm != null and jbpsNm != ""'>
+	        	jbps_nm = #{jbpsNm},
+	        </if>
+	        mdfcn_dt = CURRENT_TIMESTAMP,
+	        mdfcn_id = 'SYSTEM'
+	    WHERE 
+	        user_nm = #{userNm}
+	        AND mpno_pfx = #{mpnoPfx}
+	        AND mpno_mid = #{mpnoMid}
+	        AND mpno_sfx = #{mpnoSfx}
+	        AND eml_lcal = #{emlLcal}
+	        AND eml_dmn = #{emlDmn}
+	        AND sub_stat_cd = 'SUB'
+	</update>
+	
+	<update id="cancelSubscriber" parameterType="egovframework.portal.mailing.domain.MailingRequestDTO">
+	    UPDATE ${schema}.eml_subs
+	    SET
+	        user_nm = #{newUserNm},
+	        eml_lcal = #{delToken},
+	        eml_dmn = #{delToken},
+	        inst_nm = #{delToken},
+	        jbps_nm = #{delToken},
+	        mpno_pfx = #{delToken},
+	        mpno_mid = #{delToken},
+	        mpno_sfx = #{delToken},
+	        sub_stat_cd = #{subStatCd},
+	        cncltn_dt = CURRENT_DATE
+	    WHERE 
+	        user_nm = #{userNm}
+	        AND eml_lcal = #{emlLcal}
+	        AND sub_stat_cd = 'SUB'
+	</update>	
+	
+    <select id="getMailingNextWithdrawSeq" resultType="String">
+		SELECT
+		        CONCAT('del', LPAD(
+		            COALESCE(
+		                (SELECT MAX(CAST(SUBSTRING(mpno_pfx, 4) AS UNSIGNED)) + 1
+		                 FROM ${schema}.eml_subs
+		                 WHERE mpno_pfx LIKE 'del%'           -- mpno_pfx에서 del% 패턴 찾기
+		                   AND mpno_pfx REGEXP '^del[0-9]+$'  -- 숫자 패턴 체크
+		                ), 
+		                1
+		            ), 8, '0'))
+    </select>
+    
+    <!-- 이메일 인증 만료 로그 생성 -->
+	<insert id="insertExpiredEmailAuthLogs">
+	    /* insertExpiredEmailAuthLogs */
+	    INSERT INTO ${schema}.eml_cert_log (
+	        eml_lcal,
+	        eml_dmn,
+	        eml_cert_stts_cd,
+	        reg_id,
+	        reg_dt
+	    )
+	    SELECT
+	        eml_lcal,
+	        eml_dmn,
+	        'EXPIRED',
+	        'SYSTEM',
+	        CURRENT_TIMESTAMP
+	    FROM
+	        ${schema}.eml_cert
+	    WHERE
+	        <![CDATA[ expire_dt < CURRENT_TIMESTAMP ]]>
+	        AND cert_stts_cd = 'PENDING'
+	</insert>
+	
+	<!-- 이메일 인증 만료된 데이터 삭제 -->
+	<delete id="deleteExpiredEmailAuth">
+	    /* deleteExpiredEmailAuth */
+	    DELETE FROM ${schema}.eml_cert
+	    WHERE
+	        <![CDATA[ expire_dt < CURRENT_TIMESTAMP ]]>
+	</delete>    
+</mapper>

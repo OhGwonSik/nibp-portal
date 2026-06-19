@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin700.mapper.Admin703Mapper">
+
+	<select id="selectQnaMonthlyResponseStat" resultType="egovframework.admin.admin700.domain.QnaMonthlyResponseStatDTO">
+		/* 검색 기간 동안의 모든 '월(Month)' 생성 */
+        WITH RECURSIVE month_calendar AS (
+            SELECT STR_TO_DATE(CONCAT(#{startYearMonth}, '-01'), '%Y-%m-%d') AS m_date
+
+            UNION ALL
+
+            SELECT
+            	DATE_ADD(m_date, INTERVAL 1 MONTH)
+            FROM
+            	month_calendar
+            WHERE m_date <![CDATA[ < ]]> STR_TO_DATE(CONCAT(#{endYearMonth}, '-01'), '%Y-%m-%d')
+        ),
+
+        /* 초안 답변 통계 - 초안 답변일(h_temp.reg_dt) 기준 */
+        draft_data AS (
+            SELECT
+                DATE_FORMAT(h_temp.reg_dt, '%Y-%m') AS join_month
+                , COUNT(h_temp.reg_dt) AS draft_cnt
+                , SUM(GREATEST(0, DATEDIFF(h_temp.reg_dt, q.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[ >= ]]> DATE(q.reg_dt)
+                                AND d.dt <![CDATA[ <= ]]> DATE(h_temp.reg_dt)
+                                AND d.wrkdy_yn = 'N'), 0))) AS draft_sum_days
+            FROM
+                ${schema}.bbs_pst q
+                INNER JOIN ${schema}.bbs b
+                    ON q.bbs_oid = b.bbs_oid
+                INNER JOIN ${schema}.bbs_pst a
+                    ON q.bbs_pst_oid = a.up_bbs_pst_oid
+                    AND a.del_yn = 'N'
+                INNER JOIN (
+                    SELECT tbl_oid, MIN(reg_dt) AS reg_dt
+                    FROM ${schema}.bbs_hstry
+                    WHERE tbl_nm = 'bbs_pst' AND stts = 'TEMP'
+                    GROUP BY tbl_oid
+                ) h_temp ON a.bbs_pst_oid = h_temp.tbl_oid
+            WHERE
+                q.up_bbs_pst_oid IS NULL
+                AND q.del_yn = 'N'
+                AND b.bbs_se_cd = 'QNA'
+                AND b.stats_yn = 'Y'
+                AND b.use_yn = 'Y'
+                AND h_temp.reg_dt <![CDATA[ >= ]]> STR_TO_DATE(CONCAT(#{startYearMonth}, '-01 00:00:00'), '%Y-%m-%d %H:%i:%s')
+                AND h_temp.reg_dt <![CDATA[ <= ]]> LAST_DAY(STR_TO_DATE(CONCAT(#{endYearMonth}, '-01 23:59:59'), '%Y-%m-%d %H:%i:%s'))
+            GROUP BY
+                DATE_FORMAT(h_temp.reg_dt, '%Y-%m')
+        ),
+
+        /* 최종 완료 통계 - 최종 완료일(h_comp.reg_dt) 기준 */
+        final_data AS (
+            SELECT
+                DATE_FORMAT(h_comp.reg_dt, '%Y-%m') AS join_month
+                , COUNT(h_comp.reg_dt) AS final_cnt
+                , SUM(GREATEST(0, DATEDIFF(h_comp.reg_dt, q.reg_dt)
+                    - IFNULL((SELECT COUNT(*) FROM ${schema}.ntn_std_cldr d
+                              WHERE d.dt <![CDATA[ >= ]]> DATE(q.reg_dt)
+                                AND d.dt <![CDATA[ <= ]]> DATE(h_comp.reg_dt)
+                                AND d.wrkdy_yn = 'N'), 0))) AS final_sum_days
+            FROM
+                ${schema}.bbs_pst q
+                INNER JOIN ${schema}.bbs b
+                    ON q.bbs_oid = b.bbs_oid
+                INNER JOIN ${schema}.bbs_pst a
+                    ON q.bbs_pst_oid = a.up_bbs_pst_oid
+                    AND a.del_yn = 'N'
+                INNER JOIN (
+                    SELECT tbl_oid, MIN(reg_dt) AS reg_dt
+                    FROM ${schema}.bbs_hstry
+                    WHERE tbl_nm = 'bbs_pst' AND stts = 'COMP'
+                    GROUP BY tbl_oid
+                ) h_comp ON a.bbs_pst_oid = h_comp.tbl_oid
+            WHERE
+                q.up_bbs_pst_oid IS NULL
+                AND q.del_yn = 'N'
+                AND b.bbs_se_cd = 'QNA'
+                AND b.stats_yn = 'Y'
+                AND b.use_yn = 'Y'
+                AND h_comp.reg_dt <![CDATA[ >= ]]> STR_TO_DATE(CONCAT(#{startYearMonth}, '-01 00:00:00'), '%Y-%m-%d %H:%i:%s')
+                AND h_comp.reg_dt <![CDATA[ <= ]]> LAST_DAY(STR_TO_DATE(CONCAT(#{endYearMonth}, '-01 23:59:59'), '%Y-%m-%d %H:%i:%s'))
+            GROUP BY
+                DATE_FORMAT(h_comp.reg_dt, '%Y-%m')
+        )
+
+        /* 최종 조회 */
+        SELECT
+            DATE_FORMAT(mc.m_date, '%Y-%m') AS searchMonth
+            , IFNULL(dd.draft_cnt, 0) AS draftCnt
+            , IFNULL(dd.draft_sum_days, 0) AS draftSumDays
+            , IFNULL(ROUND(dd.draft_sum_days / NULLIF(dd.draft_cnt, 0), 2), 0) AS draftAvgDays
+            , IFNULL(fd.final_cnt, 0) AS finalCnt
+            , IFNULL(fd.final_sum_days, 0) AS finalSumDays
+            , IFNULL(ROUND(fd.final_sum_days / NULLIF(fd.final_cnt, 0), 2), 0) AS finalAvgDays
+        FROM
+            month_calendar mc
+            LEFT JOIN draft_data dd
+                ON DATE_FORMAT(mc.m_date, '%Y-%m') = dd.join_month
+            LEFT JOIN final_data fd
+                ON DATE_FORMAT(mc.m_date, '%Y-%m') = fd.join_month
+        ORDER BY
+            searchMonth ASC
+	</select>
+</mapper>

@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${boardInfo != null ? boardInfo.bbsNm : '게시판'} + ' > 등록/수정'">게시판 > 등록/수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02">
+            <table>
+                <caption th:text="${boardInfo != null ? boardInfo.bbsNm : '게시판'} + (${post != null} ? ' 수정' : ' 등록')">게시판 등록</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row" class="point"><label for="cm_brd_title">제목</label></th>
+                    <td>
+                        <input type="text" id="cm_brd_title" title="제목입력" class="w100" placeholder="제목을 입력해 주세요"
+                               th:value="${post != null ? post.bbsPstTtl : ''}">
+                        <p class="mt5" th:if="${bbsSeCd != null and bbsSeCd.isNoticeTypeBoard()}">
+                            <input type="checkbox" id="cm_brd_notice_yn" name="cm_brd_notice_yn"
+                                   th:checked="${post != null and post.ntcYn == 'Y'}">
+                            <label for="cm_brd_notice_yn" class="ml5">공지</label>
+                        </p>
+                    </td>
+                </tr>
+
+                <tr th:if="${boardInfo != null and boardInfo.ctgryYn == 'Y' and boardInfo.ctgryList != null}">
+                    <th scope="row"><label for="cm_brd_category">분류</label></th>
+                    <td>
+                        <select id="cm_brd_category" title="분류 선택" class="w30">
+                            <option value="">분류 선택</option>
+                            <option th:each="cat : ${#strings.arraySplit(#strings.replace(#strings.replace(#strings.replace(boardInfo.ctgryList, '(', ''), ')', ''), '''', ''), ',')}"
+                                    th:value="${#strings.trim(cat)}"
+                                    th:text="${#strings.trim(cat)}"
+                                    th:selected="${post != null and post.ctgry == #strings.trim(cat)}"></option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">공개여부</th>
+                    <td>
+                        <span class="radio-box">
+                            <input type="radio" id="cm_brd_open" name="cm_brd_open_yn" value="Y"
+                                   th:checked="${post == null or post.openYn == 'Y'}">
+                            <label for="cm_brd_open">공개</label>
+                        </span>
+                        <span class="radio-box">
+                            <input type="radio" id="cm_brd_private" name="cm_brd_open_yn" value="N"
+                                   th:checked="${post != null and post.openYn == 'N'}">
+                            <label for="cm_brd_private">비공개</label>
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point"><label for="cm_brd_editor">내용</label></th>
+                    <td>
+                    <textarea class="bor1ddd" name="cm_brd_editor" id="cm_brd_editor" rows="30"
+                              th:text="${post != null ? post.bbsPstCn : ''}"></textarea>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row"><label>썸네일</label></th>
+                    <td>
+                        <div class="flex_col file_list" id="cm_brd_thumb_file_area">
+                        </div>
+                        <div class="file_upload">
+                            <label for="cm_brd_thumb_input"><span>파일찾기</span></label>
+                            <input type="file" id="cm_brd_thumb_input" accept="image/*" title="썸네일 첨부">
+                            <span class="file_txt">* 썸네일 이미지를 첨부해 주세요. (JPG, PNG, GIF)</span>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${boardInfo != null and boardInfo.atchFileEnYn == 'Y'}">
+                    <th scope="row">첨부파일</th>
+                    <td>
+                        <div class="flex_col file_list" id="cm_brd_file_list"></div>
+                        <div class="file_upload" id="cm_brd_file_upload_box">
+                            <label for="cm_brd_file_input"><span>파일찾기</span></label>
+                            <input type="file" id="cm_brd_file_input" multiple="multiple">
+                            <span class="file_txt" id="cm_brd_file_upload_guide">파일을 첨부해주세요</span>
+                        </div>
+                        <div id="cm_brd_first_file_alt_text_container" style="display: none; margin-top: 10px;">
+                            <label for="cm_brd_first_file_alt_text">첫 번째 이미지 대체 텍스트:</label>
+                            <textarea id="cm_brd_first_file_alt_text" rows="2" style="width: 100%; margin-top: 5px;" placeholder="첫 번째 첨부 이미지의 대체 텍스트를 입력하세요"></textarea>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="cm_brd_btn_save" class="btn_basic bg_type01">확인</a>
+            <a href="javascript:;" id="cm_brd_btn_cancel" class="btn_basic line_type02">취소</a>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin_gallery_board_write = {
+        state: {
+            uploaderStorageKey: 'tempUploadKey_thumbBoard',
+            uploadTargetId: null,
+            bbsOid: /*[[${boardInfo != null ? boardInfo.bbsOid : null}]]*/ null,
+            boardInfo: /*[[${boardInfo}]]*/ null,
+            bbsPstOid: null,
+            menuCd: null,
+            chunkSize: 2 * 1024 * 1024,
+            uploadUrl: '/api/common/file/chunk',
+            tempDeleteUrl: '/api/common/file/chunk/temp-file',
+            rfrncSeCd: 'BOARD',
+            isUploading: false,
+            existingFiles: [],
+            newFiles: [],
+            deleteAttachNos: [],
+            thumbnailFile: null,
+            hasThumbnail: false,
+            editorFiles: [],
+            existingEditorFileKeys: [],
+            deleteEditorAttachNos: [],
+            deletedAttachNos: [],
+            strgFilePath: /*[[${basicFilePath}]]*/ ''
+        },
+
+        init: async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            this.state.bbsPstOid = urlParams.get('bbsPstOid');
+            this.state.menuCd = urlParams.get('menuCd');
+
+            this.initUploaderTarget();
+            this.initEvent();
+
+            // post 데이터 기반으로 상태값 초기화
+            this.initCommonState();
+
+            this.renderFileList();
+            this.initEditor();
+        },
+
+        initCommonState: function() {
+            const postData = /*[[${post}]]*/ null;
+            const fileList = /*[[${fileList}]]*/ null;
+            if (fileList) {
+                this.state.existingFiles = fileList;
+                // fileType이 'THUMBNAIL'이거나, 혹은 thmbYn이 'Y'인 파일을 썸네일로 인식
+                const thumbnail = fileList.find(f => f.fileType === 'THUMBNAIL' || f.thmbYn === 'Y');
+
+                // 썸네일로 식별된 파일은 제외하고 나머지(일반/에디터)만 추림
+                const thumbnailNo = thumbnail ? thumbnail.fileOid : -1;
+
+                // 일반 파일: 썸네일이 아니면서, 에디터 타입도 아닌 것
+                const attachments = fileList.filter(f => f.fileOid !== thumbnailNo && f.fileType !== 'EDITOR');
+
+                // 에디터 파일: 에디터 타입인 것
+                const editorAttachments = fileList.filter(f => f.fileType === 'EDITOR');
+
+                // 썸네일 렌더링
+                if (thumbnail) {
+                    this.state.hasThumbnail = true;
+                    this.renderExistingThumbnail(thumbnail);
+                }
+
+                // 일반 첨부파일 렌더링
+                this.state.existingFiles = attachments;
+                this.renderFileList();
+
+                // 에디터 기존 이미지 동기화
+                if(this.state.isEdit) {
+                    this.syncExistingEditorImages(postData.bbsPstCn, editorAttachments);
+                }
+
+                // 첫번째 파일 대체텍스트 세팅
+                if (this.state.existingFiles.length > 0 && this.state.existingFiles[0].imgSbstTxtCn) {
+                    $('#cm_brd_first_file_alt_text').val(this.state.existingFiles[0].imgSbstTxtCn);
+                }
+            }
+        },
+
+        initEditor: function () {
+            const postData = /*[[${post}]]*/ null;
+            const initialContent = postData ? postData.bbsPstCn : '';
+
+            CommonCKEditor.destroy('cm_brd_editor');
+            $('#cm_brd_editor').show().css('visibility', 'visible');
+            CommonCKEditor.init({
+                editorId: 'cm_brd_editor',
+                content: initialContent,
+                chunkUpload: {
+                    enabled: true,
+                    chunkUrl: '/api/common/file/tmp/ck-image/chunk',
+                    chunkSize: this.state.chunkSize,
+                    onUploadComplete: (payload) => {
+                        this.handleEditorUploadComplete(payload);
+                    }
+                }
+            });
+        },
+
+        initEvent: function () {
+            const _this = this;
+
+            $('#cm_brd_btn_save').on('click', function (e) {
+                e.preventDefault();
+                _this.fnSave();
+            });
+
+            $('#cm_brd_btn_cancel').on('click', function (e) {
+                e.preventDefault();
+                uiCommon.fnShowConfirmModal('목록으로 이동하시겠습니까?', async function () {
+                    await _this.cleanupTempFiles();
+                    _this.fnGoToListPage();
+                })
+            });
+
+            $('#cm_brd_file_input').on('change', function (e) {
+                const files = Array.from(e.target.files || []);
+                if (!files.length) return;
+                _this.handleFileSelection(files);
+                $(this).val('');
+            });
+
+            $('#cm_brd_thumb_input').on('change', function (e) {
+                const file = e.target.files[0];
+                if (file) _this.handleThumbnailSelection(file);
+                $(this).val('');
+            });
+
+            $('#cm_brd_file_list').on('click', '.icon_del', function (e) {
+                e.preventDefault();
+                const $item = $(this).closest('p');
+                const fileType = $item.data('file-type');
+                if (fileType === 'existing') {
+                    const attachNo = Number($item.data('file-attach-no'));
+                    _this.removeExistingFile(attachNo);
+                } else if (fileType === 'new') {
+                    const index = Number($item.data('file-index'));
+                    _this.removeNewFile(index);
+                }
+            });
+        },
+
+        fnSave: async function () {
+            const _this = this;
+
+            // 1. 유효성 검사
+            const title = $('#cm_brd_title').val();
+            const content = CommonCKEditor.getContent('cm_brd_editor');
+
+            if (!title || !title.trim()) return uiCommon.fnShowAlertModal("제목을 입력해주세요.");
+
+            // 썸네일 필수 여부 체크 (비즈니스 로직에 따라 선택)
+            if (!this.state.hasThumbnail) return uiCommon.fnShowAlertModal("썸네일 이미지는 필수입니다.");
+
+            // 2. 에디터 내 삭제된 이미지(기존 파일 중 본문에서 사라진 것) 계산
+            this.prepareEditorDeletionPayload(content);
+
+            // 3. 백엔드로 보낼 JSON 데이터 구성 (첨부파일은 메타데이터만 전송)
+            const requestData = {
+                bbsOid: _this.state.bbsOid,
+                bbsPstTtl: title,
+                bbsPstCn: content,
+                ctgry: $('#cm_brd_category').val() || '',
+                ntcYn: $('#cm_brd_notice_yn').is(':checked') ? 'Y' : 'N',
+                openYn: $('input[name="cm_brd_open_yn"]:checked').val() || 'Y',
+                menuCd: _this.state.menuCd,
+                isAdmin: 'Y',
+
+                // Chunk Upload로 이미 서버 임시 폴더에 올라간 파일들의 정보
+                attachedFiles: _this.state.newFiles,
+                editorFiles: _this.state.editorFiles,
+
+                // 삭제할 기존 파일 번호들
+                deleteAttachNos: _this.state.deleteAttachNos,
+                deleteEditorAttachNos: _this.state.deleteEditorAttachNos,
+
+                // 기타 정보
+                firstFileAltText: $('#cm_brd_first_file_alt_text').val() || ''
+            };
+
+            if (_this.state.bbsPstOid) {
+                requestData.bbsPstOid = _this.state.bbsPstOid;
+            }
+
+            // 4. FormData 생성 (Multipart 전송을 위함)
+            const formData = new FormData();
+
+            // JSON 데이터는 'data'라는 이름의 Blob으로 추가 (application/json 설정)
+            formData.append("data", new Blob([JSON.stringify(requestData)], { type: "application/json" }));
+
+            // 썸네일 실물 파일 추가 (사용자가 새로 선택했을 경우에만 전송)
+            if (this.state.thumbnailFile) {
+                formData.append("thumbnailFile", this.state.thumbnailFile);
+            }
+
+            // 5. 서버 전송
+            const url = _this.state.bbsPstOid ? '/api/admin/board/post/update' : '/api/admin/board/post/insert';
+
+            try {
+                uiCommon.fnShowLoading(); // 필요 시 로딩바 표시
+
+                // API.upload는 내부적으로 contentType: false, processData: false 처리가 되어있어야 합니다.
+                await API.upload(url, formData);
+
+                uiCommon.fnHideLoading();
+                uiCommon.fnShowAlertModal('저장되었습니다.', () => _this.fnGoToListPage());
+
+            } catch (xhr) {
+                uiCommon.fnHideLoading();
+                console.error('저장 실패:', xhr);
+
+                const message = (xhr.responseJSON && xhr.responseJSON.validationErrors && API.formatValidationErrors(xhr.responseJSON.validationErrors)) ||
+                        (xhr.responseJSON && xhr.responseJSON.message) ||
+                        '저장에 실패했습니다.';
+                uiCommon.fnShowAlertModal(message);
+            }
+        },
+
+        fnCollectFormData: function () {
+            return {
+                bbsPstTtl: $('#cm_brd_title').val() || '',
+                ctgry: $('#cm_brd_category').val() || '',
+                ntcYn: $('#cm_brd_notice_yn').is(':checked') ? 'Y' : 'N',
+                openYn: $('input[name="cm_brd_open_yn"]:checked').val() || 'Y'
+            };
+        },
+
+        fnGoToListPage: function () {
+            window.location.href = `${contextPath}/admin/board?bbsOid=${this.state.bbsOid}&menuCd=${this.state.menuCd}`;
+        },
+
+        initUploaderTarget: function () {
+            if (this.state.bbsPstOid) {
+                this.state.uploadTargetId = this.state.bbsPstOid;
+            } else {
+                const storageKey = this.state.uploaderStorageKey;
+                let tempId = sessionStorage.getItem(storageKey);
+                if (!tempId) {
+                    tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+                    sessionStorage.setItem(storageKey, tempId);
+                }
+                this.state.uploadTargetId = tempId;
+            }
+        },
+
+        handleThumbnailSelection: async function (file) {
+            const _this = this;
+
+            // common 방식과 동일하게 boardInfo에서 용량 참조
+            const maxSizeMB = this.state.boardInfo.fileUldSize || 5120;
+            const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+            // 이미지 확장자 및 서버 허용 확장자 체크
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+            const rawExts = /*[[${allowedExtensions}]]*/ '';
+            const allowedExts = rawExts.toLowerCase().split(',').map(ext => ext.trim());
+            const finalAllowed = imgExts.filter(ext => allowedExts.includes(ext));
+
+            let reason = "";
+            if (!finalAllowed.includes(fileExt)) {
+                reason = "이미지 파일이 아닙니다.";
+            } else if (file.size > maxSizeBytes) {
+                reason = `최대 ${maxSizeMB}MB까지만 업로드 가능합니다.`;
+            }
+
+            if (reason) {
+                uiCommon.fnShowAlertModal(`${reason}`);
+                e.target.value = '';
+                return;
+            }
+
+            this.state.thumbnailFile = file;
+            this.state.hasThumbnail = true;
+
+            const container = document.getElementById("cm_brd_thumb_file_area");
+            container.innerHTML = '';
+            const p = document.createElement('p');
+            p.innerHTML = `${file.name} <a class="icon_del" href="javascript:;" onclick="admin_gallery_board_write.deleteThumbnail()">삭제</a>`;
+            container.appendChild(p);
+        },
+
+        renderExistingThumbnail: function(file) {
+            const container = document.getElementById("cm_brd_thumb_file_area");
+            container.innerHTML = '';
+            const p = document.createElement('p');
+            // 썸네일은 삭제 시에도 일반 파일과 동일한 테이블(FILE)을 쓴다면 ID를 수집해야 함
+            p.innerHTML = `${file.orgnlFileNm} <a class="icon_del" href="javascript:;" onclick="admin_gallery_board_write.deleteFile('THUMBNAIL_EXISTING', ${file.fileOid}, this)">삭제</a>`;
+            container.appendChild(p);
+        },
+
+        showThumbnailPreview: function(path, isExisting) {
+            const fullPath = isExisting ? this.state.strgFilePath + path : this.state.strgFilePath + path;
+            $('#cm_brd_thumb_img').attr('src', fullPath);
+            $('#cm_brd_thumb_preview_area').show();
+        },
+
+        deleteThumbnail: function() {
+            this.state.thumbnailFile = null;
+            this.state.hasThumbnail = false;
+            document.getElementById("cm_brd_thumb_file_area").innerHTML = '';
+        },
+
+        handleEditorUploadComplete: function (payload) {
+            if (!payload || !payload.strgFilePath || !payload.strgFileNm) {
+                return;
+            }
+            const meta = {
+                originalStrgFileNm: payload.originalStrgFileNm || payload.strgFileNm,
+                storedStrgFileNm: payload.strgFileNm,
+                strgFilePath: payload.strgFilePath,
+                strgFileCpct: payload.strgFileCpct || null,
+                fileTypeNm: payload.fileTypeNm || this.extractFileExtension(payload.originalStrgFileNm || payload.strgFileNm)
+            };
+            this.upsertEditorFile(meta);
+        },
+
+        upsertEditorFile: function (fileMeta) {
+            if (!fileMeta || !fileMeta.strgFilePath || !fileMeta.storedStrgFileNm) {
+                return;
+            }
+            const key = `${fileMeta.strgFilePath}__${fileMeta.storedStrgFileNm}`;
+            const idx = this.state.editorFiles.findIndex(item => `${item.strgFilePath}__${item.storedStrgFileNm}` === key);
+            if (idx > -1) {
+                this.state.editorFiles[idx] = fileMeta;
+            } else {
+                this.state.editorFiles.push(fileMeta);
+            }
+        },
+
+        extractFileExtension: function (fileName) {
+            if (!fileName) {
+                return '';
+            }
+            const pos = fileName.lastIndexOf('.');
+            return pos > -1 ? fileName.substring(pos + 1).toLowerCase() : '';
+        },
+
+        extractImageKeysFromHtml: function (html) {
+            if (!html) {
+                return [];
+            }
+            const container = document.createElement('div');
+            container.innerHTML = html;
+            const uniqueKeys = {};
+            const results = [];
+            Array.from(container.querySelectorAll('img[src]')).forEach(img => {
+                const parsed = this.normalizeImageSrc(img.getAttribute('src'));
+                if (!parsed || uniqueKeys[parsed.key]) {
+                    return;
+                }
+                uniqueKeys[parsed.key] = true;
+                results.push(parsed);
+            });
+            return results;
+        },
+
+        normalizeImageSrc: function (src) {
+            if (!src || typeof src !== 'string') {
+                return null;
+            }
+            let cleaned = src.trim();
+            if (!cleaned || cleaned.indexOf('data:') === 0) {
+                return null;
+            }
+            const qIdx = cleaned.indexOf('?');
+            if (qIdx > -1) {
+                cleaned = cleaned.substring(0, qIdx);
+            }
+            const hashIdx = cleaned.indexOf('#');
+            if (hashIdx > -1) {
+                cleaned = cleaned.substring(0, hashIdx);
+            }
+            const origin = window.location.origin;
+            if (cleaned.startsWith(origin)) {
+                cleaned = cleaned.substring(origin.length);
+            }
+            const uploadsIdx = cleaned.indexOf('/files/');
+            if (uploadsIdx === -1) {
+                return null;
+            }
+            const relative = cleaned.substring(uploadsIdx + '/files/'.length);
+            const lastSlash = relative.lastIndexOf('/');
+            if (lastSlash === -1) {
+                return null;
+            }
+            const filePath = relative.substring(0, lastSlash);
+            const fileName = relative.substring(lastSlash + 1);
+            if (!filePath || !fileName) {
+                return null;
+            }
+            return {
+                strgFilePath: filePath.replace(/^\/+/, '').replace(/\\/g, '/'),
+                storedStrgFileNm: fileName,
+                key: this.buildEditorFileKey(filePath, fileName)
+            };
+        },
+
+        buildEditorFileKey: function (filePath, storedStrgFileNm) {
+            const normalizedPath = (filePath || '').replace(/^\/+/, '').replace(/\\/g, '/');
+            return `${normalizedPath}__${storedStrgFileNm}`;
+        },
+
+        syncExistingEditorImages: function (content, attachments) {
+            this.state.existingEditorFileKeys = [];
+            if (!attachments || !attachments.length || !content) {
+                return;
+            }
+            const attachMap = {};
+            attachments.forEach(file => {
+                if (!file || !file.strgFilePath || !file.strgFileNm) {
+                    return;
+                }
+                const key = this.buildEditorFileKey(file.strgFilePath, file.strgFileNm);
+                attachMap[key] = file.fileOid;
+            });
+            const keys = this.extractImageKeysFromHtml(content);
+            keys.forEach(item => {
+                const attachNo = attachMap[item.key];
+                if (attachNo) {
+                    this.state.existingEditorFileKeys.push({
+                        key: item.key,
+                        fileOid: attachNo
+                    });
+                }
+            });
+        },
+
+        prepareEditorDeletionPayload: function (currentContent) {
+            const currentKeys = this.extractImageKeysFromHtml(currentContent);
+            const keySet = currentKeys.reduce((acc, item) => {
+                acc[item.key] = true;
+                return acc;
+            }, {});
+            const removed = this.state.existingEditorFileKeys
+                    .filter(item => item && item.fileOid && !keySet[item.key])
+                    .map(item => item.fileOid);
+            this.state.deleteEditorAttachNos = removed;
+        },
+
+        handleFileSelection: async function (files) {
+            const _this = this;
+            if (this.state.isUploading) {
+                uiCommon.fnShowAlertModal('현재 파일을 업로드 중입니다. 잠시만 기다려주세요.');
+                return;
+            }
+
+            if (!files || files.length === 0) return;
+
+            const maxFileSizeMb = /*[[${maxFileSize}]]*/ 5120;
+            const maxFileSizeBytes = maxFileSizeMb * 1024 * 1024;
+            const maxFileCount = 20;
+            const rawExtensions = /*[[${allowedExtensions}]]*/ 'pdf,hwp,hwpx,doc,docx,ppt,pptx,xls,xlsx,txt,zip,7z,rar,jpg,jpeg,png,gif,bmp';
+            const allowedExtensions = rawExtensions.toLowerCase().split(',').map(ext => ext.trim());
+
+            const totalFileCount = this.state.existingFiles.length + this.state.newFiles.length + files.length;
+            if (totalFileCount > maxFileCount) {
+                uiCommon.fnShowAlertModal(`최대 ${maxFileCount}개까지 업로드 가능합니다.<br>현재 선택 포함 시 ${totalFileCount}개로 제한을 초과합니다.`);
+                return;
+            }
+
+            const validFiles = [];
+            const rejectedFiles = [];
+
+            for (const file of files) {
+                const fileExt = this.extractFileExtension(file.name).toLowerCase();
+                let reason = "";
+
+                if (!allowedExtensions.includes(fileExt)) {
+                    reason = "허용되지 않는 확장자입니다.";
+                } else if (file.size > maxFileSizeBytes) {
+                    reason = `최대 ${maxFileSizeMb}MB까지만 업로드 가능합니다.`;
+                }
+
+                if (reason) {
+                    rejectedFiles.push(`${reason}`);
+                } else {
+                    validFiles.push(file);
+                }
+            }
+
+            if (rejectedFiles.length > 0) {
+                const errorMsg = rejectedFiles.join('\n');
+                uiCommon.fnShowAlertModal(errorMsg, function() {
+                    if (validFiles.length > 0) {
+                        _this.startChunkUploadProcess(validFiles);
+                    }
+                });
+            } else {
+                await this.startChunkUploadProcess(validFiles);
+            }
+        },
+
+        startChunkUploadProcess: async function (validFiles) {
+            if (validFiles.length === 0) return;
+
+            this.setUploading(true, '파일을 업로드 중입니다...');
+
+            for (const file of validFiles) {
+                try {
+                    const uploadedInfo = await this.uploadChunkedFile(file, 'FILE');
+                    if (uploadedInfo) {
+                        this.state.newFiles.push(uploadedInfo);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal(`${file.name} 업로드 중 오류가 발생했습니다.`);
+                    this.setUploading(false);
+                    return;
+                }
+            }
+
+            this.setUploading(false, '');
+            this.renderFileList();
+            this.updateUploadGuide('파일을 첨부해주세요');
+        },
+
+        uploadChunkedFile: async function (file, type) {
+            if (!file || file.size === 0) {
+                throw new Error('비어있는 파일은 업로드할 수 없습니다.');
+            }
+            const chunkSize = this.state.chunkSize;
+            const totalChunks = Math.max(Math.ceil(file.size / chunkSize), 1);
+            const identifier = `${this.state.uploadTargetId}-${file.name}-${file.size}-${file.lastModified}`;
+            let uploadedInfo = null;
+
+            for (let chunkNumber = 1; chunkNumber <= totalChunks; chunkNumber++) {
+                const start = (chunkNumber - 1) * chunkSize;
+                const end = Math.min(file.size, start + chunkSize);
+                const chunk = file.slice(start, end);
+
+                const formData = new FormData();
+                formData.append('file', chunk, file.name);
+                formData.append('resumableChunkNumber', chunkNumber);
+                formData.append('resumableTotalChunks', totalChunks);
+                formData.append('resumableIdentifier', identifier);
+                formData.append('resumableFilename', file.name);
+                formData.append('strgFileCpct', file.size);
+                formData.append('targetId', this.state.uploadTargetId);
+                formData.append('rfrncSeCd', this.state.rfrncSeCd);
+                formData.append('fileType', type);
+
+                const response = await API.upload(this.state.uploadUrl, formData);
+
+                if (chunkNumber === totalChunks) {
+                    uploadedInfo = response;
+                }
+
+                this.updateUploadGuide(`${file.name} 업로드 중... (${chunkNumber}/${totalChunks})`);
+            }
+
+            return uploadedInfo;
+        },
+
+        setUploading: function (uploading, message) {
+            this.state.isUploading = uploading;
+            if (message) {
+                this.updateUploadGuide(message);
+            }
+            $('#cm_brd_file_input').prop('disabled', uploading);
+            $('#cm_brd_file_upload_box').toggleClass('is-uploading', uploading);
+        },
+
+        updateUploadGuide: function (message, isError) {
+            const guideEl = $('#cm_brd_file_upload_guide');
+            if (!guideEl.length) return;
+            guideEl.text(message || '');
+            guideEl.toggleClass('error', !!isError);
+        },
+
+        renderFileList: function () {
+            const listEl = $('#cm_brd_file_list');
+            if (!listEl.length) return;
+
+            const fragments = [];
+            this.state.existingFiles.forEach(file => {
+                const sizeText = this.formatFileSize(file.strgFileCpct);
+                fragments.push(`<p data-file-type="existing" data-file-attach-no="${file.fileOid}">
+                    ${file.orgnlFileNm} (${sizeText})
+                    <a class="icon_del" href="javascript:;">파일삭제</a>
+                </p>`);
+            });
+
+            this.state.newFiles.forEach((file, index) => {
+                const sizeText = this.formatFileSize(file.strgFileCpct);
+                fragments.push(`<p data-file-type="new" data-file-index="${index}">
+                    ${file.originalStrgFileNm} (${sizeText})
+                    <a class="icon_del" href="javascript:;">파일삭제</a>
+                </p>`);
+            });
+
+            listEl.html(fragments.join(''));
+
+            const hasFiles = this.state.existingFiles.length > 0 || this.state.newFiles.length > 0;
+            $('#cm_brd_first_file_alt_text_container').toggle(hasFiles);
+        },
+
+        deleteFile: function(type, id, btnElement) {
+            if(type === 'THUMBNAIL_EXISTING') {
+                this.state.deleteAttachNos.push(id);
+                this.state.hasThumbnail = false;
+                this.state.thumbnailFile = null;
+                document.getElementById("cm_brd_thumb_file_area").innerHTML = '';
+            }
+            else if (type === 'EXISTING') {
+                this.state.deleteAttachNos.push(id);
+                this.state.existingFiles = this.state.existingFiles.filter(f => f.fileOid !== id);
+                this.renderFileList();
+            }
+            else if (type === 'NEW') {
+                const fileInfo = this.state.newFiles[id];
+                this.deleteTempUploadedFile(fileInfo).then(() => {
+                    this.state.newFiles.splice(id, 1);
+                    this.renderFileList();
+                });
+            }
+        },
+
+        removeExistingFile: function (attachNo) {
+            const _this = this;
+            if (!attachNo) return;
+            uiCommon.fnShowConfirmModal('해당 파일을 삭제하시겠습니까?', function(){
+                uiCommon.fnHideConfirmModal();
+                if (!_this.state.deleteAttachNos.includes(attachNo)) {
+                    _this.state.deleteAttachNos.push(attachNo);
+                }
+                _this.state.existingFiles = _this.state.existingFiles.filter(file => file.fileOid !== attachNo);
+                _this.renderFileList();
+            });
+        },
+
+        removeNewFile: function (index) {
+            const _this = this;
+            const fileInfo = _this.state.newFiles[index];
+            if (!fileInfo) return;
+            uiCommon.fnShowConfirmModal('해당 파일을 삭제하시겠습니까?', function(){
+                uiCommon.fnHideConfirmModal();
+                _this.deleteTempUploadedFile(fileInfo)
+                        .then(() => {
+                            _this.state.newFiles.splice(index, 1);
+                            _this.renderFileList();
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                            _this.updateUploadGuide(error.message || '파일 삭제 중 오류가 발생했습니다.', true);
+                        });
+            })
+        },
+
+        deleteTempUploadedFile: function (fileInfo) {
+            if (!fileInfo) return Promise.resolve();
+            return fetch(this.state.tempDeleteUrl, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    strgFilePath: fileInfo.strgFilePath,
+                    storedStrgFileNm: fileInfo.storedStrgFileNm
+                })
+            });
+        },
+
+        cleanupTempFiles: function () {
+            if (!this.state.newFiles.length) return Promise.resolve();
+            const deletions = this.state.newFiles.map(fileInfo => this.deleteTempUploadedFile(fileInfo));
+            this.state.newFiles = [];
+            return Promise.allSettled(deletions);
+        },
+
+        formatFileSize: function (bytes) {
+            if (!bytes) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
+        }
+    };
+
+    $(document).ready(function () {
+        admin_gallery_board_write.init();
+    });
+
+    window.addEventListener('beforeunload', function () {
+        admin_gallery_board_write.cleanupTempFiles();
+    });
+</script>
+</body>
+</html>

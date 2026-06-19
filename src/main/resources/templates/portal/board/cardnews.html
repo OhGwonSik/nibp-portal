@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>카드뉴스</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">카드뉴스</h3>
+    <div class="board_search mb10">
+        <p class="count">총 <strong class="color_01" id="cn_total_count" th:text="${CardNewsPostList.total}">0</strong> 건</p>
+        <fieldset>
+            <legend>카드뉴스 검색</legend>
+            <select id="cn_search_type" title="검색 옵션 선택" class="wp100">
+                <option value="cardNewsNm">제목</option>
+                <option value="smry">내용</option>
+                <option value="all">제목+내용</option>
+            </select>
+            <input type="text" id="cn_keyword" title="검색어를 입력해주세요." class="wp200">
+            <button id="cn_board_btn_search" class="btn_basic_ss">검색</button>
+        </fieldset>
+    </div>
+    <div class="table_layout">
+        <table>
+            <caption>카드뉴스 리스트 테이블</caption>
+            <colgroup>
+                <col style="width: 90px;">
+                <col style="width: auto;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+            </colgroup>
+            <thead>
+            <tr>
+                <th scope="col">번호</th>
+                <th scope="col">제목</th>
+                <th scope="col">등록자</th>
+                <th scope="col">등록일</th>
+            </tr>
+            </thead>
+            <tbody id="cn_board_tbody">
+            <tr th:if="${#lists.isEmpty(CardNewsPostList.list)}">
+                <td class="tac" colspan="4">조회된 결과가 없습니다.</td>
+            </tr>
+
+            <tr th:each="item : ${CardNewsPostList.list}">
+                <td><span th:text="${item.cardNewsOid}"></span></td>
+                <td class="tal">
+                    <a href="javascript:" class="link cn_link" th:data-id="${item.cardNewsOid}" th:text="${item.cardNewsNm}"></a>
+                </td>
+                <td th:text="${item.regId}"></td>
+                <td th:text="${#temporals.format(item.regDt, 'yyyy-MM-dd')}"></td>
+            </tr>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+    <div id="paging_wrap" class="paging_wrap">
+        <a href="javascript:" class="first page_first">첫 페이지</a>
+        <a href="javascript:" class="previous page_prev">전 페이지</a>
+        <div class="namber pagination_container"></div>
+        <a href="javascript:" class="next page_next">다음 페이지</a>
+        <a href="javascript:" class="last page_last">끝 페이지</a>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const cardnews = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: /*[[${CardNewsPostList}]]*/ '',
+            pageIndex: 1,
+            pageSize: 15
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+
+            // 검색조건 복원
+            _this.fnRestoreState();
+
+            _this.renderPagination();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼 클릭
+            document.getElementById("cn_board_btn_search").addEventListener('click', function () {
+                _this.state.pageIndex = 1;
+                _this.getListData();
+            });
+
+            // 제목 클릭
+            document.querySelector("#cn_board_tbody").addEventListener("click", function (e) {
+                const link = e.target.closest(".cn_link");
+                if (!link) return;
+                e.preventDefault();
+
+                const id = Number(link.dataset.id);
+                _this.fnGoToDetail(id);
+            });
+
+            // 검색어 입력 시 엔터키 이벤트
+            const keywordInput = document.getElementById('cn_keyword');
+            if (keywordInput) {
+                keywordInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        _this.state.pageIndex = 1;
+                        _this.getListData();
+                    }
+                });
+            }
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            if (!_this.state.all) {
+                return;
+            }
+
+            const totalPages = _this.state.all.pages;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: totalPages,
+                onPageChange: function(page) {
+                    _this.state.pageIndex = page;
+                    _this.getListData();
+                }
+            });
+        },
+
+        /**
+         * 목록 데이터 조회
+         */
+        getListData: async function () {
+            SearchState.saveForm('portal_cardnews', '.board_search', { pageIndex: this.state.pageIndex });
+
+            const param = new URLSearchParams({
+                page: this.state.pageIndex,
+                size: this.state.pageSize,
+                keyword: document.getElementById('cn_keyword').value.trim() || '',
+                searchType: document.getElementById('cn_search_type').value.trim() || ''
+            });
+
+            SearchState.updateUrl(param);
+
+            try {
+                const response = await API.get('/api/common/portal/cardnews/list/filter?' + param);
+
+                // 페이지 데이터에 저장
+                this.state.all = response;
+                this.renderTable();
+                this.renderPagination();
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('목록 조회에 실패했습니다.');
+            }
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+            const tbody = document.getElementById("cn_board_tbody");
+            tbody.innerHTML = '';
+
+            // 총 건수 업데이트
+            const totalCountEl = document.getElementById('cn_total_count');
+            if (totalCountEl) {
+                totalCountEl.textContent = this.state.all ? this.state.all.total : 0;
+            }
+
+            if (!this.state.all || !this.state.all.list || this.state.all.list.length === 0) {
+                tbody.innerHTML = '<tr><td class="tac" colspan="4">조회된 결과가 없습니다.</td></tr>';
+                return;
+            }
+
+            const list = this.state.all.list;
+            let html = '';
+            list.forEach(function (item) {
+                html += `
+                    <tr>
+                        <td>${item.cardNewsOid}</td>
+                        <td class="tal"><a href="javascript:" class="link cn_link" data-id="${item.cardNewsOid}">${item.cardNewsNm}</a></td>
+                        <td>${item.regId}</td>
+                        <td>${common.formatDate(item.regDt)}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        },
+
+        /**
+         * 페이지 이동 - 카드뉴스 상세
+         */
+        fnGoToDetail: function (cnId) {
+            const targetCnId = this.state.all.list.find(item => item.cardNewsOid === cnId);
+            if (!targetCnId) {
+                uiCommon.fnShowAlertModal('상세 정보를 찾을 수 없습니다.');
+                return;
+            }
+            // 상세 페이지로 이동
+            window.location.href = contextPath + '/board/cardnews/post?cardNewsOid=' + targetCnId.cardNewsOid;
+        },
+
+        /**
+         * 검색조건 복원
+         */
+        fnRestoreState: function () {
+            const _this = this;
+
+            // 1. URL 파라미터로 복원
+            const _fieldMap = { keyword: 'cn_keyword', searchType: 'cn_search_type' };
+            const urlPage = SearchState.restoreFromUrl(_fieldMap);
+            if (urlPage !== null) {
+                _this.state.pageIndex = urlPage;
+            } else {
+                // 2. sessionStorage 로 복원
+                const saved = SearchState.restoreForm('portal_cardnews', '.board_search');
+                if (saved) {
+                    _this.state.pageIndex = saved._extra.pageIndex || 1;
+                }
+            }
+
+            // 3. 뒤로가기 / 앞으로가기 시
+            SearchState.handlePopState(_fieldMap, 'page', function(page) {
+                _this.state.pageIndex = page;
+                _this.getListData();
+            });
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        cardnews.init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소개 > 정책원 소개 > 개요</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">개요</h3>
+    <div class="overview_wrap">
+        <div class="overview_inner">
+            <strong>설립 근거</strong>
+            <p class="tal">국가생명윤리정책원은 생명윤리정책의 구현을 위해 생명윤리 관련 전문적인 조사, 연구, 교육 등을 실시하여<br class="brnone">의료생명과학 및 기술의 발전을 위한 여건 조성 등의 사업을 수행하는 생명윤리 전문기관으로 2011년 12월에 설립되어 현재는 공공기관으로 지정되어 있습니다.</p>
+        </div>
+    </div>
+    <h4 class="sstit">설립 목적</h4>
+    <div class="purpose_wrap">
+        <img th:src="@{/portal/images/img_purpose.png}" class="pc" alt="하단 대체 텍스트 참조">
+        <img th:src="@{/portal/images/img_purpose_m.png}" class="m" alt="하단 대체 텍스트 참조">
+        <ul class="hidden">
+            <li>생명윤리정책에 관한 전문적인 조사, 연구 및 교육 등을 실시</li>
+            <li>의료생명과학 및 그 기술의 발전 과정에서 안전하게 연구, 개발, 이용될 수 있는 제도적 여건 조성과 관리를 추구</li>
+            <li>연명의료에 관한 제반 사항을 관장</li>
+            <li>생명윤리정책 구현의중추적 기능을 수행</li>
+        </ul>
+    </div>
+    <div class="scope_wrap">
+        <span><img th:src="@{/portal/images/bg_scope.png}" alt="사업범위 상징 이미지"></span>
+        <div class="scope_list">
+            <h4 class="sstit">사업 범위</h4>
+            <ul>
+                <li>국가생명윤리심의위원회 및 산하 전문위원회 지원</li>
+                <li>기관생명윤리심의위원회(IRB) 관련 정책 개발·지원·교육 및 공용 IRB 운영</li>
+                <li>배아·생식세포·줄기세포 등의 이용·연구와 관련한 정책개발·지원 및 생식세포 불법거래 모니터링</li>
+                <li>유전자·유전정보 등의 활용, 유전자연구·유전자검사·인체유래물은행·유전자치료 등과 관련한 정책 개발 및 지원</li>
+                <li>생명윤리 및 안전과 관련한 자료 조사·수집 및 지식센터 운영</li>
+                <li>생명윤리 및 안전과 관련한 국내·외 네트워크 구축 및 지원</li>
+                <li>생명윤리 및 안전과 관련한 콘텐츠 개발 및 교육·연수·홍보 사업</li>
+                <li>국립연명의료관리기관의 기능 수행</li>
+                <li>의료윤리 등의 정책 개발 및 지원</li>
+                <li>장기, 인체조직, 혈액, 조혈모세포 등 기증과 이식 정책에 관한 생명윤리 및 안전 연구</li>
+                <li>정책원의 목적달성에 필요한 부대사업 및 수익사업</li>
+                <li>기타 생명윤리 및 안전과 관련하여 보건복지부, 국가기관 등이 위탁·지원하는 사업</li>
+            </ul>
+        </div>
+    </div>
+    <h4 class="sstit">주요 연혁</h4>
+    <div class="history_wrap">
+        <ul>
+            <li>
+                <strong>2020</strong>
+                <div class="history_list">
+                    <strong>09</strong>
+                    <p>생명윤리정책연구센터 지정</p>
+                </div>
+            </li>
+            <li>
+                <strong>2019</strong>
+                <div class="history_list">
+                    <strong>01</strong>
+                    <p>보건복지부 소관 기타 공공기관 지정</p>
+                </div>
+            </li>
+            <li>
+                <strong>2018</strong>
+                <div class="history_list">
+                    <strong>02</strong>
+                    <p>국립연명의료관리기관 지정</p>
+                </div>
+            </li>
+            <li>
+                <strong>2015</strong>
+                <div class="history_list">
+                    <strong>02</strong>
+                    <p>국가생명윤리심의위원회 업무지원기관으로 지정</p>
+                </div>
+            </li>
+            <li>
+                <strong>2013</strong>
+                <div class="history_list">
+                    <strong>01</strong>
+                    <p>공용기관생명윤리위원회 운영 사업 진행<br>기관생명윤리위원회 평가 시범사업 시행</p>
+                </div>
+            </li>
+            <li>
+                <strong>2012</strong>
+                <div class="history_list">
+                    <strong>01</strong>
+                    <p>생명윤리지원체계 구축사업 시행</p>
+                </div>
+            </li>
+            <li>
+                <strong>2011</strong>
+                <div class="history_list">
+                    <strong>12</strong>
+                    <p>보건복지부 소관 재단법인 설립(민법 제32조)</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal101 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal101.init();
+    });
+</script>
+</body>
+</html>

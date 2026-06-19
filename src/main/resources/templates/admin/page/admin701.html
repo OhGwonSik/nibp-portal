@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>통계 >  Q&A 데이터</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div id="admin701SearchWrap" class="search_wrap s_type">
+        <ul>
+            <li>
+                <label for="datepicker1">질문일</label>
+                <div class="flex_col">
+                    <span class="datepicker">
+                        <input type="text" id="fromQuestionDate" name="fromQuestionDate" class="datepick" placeholder="시작일"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                        </span> ~ <span class="datepicker">
+                        <input type="text" id="toQuestionDate" name="toQuestionDate" class="datepick" placeholder="종료일"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                    </span>
+                </div>
+            </li>
+        </ul>
+        <div class="s_wrap"><a id="admin701SearchBtn" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_top_btn">
+            <a href="javascript:;" id="admin701ExcelDownloadBtn" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+        </div>
+        <div class="table_layout02 list_type mt10 mb20">
+            <table>
+                <caption>Q&A 데이터</caption>
+                <colgroup>
+                    <col style="width: 80px;">
+                    <col style="width: 10%;">
+                    <col style="width: 8%;">
+                    <col style="width: 10%;">
+                    <col style="width: auto;">
+                    <col style="width: 9%;">
+                    <col style="width: 9%;">
+                    <col style="width: 9%;">
+                    <col style="width: 10%;">
+                    <col style="width: 10%;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">No.</th>
+                    <th scope="col">문의구분</th>
+                    <th scope="col">만족여부</th>
+                    <th scope="col">만족여부 답변일</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">질문일</th>
+                    <th scope="col">답변일</th>
+                    <th scope="col">답변초안 작성일</th>
+                    <th scope="col">초안답변소요일</th>
+                    <th scope="col">최종답변소요일</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin701 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10,
+            totalCount: 0
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+
+            // 1. [시작일] Datepicker 초기화
+            uiCommon.datepicker.init('#fromQuestionDate', {
+                onSelect: async function(selectedDate) {
+                    // 종료일의 최소 날짜를 시작일로 제한
+                    $('#toQuestionDate').datepicker('option', 'minDate', selectedDate);
+
+                    // 날짜 자동 보정 로직 (Alert 제거)
+                    const startDateObj = $(this).datepicker('getDate');
+                    const endDateObj = $('#toQuestionDate').datepicker('getDate');
+
+                    // 시작일이 종료일보다 미래인 경우 -> 종료일을 시작일로 변경
+                    if (startDateObj && endDateObj && startDateObj.getTime() > endDateObj.getTime()) {
+                        $('#toQuestionDate').datepicker('setDate', startDateObj);
+                    }
+                    
+                    // 1페이지로 초기화 및 조회
+                    _this.state.pageIndex = 1;
+                    await _this.fnGetQnaData();
+                }
+            });
+
+            // 2. [종료일] Datepicker 초기화
+            uiCommon.datepicker.init('#toQuestionDate', {
+                onSelect: async function(selectedDate) {
+                    // 시작일의 최대 날짜를 종료일로 제한
+                    $('#fromQuestionDate').datepicker('option', 'maxDate', selectedDate);
+
+                    // 날짜 자동 보정 로직 (Alert 제거)
+                    const startDateObj = $('#fromQuestionDate').datepicker('getDate');
+                    const endDateObj = $(this).datepicker('getDate');
+
+                    // 종료일이 시작일보다 과거인 경우 -> 시작일을 종료일로 변경
+                    if (startDateObj && endDateObj && endDateObj.getTime() < startDateObj.getTime()) {
+                        $('#fromQuestionDate').datepicker('setDate', endDateObj);
+                    }
+
+                    // 1페이지로 초기화 및 조회
+                    _this.state.pageIndex = 1;
+                    await _this.fnGetQnaData();
+                }
+            });
+
+            // 3. 기본 날짜 설정 (최근 30일)
+            const today = new Date();
+            const start = new Date();
+            start.setDate(today.getDate() - 30);
+
+            $('#fromQuestionDate').datepicker('setDate', start);
+            $('#toQuestionDate').datepicker('setDate', today);
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin701', '.search_wrap');
+            if (saved) {
+                this.state.pageIndex = saved._extra.pageIndex || 1;
+            }
+
+            // 4. 초기 조회 및 이벤트 실행
+            this.fnGetQnaData();
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: async function () {
+            const _this = this;
+
+            document.getElementById("admin701SearchBtn").addEventListener('click', async function(e){
+                e.preventDefault();
+                _this.state.pageIndex = 1;
+                await _this.fnGetQnaData();
+            });
+
+            document.getElementById("admin701ExcelDownloadBtn").addEventListener('click', async function(e){
+                e.preventDefault();
+                await _this.fnDownloadExcel();
+            });
+        },
+
+        fnGetQnaData: async function() {
+            const _this = this;
+            SearchState.saveForm('admin701', '.search_wrap', { pageIndex: _this.state.pageIndex });
+
+            const param = {
+                fromQuestionDate: $("#fromQuestionDate").val(),
+                toQuestionDate: $("#toQuestionDate").val(),
+                pageSize: _this.state.pageSize,
+                pageIndex: _this.state.pageIndex
+            };
+
+            const response = await API.get("/api/admin/admin701/list", param, {showLoading: true});
+            _this.state.all = response.list;
+            _this.state.totalCount = response.total;
+            _this.state.pageIndex = response.pageNum;
+            _this.state.pageSize = response.pageSize;
+            _this.renderTable();
+            _this.renderPagination();
+        },
+        
+        fnDownloadExcel: async function() {
+            const _this = this;
+            const reason = await uiCommon.fnShowPromptModal('엑셀 다운로드 받으시겠습니까?', {
+                qnaTtl: '엑셀 다운로드 요청',
+                defaultValue: '',
+                placeholder: '사유 입력',
+            });
+
+            
+            // 취소 시 조용히 종료
+            if (reason === null) {
+                return;
+            }
+
+            // 빈 값 체크
+            if (reason.trim() === '') {
+                uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                return;
+            }
+
+            // 2자 미만 체크
+            if (reason.trim().length < 2) {
+                uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                return;
+            }
+            
+            const param = { 
+                fromQuestionDate: $("#fromQuestionDate").val(),
+                toQuestionDate: $("#toQuestionDate").val(),
+                reason: reason.trim()
+            };
+            
+            const response = await API.excelDownload("/api/admin/admin701/excel/export", param,  {showLoading: true});
+        },
+        
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function() {
+            const _this = this;
+            const totalCount = Number(_this.state.totalCount) || 0;
+            const pageSize = Number(_this.state.pageSize) || 10;
+            
+            const totalPages = Math.ceil(totalCount / pageSize);
+            
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: totalPages,
+                onPageChange: async function(page) {
+                    _this.state.pageIndex = page;
+                    await _this.fnGetQnaData(); 
+                }
+            });
+        },
+
+        renderTable: function(){
+            const _this = this;
+            const tbody = $("tbody");
+            tbody.empty();
+            
+            if (!_this.state.all || _this.state.all.length === 0) {
+                tbody.append('<tr><td colspan="9" class="nodata">조회된 결과가 없습니다.</td></tr>');
+                return;
+            }
+            
+            _this.state.all?.forEach(function(item, index) {
+
+            	const rowNum = _this.state.totalCount - ((_this.state.pageIndex - 1) * _this.state.pageSize) - index;
+
+                const row = `
+                    <tr>
+                        <td>${rowNum}</td>
+                        <td>${item.ctgry || '-' }</td>
+                        <td>${item.isSatisfied || '-'}</td>
+                        <td>${item.satisfactionDate || '-'}</td>
+                        <td>${item.bbsPstTtl}</td>
+                        <td>${item.questionDate || '-'}</td>
+                        <td>${item.ansCnDate || '-'}</td>
+                        <td>${item.answerTempDate || '-'}</td>
+                        <td>${(item.draftResponseWorkDays || '-') + '일'}</td>
+                        <td>${(item.finalResponseWorkDays || '-') + '일'}</td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+    }
+    $(document).ready(function () {
+        admin701.init();
+    });
+</script>
+</body>
+</html>

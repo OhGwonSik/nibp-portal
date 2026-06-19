@@ -1,0 +1,24 @@
+<header th:fragment="admin_header" 
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+        id="header" class="header">
+    <h1><a th:href="@{/admin/main}">국가생명윤리정책원 대표홈페이지 관리자</a></h1>
+    <h2>국가생명윤리정책원 대표홈페이지 관리자</h2>
+    <div class="member_wrap">
+        <div class="member_inner">
+            <p sec:authorize="isAuthenticated()">
+                <strong th:text="${#authentication.principal.userNmKorn + '님'}"></strong>
+                <span id="sessionTimer" class="session-timer"></span>
+            </p>
+            <a sec:authorize="isAuthenticated()" href="javascript:API.logout();" class="btn_logout">로그아웃</a>
+        </div>
+        <div class="icon_box">
+            <div class="mp_wrap">
+                <a th:href="@{/admin/mypage}" id="home_mp" class="home_mp"><span>마이페이지</span></a>
+            </div>
+        </div>
+        <a href="javascript:;" class="m_menu">모바일 메뉴</a>
+    </div>
+</header> 
+<script th:inline="javascript">
+</script>

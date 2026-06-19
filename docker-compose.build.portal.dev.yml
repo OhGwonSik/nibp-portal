@@ -1,0 +1,35 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nibp-portal
+    networks:
+      - nibp-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8082
+      TZ: Asia/Seoul
+
+      JAVA_OPTS: >-
+        -Xms512m
+        -Xmx2048m
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -Duser.timezone=Asia/Seoul
+        -Dfile.encoding=UTF-8
+
+    volumes:
+      - ./logs:/app/logs
+      - ./files:/app/upload
+      - ./files/temp:/app/temp  # CKEditor 임시 파일
+      - ./files/temp-chunk:/app/temp-chunk  # 청크 업로드 임시 파일
+    restart: unless-stopped
+networks:
+  nibp-network:
+    name: nibp-network
+    driver: bridge

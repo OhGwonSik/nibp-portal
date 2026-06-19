@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- 문자 인코딩은 프로젝트 설정에 맞춰 UTF-8 또는 EUC-KR 로 변경 -->
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>CheckPlus 본인인증 시작</title>
+    <script type="text/javascript">
+        window.name = "Parent_window";
+        /*<![CDATA[*/
+        function fnPopup(){
+            window.open(
+                '',
+                'popupChk',
+                'width=500,height=550,top=100,left=100,' +
+                'fullscreen=no,menubar=no,status=no,toolbar=no,' +
+                'titlebar=yes,location=no,scrollbar=no'
+            );
+            // NICE 본인인증 서버로 폼 전송
+            document.form_chk.action = 'https://nice.checkplus.co.kr/CheckPlusSafeModel/checkplus.cb';
+            document.form_chk.target = 'popupChk';
+            document.form_chk.submit();
+        }
+        /*]]>*/
+    </script>
+</head>
+<body>
+<!-- 서버에서 설정한 메시지 출력 -->
+<p th:text="${sMessage}">암호화 처리오류입니다.</p>
+
+<!-- 암호화된 데이터 표시 (디버그용) -->
+<p>업체정보 암호화 데이터: [<span th:text="${encData}">ENC_DATA</span>]</p>
+
+<!-- 팝업 호출용 폼 -->
+<form name="form_chk" method="post">
+    <input type="hidden" name="m" value="checkplusService" />
+    <input type="hidden" name="EncodeData" th:value="${sEncData}" />
+    <a href="javascript:fnPopup();">CheckPlus 안심본인인증 시작</a>
+</form>
+</body>
+</html>

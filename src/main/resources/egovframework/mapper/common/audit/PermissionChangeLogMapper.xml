@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.common.audit.mapper.PermissionChangeLogMapper">
+
+	<insert id="insertPermissionChangeLog">
+		INSERT INTO ${schema}.prmsn_chg_log (
+			chnrg_user_id,
+			trgt_user_id,
+			user_menu_authrt_oid,
+			menu_oid,
+			prmsn_type,
+			old_vl,
+			new_vl,
+			chg_type,
+			chg_dt,
+			rsn,
+			reg_dt,
+			reg_id
+		)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+		(
+			#{item.chnrgUserId},
+			#{item.trgtUserId},
+			#{item.userMenuAuthrtOid},
+			#{item.menuOid},
+			#{item.prmsnType},
+			#{item.oldVl},
+			#{item.newVl},
+			#{item.chgType},
+			#{item.chgDt},
+			#{item.rsn},
+			IFNULL(#{item.regDt}, NOW()),
+			IFNULL(#{item.regId}, #{item.chnrgUserId})
+		)
+		</foreach>
+	</insert>
+</mapper>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>관리자 로그인 - NIBP Portal</title>
+    <!--/* CSS */-->
+    <link rel="stylesheet" th:href="@{/admin/css/base.css}">
+    <link rel="stylesheet" th:href="@{/common/css/font.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/layer.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/style.css}">
+    <link rel="stylesheet" th:href="@{/admin/css/tree.css}">
+    <link rel="stylesheet" th:href="@{/common/css/jquery-ui.css}">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+</head>
+<body class="bg_type">
+<div class="login_wrap">
+    <div class="login_inner">
+        <!--[S]로고 내용시작-->
+        <header class="login">
+            <h1><a th:href="@{/admin/login}">국가생명윤리정책원 관리자</a></h1>
+        </header>
+        <!--[E]로고 내용 끝-->
+        <!--[S]로그인 내용시작-->
+        <div class="login_contents_wrap">
+            <div class="left_cont_wrap">
+                <div class="text_box">
+                    <strong>대표홈페이지</strong>
+                    <p>KOREA NATIONAL INSTITUTE FOR BIOETHICS POLICY</p>
+                </div>
+            </div>
+            <div class="right_cont_wrap">
+                <h2>관리자 로그인</h2>
+                <div class="login_form_inner">
+                    <fieldset>
+                        <legend>로그인</legend>
+                        <ul>
+                            <li>
+                                <span id="errorMessage" class="none"></span>
+                            </li>
+                            <li>
+                                <span class="id_icon"><input type="text" name="" id="adminUserId" title="ID" placeholder="아이디"></span>
+                            </li>
+                            <li>
+                                <span class="pw_icon"><input type="password" name="" id="adminUserPw" title="password" placeholder="비밀번호"></span>
+                            </li>
+                        </ul>
+                        <input type="submit" id="btnAdminLogin" class="btn_login" value="로그인">
+                    </fieldset>
+                    <span class="webtong_checkbox long mt10"><input type="checkbox" id="loginSaveId" name="checks_type01"><label for="loginSaveId">아이디 저장</label></span>
+                    <div class="find_link mt10" style="text-align: center;">
+                        <a th:href="@{/admin/find-id-pwd}" style="color: #666; font-size: 13px; text-decoration: underline;">아이디/비밀번호 찾기</a>
+                    </div>
+                    <p>※관리자 외의 접근은 불가합니다.<br>※이를 어길 시 발생하는 문제에 대한 책임은 지지 않습니다.</p>
+                </div>
+            </div>
+        </div>
+        <!--[E]로그인 내용 끝-->
+    </div>
+</div>
+<!--/* 공통 모달 (Alert, Confirm, Loading 등) */-->
+<div th:replace="~{fragments/modal :: modal}"></div>
+
+<script th:src="@{/common/js/jquery.min.js}"></script>
+<script th:src="@{/common/js/jquery-ui.js}"></script>
+<script th:src="@{/admin/js/tree.js}"></script>
+<script th:src="@{/common/js/common.js}"></script>
+<script th:src="@{/common/js/style.js}"></script>
+<script th:src="@{/common/js/api.js}"></script>
+<!--/* JS */-->
+<script th:inline="javascript">
+    window.contextPath = /*[[${#httpServletRequest.contextPath}]]*/'';
+    const adminIdStorageKey = "7kX2vM9qRz";
+
+    // 에러 메시지 표시
+    function showError(message) {
+        const errorElement = document.getElementById('errorMessage');
+        errorElement.textContent = message;
+        errorElement.classList.add('show');
+    }
+
+    // 에러 메시지 숨김
+    function hideError() {
+        const errorElement = document.getElementById('errorMessage');
+        errorElement.classList.remove('show');
+    }
+
+    // 로딩 상태 설정
+    function setLoading(isLoading) {
+        const loginButton = document.getElementById('btnAdminLogin');
+        loginButton.disabled = isLoading;
+        if (isLoading) {
+            loginButton.classList.add('loading');
+        } else {
+            loginButton.classList.remove('loading');
+        }
+    }
+
+    /* ===== 2차인증 비활성화 (주석 처리) — 복원 시 아래 블록 주석 해제 =====
+    // 2차 본인인증 팝업 열기
+    function openSecondAuthPopup(payload, adminUserId) {
+        const rememberChk = document.getElementById("loginSaveId");
+
+        // 1) 관리자 아이디 저장
+        if (rememberChk.checked) {
+            localStorage.setItem(adminIdStorageKey, btoa(adminUserId));
+        } else {
+            localStorage.removeItem(adminIdStorageKey);
+        }
+
+        // 2) 팝업에서 인증 완료 시 호출될 콜백 함수 등록
+        window.adminNiceAuthCallback = function() {
+            window.location.href = contextPath + '/admin/main';
+        };
+
+        // 3) 팝업에서 인증 실패 시 호출될 콜백 함수 등록
+        window.adminNiceAuthErrorCallback = function(result) {
+            setLoading(false);
+            showError(result.message || '본인인증에 실패했습니다. 다시 시도해주세요.');
+        };
+
+        // 4) 팝업 오픈
+        const popup = window.open(
+            payload.popupUrl,
+            "niceAuthPopup",
+            "width=430,height=640,scrollbars=yes,resizable=no"
+        );
+
+        // 5) 팝업 닫힘 감지 → 로딩 해제
+        const popupChecker = setInterval(function() {
+            if (!popup || popup.closed) {
+                clearInterval(popupChecker);
+                setLoading(false);
+            }
+        }, 500);
+    }
+    ===== 2차인증 비활성화 끝 ===== */
+
+    // 로그인 처리
+    document.getElementById('btnAdminLogin').addEventListener('click', async function(e) {
+        const adminUserId = document.getElementById('adminUserId').value.trim();
+        const password = document.getElementById('adminUserPw').value.trim();
+
+        // 유효성 검사
+        if (!adminUserId) {
+            showError('아이디를 입력하세요.');
+            document.getElementById('adminUserId').focus();
+            return;
+        }
+
+        if (!password) {
+            showError('비밀번호를 입력하세요.');
+            document.getElementById('adminUserPw').focus();
+            return;
+        }
+
+        hideError();
+        setLoading(true);
+
+        // API.adminLoginWithSessionCheck 사용
+        API.adminLoginWithSessionCheck(
+            adminUserId,
+            password,
+            // 성공 콜백
+            function(result) {
+                /* ===== 2차인증 비활성화 (주석 처리) — 복원 시 아래 블록 주석 해제 =====
+                if (result?.secondAuthRequired) {
+                    openSecondAuthPopup(result, adminUserId);
+                } else {
+                    window.location.href = contextPath + '/admin/main';
+                }
+                ===== 2차인증 비활성화 끝 ===== */
+
+                // 2차인증 없이 바로 로그인 성공
+                const rememberChk = document.getElementById("loginSaveId");
+                if (rememberChk.checked) {
+                    localStorage.setItem(adminIdStorageKey, btoa(adminUserId));
+                } else {
+                    localStorage.removeItem(adminIdStorageKey);
+                }
+                window.location.href = contextPath + '/admin/main';
+            },
+            // 에러 콜백
+            function(error) {
+                setLoading(false);
+                showError(error.message || '아이디 또는 비밀번호가 올바르지 않습니다.');
+            },
+            // 취소 콜백 (세션 충돌 모달에서 취소 시)
+            function() {
+                setLoading(false);
+            }
+        );
+    });
+
+    // Enter 키 처리
+    document.getElementById('adminUserId').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('adminUserPw').focus();
+        }
+    });
+
+    document.getElementById('adminUserPw').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btnAdminLogin').dispatchEvent(new Event('click'));
+        }
+    });
+
+    // 페이지 로드 시 아이디 입력란에 포커스
+    window.addEventListener('load', function() {
+        document.getElementById('adminUserId').focus();
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const savedId = localStorage.getItem(adminIdStorageKey);
+        const rememberChk = document.getElementById("loginSaveId");
+
+        if (savedId) {
+            try {
+                document.getElementById("adminUserId").value = atob(savedId);
+                rememberChk.checked = true;
+            } catch (e) {
+                localStorage.removeItem(adminIdStorageKey);
+            }
+        }
+    });
+</script>
+</body>
+</html>

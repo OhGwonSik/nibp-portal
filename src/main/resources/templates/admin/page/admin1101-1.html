@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>정기발간자료 > 등록/수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02">
+            <table>
+                <caption>정기발간자료 등록</caption>
+                <colgroup>
+                    <col style="width: 150px;"><col style="width: auto;"><col style="width: 150px;"><col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row"><label for="total_title">총권 제목</label></th>
+                    <td colspan="3"><input type="text" id="total_title" class="w100"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="author">저자</label></th>
+                    <td colspan="3"><input type="text" id="author" class="w100"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="page_num">P.</label></th>
+                    <td><input type="text" id="page_num" class="w100"></td>
+                    <th scope="row" class="bl"><label for="publish_dt">발행일</label></th>
+                    <td>
+                            <span class="datepicker">
+                                <input type="text" id="publish_dt" class="datepick" readonly>
+                                <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택">
+                            </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><span class="essential">표지 이미지</span></th>
+                    <td>
+                        <div class="file_wrap list_last">
+                            <label for="cover_file" class="file_label">파일 선택</label>
+                            <span class="fileName" id="cover_file_name">첨부 파일 선택</span>
+                            <button type="button" id="btn_cover_file_delete" class="del btn_delete" style="display:none;">삭제</button>
+                            <input type="file" id="cover_file" class="fileInput" style="display:none;">
+                            <input type="hidden" id="cover_file_no">
+                        </div>
+                    </td>
+                    <th scope="row"><span class="essential">총권 업로드</span></th>
+                    <td>
+                        <div class="file_wrap list_last">
+                            <label for="full_file" class="file_label">파일 선택</label>
+                            <span class="fileName" id="full_file_name">첨부 파일 선택</span>
+                            <button type="button" id="btn_full_file_delete" class="del btn_delete" style="display:none;">삭제</button>
+                            <input type="file" id="full_file" class="fileInput" style="display:none;">
+                            <input type="hidden" id="full_file_no">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">공개 여부</th>
+                    <td colspan="3">
+                        <span class="radio-box"><input type="radio" id="open_y" name="open_yn" value="Y" checked><label for="open_y">공개</label></span>
+                        <span class="radio-box"><input type="radio" id="open_n" name="open_yn" value="N"><label for="open_n">비공개</label></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:each="type : ${#strings.arraySplit('SPECIAL,PAPER,APPENDIX', ',')}" class="section-container" th:id="|section_${type}|">
+            <div class="table_desc">
+                <h4 class="sstit">
+                    <span th:text="${type == 'SPECIAL' ? '특집 논문' : (type == 'PAPER' ? '논문' : '부록')}"></span>
+                </h4>
+            </div>
+            <div class="table_layout02">
+                <table>
+                    <colgroup>
+                        <col style="width: 150px;"><col style="width: auto;"><col style="width: 150px;"><col style="width: auto;">
+                    </colgroup>
+                    <tbody th:id="|tbody_${type}|">
+                    <tr th:if="${type == 'SPECIAL'}" class="section-topic-row">
+                        <th scope="row" style="background:#f9f9f9;">특집 주제</th>
+                        <td colspan="3">
+                            <input type="text" id="special_topic" class="w100" placeholder="특집 논문의 주제를 입력하세요.">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="table_top_btn mt20">
+            <a href="javascript:;" id="btn_save" class="btn_basic bg_type01">저장</a>
+            <a href="javascript:;" id="btn_list" class="btn_basic bg_type02">목록</a>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin1101Detail = {
+        state: { fxtmPblsDataOid: null, mode: 'insert' },
+
+        init: function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            this.state.fxtmPblsDataOid = urlParams.get('fxtmPblsDataOid');
+            this.initEvent();
+            uiCommon.datepicker.init('#publish_dt');
+
+            if (this.state.fxtmPblsDataOid) {
+                this.state.mode = 'update';
+                this.loadData();
+            } else {
+                ['SPECIAL', 'PAPER', 'APPENDIX'].forEach(type => this.addRow(type));
+            }
+
+            // 페이지 이탈 방지 (파일 업로드 후 저장하지 않은 경우)
+            this.initBeforeUnload();
+        },
+
+        initBeforeUnload: function() {
+            const _this = this;
+            let isFormChanged = false;
+
+            // 파일 업로드 시 변경 플래그 설정
+            $(document).on('change', 'input[type="file"]', function() {
+                isFormChanged = true;
+            });
+
+            // 입력 필드 변경 시 플래그 설정
+            $(document).on('input change', 'input[type="text"], textarea, select', function() {
+                isFormChanged = true;
+            });
+
+            // 저장 버튼 클릭 시 플래그 해제
+            $('#btn_save').on('click', function() {
+                isFormChanged = false;
+            });
+
+            // 목록 버튼 클릭 시 확인
+            $('#btn_list').on('click', function(e) {
+                if (isFormChanged) {
+                    if (!confirm('저장하지 않은 변경사항이 있습니다. 페이지를 떠나시겠습니까?')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+                }
+                window.location.href = contextPath + '/admin/page/admin1101';
+            });
+
+            // 브라우저 닫기/새로고침 방지
+            window.addEventListener('beforeunload', function(e) {
+                if (isFormChanged) {
+                    e.preventDefault();
+                    e.returnValue = '저장하지 않은 변경사항이 있습니다.';
+                    return e.returnValue;
+                }
+            });
+        },
+
+        initEvent: function() {
+            const _this = this;
+
+            // [1] 표지 이미지 파일 선택 시 자동 업로드
+            document.getElementById('cover_file').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const fileOid = await _this.fnFileUpload(file, 'COVER'); // 업로드 함수 호출
+                    if (fileOid) {
+                        document.getElementById('cover_file_name').textContent = file.name;
+                        document.getElementById('cover_file_no').value = fileOid; // 번호 세팅
+                        document.getElementById('btn_cover_file_delete').style.display = 'inline-block'; // 삭제 버튼 표시
+                    }
+                }
+            });
+
+            // [1-1] 표지 이미지 삭제
+            document.getElementById('btn_cover_file_delete').addEventListener('click', function() {
+                if (confirm('파일을 제거하시겠습니까?\n(실제 삭제는 저장 버튼 클릭 시 적용됩니다)')) {
+                    document.getElementById('cover_file').value = ''; // input file 초기화
+                    document.getElementById('cover_file_name').textContent = '첨부 파일 선택';
+                    document.getElementById('cover_file_no').value = '';
+                    this.style.display = 'none';
+                }
+            });
+
+            // [2] 총권 파일 선택 시 자동 업로드
+            document.getElementById('full_file').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const fileOid = await _this.fnFileUpload(file, 'FULL');
+                    if (fileOid) {
+                        document.getElementById('full_file_name').textContent = file.name;
+                        document.getElementById('full_file_no').value = fileOid;
+                        document.getElementById('btn_full_file_delete').style.display = 'inline-block'; // 삭제 버튼 표시
+                    }
+                }
+            });
+
+            // [2-1] 총권 파일 삭제
+            document.getElementById('btn_full_file_delete').addEventListener('click', function() {
+                if (confirm('파일을 제거하시겠습니까?\n(실제 삭제는 저장 버튼 클릭 시 적용됩니다)')) {
+                    document.getElementById('full_file').value = '';
+                    document.getElementById('full_file_name').textContent = '첨부 파일 선택';
+                    document.getElementById('full_file_no').value = '';
+                    this.style.display = 'none';
+                }
+            });
+
+            // [3] 리스트 내의 파일 선택 (이벤트 위임)
+            $(document).on('change', '.fileInput-dynamic', async function(e) {
+                const file = e.target.files[0];
+                const $this = $(this);
+
+                const sectionContainer = $this.closest('.section-container');
+                const sectionId = sectionContainer.attr('id'); // 예: section_SPECIAL
+                const fileType = sectionId.replace('section_', ''); // 예: SPECIAL
+
+                if (file) {
+                    const fileOid = await _this.fnFileUpload(file, fileType); // 업로드 함수 호출
+                    if (fileOid) {
+                        $this.siblings('.strgFileNm').text(file.name);
+                        $this.siblings('.item-file-no').val(fileOid); // 해당 행에 번호 세팅
+                        $this.siblings('.btn-item-file-delete').show(); // 삭제 버튼 표시
+                    }
+                }
+            });
+
+            // [3-1] 아이템 파일 삭제 (이벤트 위임)
+            $(document).on('click', '.btn-item-file-delete', function() {
+                if (confirm('파일을 제거하시겠습니까?\n(실제 삭제는 저장 버튼 클릭 시 적용됩니다)')) {
+                    const $this = $(this);
+                    const $fileWrap = $this.closest('.file_wrap');
+
+                    // 파일 input 초기화
+                    $fileWrap.find('.fileInput-dynamic').val('');
+                    // 파일명 초기화
+                    $fileWrap.find('.strgFileNm').text('첨부 파일 선택');
+                    // 파일 번호 초기화
+                    $fileWrap.find('.item-file-no').val('');
+                    // 삭제 버튼 숨김
+                    $this.hide();
+                }
+            });
+
+            // 행 추가/삭제 (기존 유지)
+            $(document).on('click', '.btn-add-row', function() { _this.addRow($(this).data('type')); });
+            $(document).on('click', '.btn-del-row', function() {
+                const type = $(this).data('type');
+                if ($(`#tbody_${type} tr.main-row`).length <= 1) return alert('최소 한 개의 행은 필요합니다.');
+                $(this).closest('tr').prev('tr').remove();
+                $(this).closest('tr').remove();
+            });
+
+            document.getElementById('btn_save').addEventListener('click', () => _this.fnSave());
+            // 목록 버튼은 initBeforeUnload에서 처리
+        },
+
+        // 파일 업로드 공통 함수
+        fnFileUpload: async function(file, fileType) {
+            if (!file) return null;
+            const formData = new FormData();
+            formData.append('file', file); // 서버가 받는 파라미터명 (보통 'file')
+
+            if (fileType) {
+                formData.append('fileType', fileType);
+            }
+
+            try {
+                const response = await $.ajax({
+                    url: contextPath + '/api/admin/admin1101/upload',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false
+                });
+
+                return response.data;
+            } catch (error) {
+                console.error('파일 업로드 실패:', error);
+                alert('파일 업로드에 실패했습니다.');
+                return null;
+            }
+        },
+
+        addRow: function(type, data = null) {
+            const $tbody = $(`#tbody_${type}`);
+            const itemNo = data ? data.fxtmPblsItemOid : '';
+            const sectionNo = data ? data.fxtmPblsSectOid : '';
+
+            // [중요] 파일명 필드 확인 (FileDTO의 originFileName 사용)
+            const strgFileNm = (data && data.attachments?.orgnlFileNm)
+                ? data.attachments.orgnlFileNm
+                : '첨부 파일 선택';
+
+            // [중요] 버튼 작동을 위한 고유 ID 생성
+            const uniqueFileId = 'file_' + Math.random().toString(36).substr(2, 9);
+            const uniqueDeleteBtnId = 'btn_del_' + Math.random().toString(36).substr(2, 9);
+
+            // 파일이 있으면 삭제 버튼 표시
+            const deleteButtonDisplay = (data?.atchFileOid) ? 'inline-block' : 'none';
+
+            const html = `
+                <tr class="title-row">
+                    <th scope="row">제목</th>
+                    <td colspan="3">
+                        <div class="option-row">
+                            <input type="text" class="item-title w100" value="${data ? data.fxtmPblsItemTtl : ''}">
+
+                            <div class="file_wrap list_last">
+                                <input type="hidden" class="item-no" value="${itemNo}">
+                                <input type="hidden" class="section-no" value="${sectionNo}">
+                            </div>
+
+                            <div class="file_wrap list_last">
+                                <label for="${uniqueFileId}" class="file_label">파일 선택</label>
+                                <span class="fileName strgFileNm">${strgFileNm}</span>
+                                <button type="button" id="${uniqueDeleteBtnId}" class="del btn-item-file-delete" style="display:${deleteButtonDisplay};">삭제</button>
+
+                                <input type="file" id="${uniqueFileId}" class="fileInput fileInput-dynamic" style="display:none;">
+                                <input type="hidden" class="item-file-no" value="${data?.atchFileOid || ''}">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="main-row" data-type="${type}">
+                    <th scope="row">저자</th>
+                    <td><input type="text" class="item-author w100" value="${data ? data.aut : ''}"></td>
+                    <th scope="row" class="bl">P.</th>
+                    <td>
+                        <div class="option-row">
+                            <input type="text" class="item-page" style="width:100px;" value="${data ? data.pageNum : ''}">
+                            <p class="ml10">
+                                <button type="button" class="btn-add-row" data-type="${type}">추가</button>
+                                <button type="button" class="del btn-del-row" data-type="${type}">삭제</button>
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            $tbody.append(html);
+        },
+
+        loadData: async function() {
+            try {
+                const response = await API.get('/api/admin/admin1101/select?fxtmPblsDataOid=' + this.state.fxtmPblsDataOid);
+                this.fillForm(response);
+            } catch (error) { console.error('데이터 로드 실패:', error); }
+        },
+
+        fillForm: function(data) {
+            // 1. 총권 정보 세팅 (periodical 객체)
+            if (data.periodical) {
+                document.getElementById('total_title').value = data.periodical.fxtmPblsDataTtl || '';
+                document.getElementById('author').value = data.periodical.aut || '';
+                document.getElementById('page_num').value = data.periodical.pageNum || '';
+                document.getElementById('publish_dt').value = data.periodical.pblcnDt || '';
+                document.getElementById('cover_file_no').value = data.periodical.cvrImg1Oid || '';
+                document.getElementById('full_file_no').value = data.periodical.cvrImg2Oid || '';
+
+                if (data.periodical.cvrImg1Oid) {
+                    document.getElementById('cover_file_no').value = data.periodical.cvrImg1Oid;
+                    document.getElementById('cover_file_name').textContent = data.periodical.coverFile?.orgnlFileNm || '기존 파일 있음';
+                    document.getElementById('btn_cover_file_delete').style.display = 'inline-block'; // 삭제 버튼 표시
+                }
+
+                if (data.periodical.cvrImg2Oid) {
+                    document.getElementById('full_file_no').value = data.periodical.cvrImg2Oid;
+                    document.getElementById('full_file_name').textContent = data.periodical.fullFile?.orgnlFileNm || '기존 파일 있음';
+                    document.getElementById('btn_full_file_delete').style.display = 'inline-block'; // 삭제 버튼 표시
+                }
+
+                // 라디오 버튼 (공개 여부)
+                const openYnVal = data.periodical.openYn || 'Y';
+                const radio = document.querySelector(`input[name="open_yn"][value="${openYnVal}"]`);
+                if (radio) radio.checked = true;
+            }
+
+            // 2. 섹션별 아이템 세팅
+            ['SPECIAL', 'PAPER', 'APPENDIX'].forEach(type => {
+                // 해당 타입에 맞는 섹션 객체 찾기
+                const section = data.sections ? data.sections.find(s => s.fxtmPblsSectType === type) : null;
+
+                // [핵심 1] 섹션 번호를 해당 영역(div)에 data 속성으로 저장해둡니다. (수정 시 식별용)
+                const $sectionDiv = $(`#section_${type}`);
+                if (section) {
+                    $sectionDiv.data('section-no', section.fxtmPblsSectOid);
+                } else {
+                    $sectionDiv.data('section-no', null);
+                }
+
+                if (section) {
+                    // 2-1. 특집(SPECIAL)일 경우, 섹션 제목(주제) 세팅
+                    if (type === 'SPECIAL') {
+                        document.getElementById('special_topic').value = section.fxtmPblsSectTtl || '';
+                    }
+
+                    // 2-2. 섹션 내부의 아이템 리스트 추출
+                    const items = section.items || []; // items 배열이 없으면 빈 배열
+
+                    if (items.length > 0) {
+                        // 아이템이 있으면 각각 행 추가
+                        items.forEach(item => {
+                            this.addRow(type, item);
+                        });
+                    } else {
+                        // 섹션은 있는데 아이템이 없으면 빈 행 1개 추가
+                        this.addRow(type);
+                    }
+                } else {
+                    // 해당 섹션 데이터가 아예 없으면 빈 행 1개 추가
+                    this.addRow(type);
+                }
+            });
+        },
+
+        // 데이터 수집 및 유효성 검사
+        collectFormData: function() {
+            const getSectionName = function(type) {
+                if (type === 'SPECIAL') return '특집 논문';
+                if (type === 'PAPER') return '논문';
+                return '부록';
+            };
+            // [1] 총권 기본 정보 수집
+            const totalTitle = document.getElementById('total_title').value.trim();
+            const author = document.getElementById('author').value.trim();
+            const pageNum = document.getElementById('page_num').value.trim();
+            const publishDt = document.getElementById('publish_dt').value;
+
+            // [Validation 1] 총권 필수 정보 체크
+            if (!totalTitle) { uiCommon.fnShowAlertModal('총권 제목을 입력해주세요.'); return null; }
+            if (!author) { uiCommon.fnShowAlertModal('총권 저자를 입력해주세요.'); return null; }
+            if (!pageNum) { uiCommon.fnShowAlertModal('총권 페이지를 입력해주세요.'); return null; }
+            if (!publishDt) { uiCommon.fnShowAlertModal('발행일을 선택해주세요.'); return null; }
+
+            // 표지 이미지 필수 체크
+            const coverFileNo = document.getElementById('cover_file_no').value;
+            if (!coverFileNo) {
+                uiCommon.fnShowAlertModal('표지 이미지를 업로드해주세요.');
+                return null;
+            }
+
+            // 총권 파일 필수 체크
+            const fullFileNo = document.getElementById('full_file_no').value;
+            if (!fullFileNo) {
+                uiCommon.fnShowAlertModal('총권 파일을 업로드해주세요.');
+                return null;
+            }
+
+            const data = {
+                fxtmPblsDataOid: this.state.fxtmPblsDataOid,
+                fxtmPblsDataTtl: totalTitle,
+                aut: author,
+                pageNum: pageNum,
+                pblcnDt: publishDt,
+                cvrImg1Oid: document.getElementById('cover_file_no').value || null,
+                cvrImg2Oid: document.getElementById('full_file_no').value || null,
+                openYn: document.querySelector('input[name="open_yn"]:checked').value,
+                sections: []
+            };
+
+            const specialTopic = document.getElementById('special_topic')?.value.trim() || '';
+            let isValid = true;
+
+            // [2] 섹션별 아이템 수집 Loop
+            ['SPECIAL', 'PAPER', 'APPENDIX'].forEach((type, index) => {
+                if (!isValid) return;
+
+                const $rows = $(`#tbody_${type} tr.main-row`);
+
+                // 섹션 DTO 준비
+                const sectionNoVal = $(`#section_${type}`).data('section-no');
+                const section = {
+                    fxtmPblsSectOid: sectionNoVal ? Number(sectionNoVal) : null,
+                    fxtmPblsSectType: type,
+                    fxtmPblsSectTtl: (type === 'SPECIAL') ? specialTopic : '',
+                    sortSeq: index,
+                    items: []
+                };
+
+                // 행(Row) 반복 검사
+                $rows.each(function(idx) {
+                    if (!isValid) return false;
+
+                    const $mainRow = $(this);
+                    const $titleRow = $mainRow.prev('tr');
+
+                    const itemTitle = $titleRow.find('.item-title').val().trim();
+                    const itemAuthor = $mainRow.find('.item-author').val().trim();
+                    const itemPage = $mainRow.find('.item-page').val().trim();
+
+                    // [핵심] 제목이 없는 경우(=빈 행)는 아예 무시합니다. (유효성 검사 안 함)
+                    if (!itemTitle) {
+                        return true; // continue
+                    }
+
+                    // [Validation 2] 제목을 썼다면 -> 저자와 페이지는 필수입니다.
+                    if (!itemAuthor) {
+                        uiCommon.fnShowAlertModal(`[${getSectionName(type)}] '${itemTitle}'의 저자를 입력해주세요.`);
+                        isValid = false;
+                        return false;
+                    }
+                    if (!itemPage) {
+                        uiCommon.fnShowAlertModal(`[${getSectionName(type)}] '${itemTitle}'의 페이지를 입력해주세요.`);
+                        isValid = false;
+                        return false;
+                    }
+
+                    // 유효한 데이터이므로 items에 추가
+                    const itemNoVal = $titleRow.find('.item-no').val();
+                    section.items.push({
+                        fxtmPblsItemOid: itemNoVal ? Number(itemNoVal) : null,
+                        fxtmPblsItemTtl: itemTitle,
+                        aut: itemAuthor,
+                        pageNum: itemPage,
+                        atchFileOid: $titleRow.find('.item-file-no').val() || null,
+                        sortSeq: idx
+                    });
+                });
+
+                // [Validation 3] 섹션 간 정합성 체크
+                // (1) 특집인데 주제만 있고 아이템이 없는 경우
+                if (type === 'SPECIAL' && specialTopic && section.items.length === 0) {
+                    uiCommon.fnShowAlertModal('특집 논문의 주제를 입력하셨다면, 최소 한 개의 논문을 등록해야 합니다.');
+                    isValid = false;
+                    return;
+                }
+
+                // (2) 특집인데 아이템은 있는데 주제가 없는 경우 -> 주제 필수
+                if (type === 'SPECIAL' && section.items.length > 0 && !specialTopic) {
+                    uiCommon.fnShowAlertModal('특집 논문을 등록하시려면 특집 주제를 입력해주세요.');
+                    isValid = false;
+                    return;
+                }
+
+                // [최종 판단]
+                // 아이템이 하나라도 있거나, (특집의 경우) 주제가 있는 경우에만 저장 대상에 포함
+                if (section.items.length > 0 || (type === 'SPECIAL' && specialTopic)) {
+                    data.sections.push(section);
+                }
+            });
+
+            return isValid ? data : null;
+        },
+
+        // 저장
+        fnSave: async function() {
+            // collectFormData 내부에서 얼럿을 띄우고 null을 반환하도록 수정함
+            const data = this.collectFormData();
+
+            if (!data) return; // 유효성 검사 실패 시 중단
+
+            try {
+                const url = this.state.mode === 'insert' ? '/api/admin/admin1101/insert' : '/api/admin/admin1101/update';
+                await API.post(url, data);
+
+                uiCommon.fnShowAlertModal('저장되었습니다.', () => {
+                    window.location.href = contextPath + '/admin/page/admin1101';
+                });
+            } catch (error) {
+                console.error(error);
+                uiCommon.fnShowAlertModal('저장에 실패했습니다.');
+            }
+        }
+    };
+
+    $(document).ready(() => admin1101Detail.init());
+</script>
+</body>
+</html>

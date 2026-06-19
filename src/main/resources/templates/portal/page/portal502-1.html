@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>자료실 > 정기발간자료 > 다운로드 > 상세</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">다운로드</h3>
+    
+    <div class="board_wrap">
+        <div class="board_view">
+            <div class="board_view_header">
+                <h4 class="title" id="totalTitle"></h4>
+                <div class="board_view_info">
+                    <em class="board_date">등록일: <span id="publishDt"></span></em>
+                    <em class="board_date">조회수: <span id="viewCnt"></span></em>
+                </div>
+            </div>
+
+            <div class="board_content">
+                <div class="table_layout t_tal">
+                    <table>
+                        <caption>다운로드 테이블</caption>
+                        <colgroup>
+                            <col style="width: 150px;">
+                            <col style="width: auto;">
+                        </colgroup>
+                        <tbody>
+                            <tr>
+                                <th scope="row">저자</th>
+                                <td id="author"></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">P.</th>
+                                <td id="pageNum"></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">발행일</th>
+                                <td id="publishDtDetail"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <span class="scroll_img">스크롤</span>
+                </div>
+
+                <br><br>
+                <p style="text-align: center;"><strong>목 차</strong></p>
+                <div id="sectionsContainer">
+                    <!-- 섹션 정보가 동적으로 추가됩니다 -->
+                </div>
+            </div>
+
+            <div class="attachment">
+                <h5>첨부파일</h5>
+                <div id="fileList">
+                    <!-- 파일 목록이 동적으로 추가됩니다 -->
+                </div>
+            </div>
+
+            <div class="btn_wrap mt30">
+                <a href="/page/portal502" class="btn_basic">목록</a>
+            </div>
+        </div>
+
+        <div class="pagination">
+            <p class="prev" id="prevPost" style="display:none;">
+                <span class="name">이전글</span>
+                <span class="text"><a href="javascript:;" onclick="portal502_1.goDetail(this.dataset.no)" data-no=""><span></span></a></span>
+            </p>
+            <p class="next" id="nextPost" style="display:none;">
+                <span class="name">다음글</span>
+                <span class="text"><a href="javascript:;" onclick="portal502_1.goDetail(this.dataset.no)" data-no=""><span></span></a></span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal502_1 = {
+        
+        /**
+         * 상태
+         */
+        state: {
+            fxtmPblsDataOid: null,
+            detail: null,
+            filePath: /*[[${basicFilePath}]]*/''
+        },
+        
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.getFxtmPblsDataOid();
+            if (_this.state.fxtmPblsDataOid) {
+                _this.loadDetail();
+            }
+        },
+        
+        /**
+         * URL에서 fxtmPblsDataOid 가져오기
+         */
+        getFxtmPblsDataOid: function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            this.state.fxtmPblsDataOid = urlParams.get('fxtmPblsDataOid');
+        },
+        
+        /**
+         * 상세 정보 로드
+         */
+        loadDetail: function () {
+            const _this = this;
+            
+            fetch(`/api/common/portal502/detail/${_this.state.fxtmPblsDataOid}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 200 && result.data) {
+                        _this.state.detail = result.data;
+                        _this.renderDetail();
+                    } else {
+                        alert('정기발간자료 정보를 불러올 수 없습니다.');
+                        history.back();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('오류가 발생했습니다.');
+                    history.back();
+                });
+        },
+        
+        /**
+         * 상세 정보 렌더링
+         */
+        renderDetail: function () {
+            const _this = this;
+            const detail = _this.state.detail;
+            
+            // 기본 정보
+            document.getElementById('totalTitle').textContent = detail.fxtmPblsDataTtl || '';
+            document.getElementById('author').textContent = detail.aut || '';
+            document.getElementById('pageNum').textContent = detail.pageNum || '';
+            document.getElementById('publishDt').textContent = _this.formatDate(detail.pblcnDt);
+            document.getElementById('publishDtDetail').textContent = _this.formatDate(detail.pblcnDt);
+            document.getElementById('viewCnt').textContent = detail.inqCnt || '0';
+
+            // 섹션 정보 렌더링
+            _this.renderSections(detail.sections);
+
+            // 첨부파일
+            _this.renderFiles(detail.files);
+            
+            // 이전글/다음글
+            _this.renderNavigation(detail.prevPost, detail.nextPost);
+        },
+        
+        /**
+         * 섹션 정보 렌더링
+         */
+        renderSections: function (sections) {
+            const _this = this;
+            const container = document.getElementById('sectionsContainer');
+            const filePath = _this.state.filePath;
+
+            if (!sections || sections.length === 0) {
+                container.innerHTML = '<p>목차 정보가 없습니다.</p>';
+                return;
+            }
+
+            let html = '';
+            sections.forEach(section => {
+                const sectionTitle = _this.getSectionTitle(section.fxtmPblsSectType);
+
+                html += `<div class="section_item" style="margin-bottom: 30px;">`;
+                html += `<h6 style="font-size: 16px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 5px;">${sectionTitle}</h6>`;
+
+                if (section.fxtmPblsSectTtl) {
+                    html += `<p style="color: #666; margin-bottom: 10px;">주제: ${section.fxtmPblsSectTtl}</p>`;
+                }
+
+                if (section.items && section.items.length > 0) {
+                    html += `<ul style="list-style: none; padding: 0;">`;
+                    section.items.forEach((item, index) => {
+                        html += `<li style="padding: 8px 0; border-bottom: 1px solid #eee;">`;
+                        html += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
+                        html += `<div style="flex: 1;">`;
+                        html += `<strong>${index + 1}. ${item.fxtmPblsItemTtl || ''}</strong>`;
+                        if (item.aut) {
+                            html += ` <span style="color: #666; font-size: 14px;">/ ${item.aut}</span>`;
+                        }
+                        if (item.pageNum) {
+                            html += ` <span style="color: #999; font-size: 13px;">(p. ${item.pageNum})</span>`;
+                        }
+                        html += `</div>`;
+                        if (item.attachFilePath) {
+                            const fileUrl = `${filePath}${item.attachFilePath}/${item.attachFileName}`;
+                            html += `<div><a href="${fileUrl}" class="bg_box_fff btn_basic btn_s line_type01 mt0" download="${item.attachOriginFileName}">다운로드</a></div>`;
+                        }
+                        html += `</div>`;
+                        html += `</li>`;
+                    });
+                    html += `</ul>`;
+                } else {
+                    html += `<p style="color: #999;">등록된 항목이 없습니다.</p>`;
+                }
+
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+        },
+
+        /**
+         * 섹션 타입별 제목
+         */
+        getSectionTitle: function (type) {
+            switch(type) {
+                case 'SPECIAL': return '특집 논문';
+                case 'PAPER': return '논문';
+                case 'APPENDIX': return '부록';
+                default: return '기타';
+            }
+        },
+
+
+        /**
+         * 첨부파일 렌더링
+         */
+        renderFiles: function (files) {
+            const _this = this;
+            const fileList = document.getElementById('fileList');
+            const filePath = _this.state.filePath;
+            fileList.innerHTML = '';
+
+            if (!files || files.length === 0) {
+                fileList.innerHTML = '<p>첨부파일이 없습니다.</p>';
+                return;
+            }
+
+            files.forEach(file => {
+                const fileIcon = _this.getFileIcon(file.fileTypeNm);
+                const strgFileCpct = _this.formatFileSize(file.strgFileCpct);
+                const fileUrl = `${filePath}${file.strgFilePath}/${file.strgFileNm}`;
+
+                const link = document.createElement('a');
+                link.href = fileUrl;
+                link.className = 'file_link';
+                link.download = file.orgnlFileNm;
+                link.innerHTML = `
+                    <i class="ico_file ${fileIcon}">첨부아이콘</i>
+                    ${file.orgnlFileNm} (${strgFileCpct} / 다운로드 ${file.dwnldCnt || 0})
+                `;
+
+                fileList.appendChild(link);
+            });
+        },
+        
+        /**
+         * 이전글/다음글 렌더링
+         */
+        renderNavigation: function (prevPost, nextPost) {
+            // 이전글
+            const prevP = document.getElementById('prevPost');
+            if (prevPost) {
+                const link = prevP.querySelector('a');
+                link.dataset.no = prevPost.fxtmPblsDataOid;
+                link.querySelector('span').textContent = prevPost.fxtmPblsDataTtl;
+             	// 퍼블 예시처럼 파란색 링크 클래스 추가
+                link.classList.add('c_blue02');
+                prevP.style.display = 'block';
+            } else {
+                prevP.querySelector('.text').innerHTML = '<em>이전 글이 없습니다</em>';
+                prevP.style.display = 'block';
+            }
+
+            // 다음글
+            const nextP = document.getElementById('nextPost');
+            if (nextPost) {
+                const link = nextP.querySelector('a');
+                link.dataset.no = nextPost.fxtmPblsDataOid;
+                link.querySelector('span').textContent = nextPost.fxtmPblsDataTtl;
+                // 퍼블 예시처럼 파란색 링크 클래스 추가
+                link.classList.add('c_blue02');
+                nextP.style.display = 'block';
+            } else {
+                nextP.querySelector('.text').innerHTML = '<em>다음 글이 없습니다</em>';
+                nextP.style.display = 'block';
+            }
+        },
+        
+        /**
+         * 상세 페이지 이동
+         */
+        goDetail: function (fxtmPblsDataOid) {
+            location.href = `/page/portal502-1?fxtmPblsDataOid=${fxtmPblsDataOid}`;
+        },
+        
+        /**
+         * 날짜 포맷
+         */
+        formatDate: function (dateStr) {
+            if (!dateStr) return '';
+            return dateStr.replace(/-/g, '.');
+        },
+        
+        /**
+         * 파일 크기 포맷
+         */
+        formatFileSize: function (bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+        
+        /**
+         * 파일 아이콘 클래스
+         */
+        getFileIcon: function (ext) {
+            if (!ext) return 'etc';
+            ext = ext.toLowerCase();
+            
+            if (ext === 'pdf') return 'pdf';
+            if (ext === 'hwp' || ext === 'hwpx') return 'hwp';
+            if (ext === 'doc' || ext === 'docx') return 'doc';
+            if (ext === 'xls' || ext === 'xlsx') return 'xls';
+            if (ext === 'ppt' || ext === 'pptx') return 'ppt';
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) return 'img';
+            if (ext === 'zip' || ext === 'alz') return 'zip';
+            
+            return 'etc';
+        }
+    };
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        portal502_1.init();
+    });
+</script>
+</body>
+</html>

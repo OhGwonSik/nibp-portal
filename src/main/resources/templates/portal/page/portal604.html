@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소통·참여 > 메일링 신청</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">메일링 신청</h3>
+    <div class="human_intro_wrap">
+        <strong>KoNIBP의 다양한 정보를 메일로 전해드립니다.</strong>
+        <p>메일링 서비스를 신청하시면 국가생명윤리정책원의 학술정보 및 행사 안내 등 다양한 정보를 이메일을 통하여 받아보실 수 있습니다.</p>
+    </div>
+    <div class="mailing_wrap">
+        <ul>
+            <li>
+                <div class="mailing_inner">
+                    <img th:src="@{/portal/images/mailing_icon01.png}" alt="생명윤리 이슈논의 아이콘">
+                    <div class="mailing_text">
+                        <h4>생명윤리 이슈논의</h4>
+                        <p>콜로키움, 국가생명윤리포럼 등</p>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <div class="mailing_inner">
+                    <img th:src="@{/portal/images/mailing_icon02.png}" alt="정기간행물 아이콘">
+                    <div class="mailing_text">
+                        <h4>정기간행물</h4>
+                        <p>생명, 윤리와 정책</p>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <div class="mailing_inner">
+                    <img th:src="@{/portal/images/mailing_icon03.png}" alt="KoNIBP 소식안내 아이콘">
+                    <div class="mailing_text">
+                        <h4>KoNIBP 소식안내</h4>
+                        <p>자유공모지원, 학술대회지원 등</p>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="tac mt50">
+        <a th:href="@{/page/portal604-1}" class="btn_basic btn_bg_type00">서비스 신청하기</a>
+        <a th:href="@{/page/portal604-2}" class="btn_basic btn_bg_type01">서비스 변경/해지하기</a>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal604 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],
+            pageIndex: 1,
+            pageSize: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal604.init();
+    });
+</script>
+</body>
+</html>

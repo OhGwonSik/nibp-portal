@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.common.file.mapper.FileMapper">
+    <!-- 첨부 파일을 통해서 업로드된 파일만 조회 -->
+    <select id="selectAttachmentFileByTableNameAndTablePk" resultType="egovframework.common.file.domain.FileDTO">
+        SELECT file_oid, tbl_nm, tbl_oid,
+               orgnl_file_nm, strg_file_nm, strg_file_path, strg_file_cpct,
+               strg_sml_file_nm, strg_sml_file_path, strg_sml_file_cpct,
+               strg_md_file_nm, strg_md_file_path, strg_md_file_cpct,
+               file_type_nm, file_type, thmb_yn, img_sbst_txt_cn,
+               dwnld_cnt, atch_file_seq, file_expln, use_yn,
+               reg_id, reg_dt, mdfcn_id, mdfcn_dt
+        FROM ${schema}.file
+        WHERE tbl_nm = #{tblNm}
+          AND tbl_oid = #{tblOid}
+          AND file_type = 'ATTACHMENT'
+          AND use_yn = 'Y'
+    </select>
+
+    <!-- 첨부 파일을 통해서 업로드된 파일만 일괄 조회 -->
+    <select id="selectAttachmentFilesByTableNameAndTablePks" resultType="egovframework.common.file.domain.FileDTO">
+        SELECT file_oid, tbl_nm, tbl_oid,
+               orgnl_file_nm, strg_file_nm, strg_file_path, strg_file_cpct,
+               strg_sml_file_nm, strg_sml_file_path, strg_sml_file_cpct,
+               strg_md_file_nm, strg_md_file_path, strg_md_file_cpct,
+               file_type_nm, file_type, thmb_yn, img_sbst_txt_cn,
+               dwnld_cnt, atch_file_seq, file_expln, use_yn,
+               reg_id, reg_dt, mdfcn_id, mdfcn_dt
+        FROM ${schema}.file
+        WHERE tbl_nm = #{tblNm}
+          AND tbl_oid IN
+            <foreach collection="tblOids" item="tblOid" open="(" separator="," close=")">
+                #{tblOid}
+            </foreach>
+          AND file_type = 'ATTACHMENT'
+          AND use_yn = 'Y'
+    </select>
+
+    <!-- ckeditor를 통해서 업로드된 파일(이미지)만 조회 -->
+    <select id="selectInlineFileByTableNameAndTablePk" resultType="egovframework.common.file.domain.FileDTO">
+        SELECT file_oid, tbl_nm, tbl_oid,
+               orgnl_file_nm, strg_file_nm, strg_file_path, strg_file_cpct,
+               strg_sml_file_nm, strg_sml_file_path, strg_sml_file_cpct,
+               strg_md_file_nm, strg_md_file_path, strg_md_file_cpct,
+               file_type_nm, file_type, thmb_yn,
+               dwnld_cnt, atch_file_seq, file_expln, use_yn,
+               reg_id, reg_dt, mdfcn_id, mdfcn_dt
+        FROM ${schema}.file
+        WHERE tbl_nm = #{tblNm}
+          AND tbl_oid = #{tblOid}
+          AND file_type = 'INLINE'
+          AND use_yn = 'Y'
+    </select>
+
+    <select id="selectFileByFileNo" resultType="egovframework.common.file.domain.FileDTO">
+        SELECT file_oid, tbl_nm, tbl_oid,
+               orgnl_file_nm, strg_file_nm, strg_file_path, strg_file_cpct,
+               strg_sml_file_nm, strg_sml_file_path, strg_sml_file_cpct,
+               strg_md_file_nm, strg_md_file_path, strg_md_file_cpct,
+               file_type_nm, file_type, thmb_yn,
+               dwnld_cnt, atch_file_seq, file_expln, use_yn,
+               reg_id, reg_dt, mdfcn_id, mdfcn_dt
+        FROM ${schema}.file
+        WHERE file_oid = #{fileOid}
+          AND use_yn = 'Y'
+    </select>
+
+    <insert id="insertFile" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" useGeneratedKeys="true" keyProperty="fileOid">
+        INSERT INTO ${schema}.file(
+            tbl_nm, tbl_oid,
+            orgnl_file_nm, strg_file_nm, strg_file_path, strg_file_cpct,
+            strg_sml_file_nm, strg_sml_file_path, strg_sml_file_cpct,
+            strg_md_file_nm, strg_md_file_path, strg_md_file_cpct,
+            file_type_nm, file_type, thmb_yn, img_sbst_txt_cn, atch_file_seq, file_expln,
+            use_yn, reg_id, mdfcn_id
+        )
+        VALUES (
+                   #{tblNm}, #{tblOid},
+                   #{orgnlFileNm}, #{strgFileNm}, #{strgFilePath}, #{strgFileCpct},
+                   #{strgSmlFileNm}, #{strgSmlFilePath}, #{strgSmlFileCpct},
+                   #{strgMdFileNm}, #{strgMdFilePath}, #{strgMdFileCpct},
+                   #{fileTypeNm}, #{fileType}, #{thmbYn}, #{imgSbstTxtCn}, #{atchFileSeq}, #{fileExpln},
+                   #{useYn}, #{regId}, #{mdfcnId}
+               )
+    </insert>
+
+    <!-- 파일 img_sbst_txt_cn 업데이트 -->
+    <update id="updateFileAltText" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap">
+        UPDATE ${schema}.file
+        SET img_sbst_txt_cn = #{imgSbstTxtCn},
+            mdfcn_id = #{mdfcnId},
+            mdfcn_dt = NOW()
+        WHERE file_oid = #{fileOid}
+    </update>
+
+    <!-- 이미지 리사이즈 오류 발생 시 file_expln 컬럼에 오류 표시 -->
+    <update id="updateFileMsg" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap">
+        UPDATE ${schema}.file
+        SET file_expln = #{fileExpln},
+            mdfcn_id = #{mdfcnId}
+        WHERE file_oid = #{fileOid}
+    </update>
+
+    <!-- 파일의 tbl_oid 업데이트 (임시 저장 후 실제 PK 연결) -->
+    <update id="updateFileTablePk" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap">
+        UPDATE ${schema}.file
+        SET tbl_oid = #{tblOid},
+            mdfcn_id = #{mdfcnId},
+            mdfcn_dt = NOW()
+        WHERE file_oid = #{fileOid}
+    </update>
+
+    <!-- 테이블명, 테이블 PK로 파일 정보 논리 삭제 -->
+    <update id="deleteFileByTableNameAndTablePk" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap">
+        UPDATE ${schema}.file
+        SET use_yn = 'N',
+            mdfcn_id = #{mdfcnId}
+        WHERE tbl_nm = #{tblNm}
+          AND tbl_oid = #{tblOid}
+    </update>
+
+    <!-- fileNo로 파일 정보 논리 삭제 -->
+    <update id="deleteFileByFileNo" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap">
+        UPDATE ${schema}.file
+        SET use_yn = 'N',
+            mdfcn_id = #{mdfcnId}
+        WHERE file_oid = #{fileOid}
+    </update>
+
+    <!-- fileOid 리스트로 파일 경로/이름 조회 (물리 파일 삭제용) -->
+    <select id="selectFileInfosByFileNos" parameterType="java.util.List" resultType="org.egovframe.rte.psl.dataaccess.util.EgovMap">
+        SELECT file_oid AS fileOid, strg_file_path AS filePath, strg_file_nm AS fileName
+        FROM ${schema}.file
+        WHERE file_oid IN
+        <foreach collection="list" item="fileOid" open="(" separator="," close=")">
+            #{fileOid}
+        </foreach>
+    </select>
+
+    <!-- 조회 수 증가 -->
+    <update id="increaseDownloadCnt" parameterType="Long">
+        UPDATE ${schema}.file
+        SET dwnld_cnt = dwnld_cnt + 1
+        WHERE file_oid = #{fileOid}
+    </update>
+
+    <!-- 고아 파일 관리: 모든 파일 경로 조회 -->
+    <select id="selectAllFilePaths" resultType="String">
+        SELECT DISTINCT strg_file_path
+        FROM ${schema}.file
+        WHERE use_yn = 'Y'
+          AND strg_file_path IS NOT NULL
+          AND strg_file_path != ''
+        UNION
+        SELECT DISTINCT strg_sml_file_path
+        FROM ${schema}.file
+        WHERE use_yn = 'Y'
+          AND strg_sml_file_path IS NOT NULL
+          AND strg_sml_file_path != ''
+        UNION
+        SELECT DISTINCT strg_md_file_path
+        FROM ${schema}.file
+        WHERE use_yn = 'Y'
+          AND strg_md_file_path IS NOT NULL
+          AND strg_md_file_path != ''
+    </select>
+
+    <!-- 파일 레코드 복사 (table_pk만 변경하여 새 row 생성) -->
+    <insert id="copyFilesByTablePk" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap">
+        INSERT INTO ${schema}.file (
+            tbl_nm, tbl_oid,
+            orgnl_file_nm, strg_file_nm, strg_file_path, strg_file_cpct,
+            strg_sml_file_nm, strg_sml_file_path, strg_sml_file_cpct,
+            strg_md_file_nm, strg_md_file_path, strg_md_file_cpct,
+            file_type_nm, file_type, thmb_yn, img_sbst_txt_cn, atch_file_seq, file_expln,
+            use_yn, reg_id, mdfcn_id
+        )
+        SELECT
+            tbl_nm, #{newTablePk},
+            orgnl_file_nm, strg_file_nm, strg_file_path, strg_file_cpct,
+            strg_sml_file_nm, strg_sml_file_path, strg_sml_file_cpct,
+            strg_md_file_nm, strg_md_file_path, strg_md_file_cpct,
+            file_type_nm, file_type, thmb_yn, img_sbst_txt_cn, atch_file_seq, file_expln,
+            use_yn, #{regId}, #{regId}
+        FROM ${schema}.file
+        WHERE tbl_nm = #{tblNm}
+          AND tbl_oid = #{oldTablePk}
+          AND use_yn = 'Y'
+    </insert>
+</mapper>

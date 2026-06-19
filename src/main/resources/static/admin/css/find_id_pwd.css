@@ -1,0 +1,230 @@
+@charset "utf-8";
+
+/* 아이디/비밀번호 찾기 페이지 */
+.find_id_pwd_wrap {
+    max-width: 445px;
+    width: 100%;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 1px 54px rgba(0,0,0,.1);
+    padding: 40px 50px;
+}
+
+.find_id_pwd_wrap h2 {
+    font-size: 26px;
+    color: #000;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+/* 탭 메뉴 */
+.find_id_pwd_wrap .tab_menu {
+    margin-bottom: 25px;
+}
+
+.find_id_pwd_wrap .tab_menu ul {
+    display: flex;
+    border-bottom: 2px solid #2ca6e0;
+}
+
+.find_id_pwd_wrap .tab_menu ul li {
+    flex: 1;
+    text-align: center;
+}
+
+.find_id_pwd_wrap .tab_menu ul li a {
+    display: block;
+    padding: 12px 0;
+    background: #f5f6f7;
+    color: #666;
+    text-decoration: none;
+    border: 1px solid #D4D4D4;
+    border-bottom: none;
+    border-radius: 3px 3px 0 0;
+    font-weight: 600;
+}
+
+.find_id_pwd_wrap .tab_menu ul li.on a {
+    background: #2ca6e0;
+    color: #fff;
+    border-color: #2ca6e0;
+}
+
+/* 입력 폼 */
+.find_id_pwd_wrap .input_form {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.find_id_pwd_wrap .input_form li {
+    margin-bottom: 12px;
+}
+
+.find_id_pwd_wrap .input_form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.find_id_pwd_wrap .input_form input[type="text"] {
+    border: 1px solid #D4D4D4;
+    height: 42px;
+    width: 100%;
+    border-radius: 3px;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+
+.find_id_pwd_wrap .input_form select {
+    border: 1px solid #D4D4D4;
+    height: 42px;
+    border-radius: 3px;
+    padding: 0 8px;
+    box-sizing: border-box;
+}
+
+.find_id_pwd_wrap .input_form .flex_col {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.find_id_pwd_wrap .input_form .flex_col input[type="text"] {
+    flex: 1;
+    min-width: 0;
+}
+
+.find_id_pwd_wrap .input_form .flex_col select {
+    flex-shrink: 0;
+}
+
+.find_id_pwd_wrap .input_form .flex_col select[title="연락처 앞자리"] {
+    width: 80px;
+}
+
+.find_id_pwd_wrap .input_form .flex_col select[title="이메일도메인"] {
+    width: 115px;
+}
+
+/* 안내 문구 */
+.find_id_pwd_wrap .info_text {
+    color: #898989;
+    font-size: 13px;
+    margin-top: 5px;
+    font-weight: 400;
+}
+
+.find_id_pwd_wrap .info_text em {
+    color: #d30000;
+}
+
+/* 버튼 */
+.find_id_pwd_wrap .btn_wrap {
+    margin-top: 20px;
+    display: flex;
+    gap: 8px;
+}
+
+.find_id_pwd_wrap .btn_basic {
+    flex: 1;
+    display: block;
+    text-align: center;
+    padding: 12px 0;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.find_id_pwd_wrap .btn_confirm {
+    background: #2ca6e0;
+    color: #fff;
+}
+
+.find_id_pwd_wrap .btn_cancel {
+    background: #888;
+    color: #fff;
+}
+
+.find_id_pwd_wrap .btn_login {
+    background: #2ca6e0;
+    color: #fff;
+}
+
+/* 결과 영역 */
+.find_id_pwd_wrap .result_box {
+    padding: 20px;
+    background: #f5fcfe;
+    border: 1px solid #d0e8f2;
+    border-radius: 5px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.find_id_pwd_wrap .result_box b {
+    color: #1783B5;
+    font-size: 18px;
+}
+
+.find_id_pwd_wrap .result_box .help_text {
+    margin-top: 10px;
+    text-align: left;
+}
+
+.find_id_pwd_wrap .result_box .help_text li {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 5px;
+    padding-left: 12px;
+    position: relative;
+}
+
+.find_id_pwd_wrap .result_box .help_text li:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 4px;
+    height: 4px;
+    background: #666;
+    border-radius: 50%;
+}
+
+/* 뒤로가기 링크 */
+.find_id_pwd_wrap .back_link {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.find_id_pwd_wrap .back_link a {
+    color: #666;
+    text-decoration: underline;
+    font-size: 13px;
+}
+
+/* 패널 숨김 */
+.find_panel[hidden] {
+    display: none;
+}
+
+/* 접근성 */
+.sr_only_focusable {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}

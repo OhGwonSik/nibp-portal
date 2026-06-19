@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>알림관리 > Q&A > Q&A 답변</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <h3 class="stit">Q&amp;A 문의</h3>
+        <div class="table_layout02 has_editor">
+            <table>
+                <caption>Q&amp;A 문의</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody id="qna_detail_tbody_q">
+                <tr>
+                    <th scope="row">제목</th>
+                    <td colspan="3" id="admin610_1_title_q"></td>
+                </tr>
+                <tr>
+                    <th scope="row">분류</th>
+                    <td id="admin601_1_category"></td>
+                    <th scope="row" class="bl">등록일시</th>
+                    <td id="admin610_1_reg_dt_q"></td>
+                </tr>
+                <tr>
+                    <th scope="row">공개여부</th>
+                    <td colspan="3" id="admin610_1_secret_yn"></td>
+                </tr>
+                <tr>
+                    <th scope="row">내용</th>
+                    <td colspan="3" id="admin610_1_content_q"></td>
+                </tr>
+                <tr>
+                    <th scope="row">첨부파일</th>
+                    <td colspan="3" id="admin610_1_file_q"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a th:href="@{/admin/page/admin610}" class="btn_basic bg_type01">목록</a>
+            <a href="javascript:;" id="btn_qna_delete" class="btn_basic line_type02">삭제</a>
+        </div>
+        <h3 class="stit">Q&amp;A 답변</h3>
+        <div class="table_layout02">
+            <table>
+                <caption>Q&amp;A 답변</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody id="qna_detail_tbody_a">
+                <tr>
+                    <th scope="row"><label for="qna_editor">답변내용</label></th>
+                    <td>
+                        <textarea name="qna_editor" id="qna_editor" rows="30"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">답변일시</th>
+                    <td id="admin610_1_upd_dt_a"></td>
+                </tr>
+                <tr>
+                    <th scope="row">파일첨부</th>
+                    <td>
+                        <div id="admin610_1_file_list_a" class="flex_col file_list"></div>
+                        <div class="file_upload">
+                            <label for="admin610_1_file"><span>파일찾기</span></label>
+                            <input type="file" id="admin610_1_file"
+                                   th:accept="${#strings.substringBefore(allowedExtensions, ',') == allowedExtensions ? '.' + allowedExtensions : '.' + #strings.replace(allowedExtensions, ',', ',.')}"
+                                   th:attr="data-allowed-ext=${allowedExtensions}">
+                            <span id="admin610_1_file_text" class="file_txt">파일을 첨부해주세요</span>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="btn_qna_save" class="btn_basic bg_type01">저장</a>
+            <a href="/admin/page/admin610" id="btn_qna_cancel" class="btn_basic bg_type02">취소</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin610_1 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: null,
+            qnaOid: null,
+            file: [],
+            qnaQuestionFiles: [],
+            qnaAnswerFiles: [],
+            editorFiles: [],
+            existingFiles: [],
+            deletedFiles: [],
+            strgFilePath: /*[[${basicFilePath}]]*/'',
+            maxFileSize: /*[[${maxFileSize}]]*/ 10,
+            allowedExtensions: /*[[${allowedExtensions}]]*/ ''
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            // CKEditor 초기화 (완료 대기)
+            await this.initCkEditor();
+
+            // 이벤트 바인딩
+            this.initEvent();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            this.state.qnaOid = parseInt(urlParams.get('qnaOid'));
+
+            // 데이터 조회
+            this.fnLoadData(this.state.qnaOid);
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 삭제버튼 클릭
+            $("#btn_qna_delete").on("click", function (e) {
+                e.preventDefault();
+                _this.fnDelete();
+            });
+
+            // 저장 버튼 클릭
+            $("#btn_qna_save").on("click", function (e) {
+                e.preventDefault();
+                _this.fnSaveAnswer();
+            });
+
+            // 취소 버튼 클릭
+            $("#btn_qna_cancel").on("click", function (e) {
+                e.preventDefault();
+                uiCommon.fnShowConfirmModal('목록으로 이동하시겠습니까?', function () {
+                    uiCommon.fnHideConfirmModal();
+                    // 목록 페이지로 이동
+                    _this.fnGoToListPage();
+                })
+            });
+
+            // 파일 선택 시
+            document.getElementById("admin610_1_file").addEventListener("change", function (e) {
+                _this.fnHandleFileSelect(e);
+            });
+        },
+
+        /**
+         * CK Editor 초기화
+         */
+        initCkEditor: function () {
+            CommonCKEditor.destroy('qna_editor');
+
+            document.getElementById('qna_editor').style.display = 'block';
+            document.getElementById('qna_editor').style.visibility = 'visible';
+
+            return CommonCKEditor.init({
+                editorId: 'qna_editor',
+                content: '',
+                chunkUpload: {
+                    enabled: true,
+                    chunkUrl: '/api/common/file/tmp/ck-image/chunk',
+                    chunkSize: this.state.chunkSize,
+                    thresholdBytes: 5 * 1024 * 1024,
+                    onUploadComplete: (payload) => {
+                        // 업로드 방식과 무관하게 응답을 수집해 둔다.
+                        this.handleEditorUploadComplete(payload);
+                    }
+                },
+                config: {
+                    height: 300,
+                    allowedContent: true,
+
+                    uploadUrl: "/api/common/file/tmp/ck-image?responseType=json",
+                    filebrowserImageUploadUrl: "/api/common/file/tmp/ck-image?responseType=json",
+                    removePlugins: "image"
+                }
+            });
+        },
+
+        /**
+         * 데이터 조회
+         */
+        fnLoadData: async function (qnaOid) {
+            const _this = this;
+
+            try {
+                const params = new URLSearchParams({ qnaOid: qnaOid });
+                const data = await API.get(`/api/admin/admin610/select?${params}`);
+
+                if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+                    throw new Error('데이터가 존재하지 않습니다.');
+                } else {
+                    _this.state.all = data;
+
+                    // 정답 테이블 데이터 매핑
+                    _this.renderTableQ();
+
+                    // 답변 테이블 데이터 매핑 or 초기화
+                    if (Array.isArray(data.answers) && data.answers.length > 0) {
+                        this.renderTableA();    // 기존 답변 수정
+                    } else {
+                        this.initFormData();    // 신규 답변 작성
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                uiCommon.fnShowAlertModal('데이터를 불러오는데 실패했습니다.', () => this.fnGoToListPage());
+            }
+        },
+
+        /**
+         * 테이블 렌더링 - Q&A 문의
+         */
+        renderTableQ: function () {
+            const data = this.state.all;
+            const _this = this;
+
+            document.getElementById('admin610_1_title_q').innerText = data.title || '';
+            document.getElementById('admin601_1_category').innerText = data.categoryNm || '';
+            document.getElementById('admin610_1_reg_dt_q').innerText = common.formatDateTime(data.regDt);
+            document.getElementById('admin610_1_secret_yn').innerText = data.prvtPstYn === 'Y' ? '비밀글' : '공개글' || '';
+            document.getElementById('admin610_1_content_q').innerHTML = data.ntcCn || '';
+
+            const fileContainerQ = document.getElementById('admin610_1_file_q');
+            fileContainerQ.innerHTML = '';
+            if (data.qnaQuestionFiles && Array.isArray(data.qnaQuestionFiles) && data.qnaQuestionFiles.length > 0) {
+                const strgFilePath = _this.state.strgFilePath;
+                data.qnaQuestionFiles.forEach((file) => {
+                    const fileLink = document.createElement('a');
+                    fileLink.href = `${strgFilePath}${file.strgFilePath}/${file.strgFileNm}`;
+                    fileLink.className = 'a_link';
+                    fileLink.style.display = 'inline';
+                    fileLink.setAttribute('download', '');
+                    fileLink.textContent = file.orgnlFileNm || file.strgFileNm || '파일';
+                    fileContainerQ.appendChild(fileLink);
+                    fileContainerQ.appendChild(document.createTextNode(' '));
+                });
+            } else {
+                fileContainerQ.innerHTML = '-';
+            }
+        },
+
+        /**
+         * 테이블 렌더링 - Q&A 답변
+         */
+        renderTableA: function () {
+            const data = this.state.all.answers[0];
+            const _this = this;
+
+            CommonCKEditor.setContent('qna_editor', data.ntcCn || '');
+            document.getElementById('admin610_1_upd_dt_a').innerText = common.formatDateTime(data.mdfcnDt) || '';
+
+            this.fnRenderAnswerFiles((data && data.files) ? data.files : []);
+        },
+
+        /**
+         * 폼 입력값 초기화 - Q&A 답변 신규 등록
+         */
+        initFormData: function () {
+            document.getElementById('admin610_1_upd_dt_a').innerText = common.formatDateTimeOffset();
+            document.getElementById('admin610_1_file').value = '';
+        },
+
+        /**
+         * 파라미터 생성
+         */
+        fnBuildParam: function () {
+            const _this = this;
+            const validFiles = _this.state.file.filter(file => file !== null);
+
+            const param = {
+                qnaOid : parseInt(_this.state.all.answers?.[0]?.qnaOid) || null,
+                parentNo : parseInt(_this.state.all.answers?.[0]?.parentNo) || parseInt(_this.state.qnaOid),
+                title: '답변',
+                ntcCn: CommonCKEditor.getContent('qna_editor'),
+                files: validFiles,
+                editorFiles: _this.state.editorFiles
+            };
+
+            if (this.state.deletedFiles && this.state.deletedFiles.length > 0) {
+                param.deletedFiles = this.state.deletedFiles;
+            }
+
+            return param;
+        },
+
+        /**
+         * Q&A 답변 저장
+         */
+        fnSaveAnswer: async function () {
+            var editorValidation = CommonCKEditor.validate('qna_editor', { required: true, maxHtmlLength: 10000 });
+            if (!editorValidation.valid) {
+                uiCommon.fnShowAlertModal(editorValidation.message);
+                return;
+            }
+
+            const param = this.fnBuildParam();
+            const formData = new FormData();
+
+            // JSON -> Blob
+            formData.append("data", new Blob([JSON.stringify({
+                qnaOid : param.qnaOid,
+                parentNo : param.parentNo,
+                title: param.title,
+                ntcCn: param.ntcCn,
+                deletedFiles: param.deletedFiles,
+                editorFiles: param.editorFiles,
+            })], { type: "application/json" }));
+
+            if (param.files && param.files.length > 0) {
+                param.files.forEach(file => {
+                    formData.append("files", file);
+                });
+            }
+
+            try {
+                await API.upload('/api/admin/admin610/upsert', formData);
+                uiCommon.fnShowAlertModal('저장되었습니다.', () => this.fnGoToListPage());
+            } catch (error) {
+                console.error('저장 실패:', error);
+                let errorMessage = '저장에 실패했습니다.';
+                if (error instanceof APIError) {
+                    if (error.isValidationError()) {
+                        errorMessage = error.getUserMessage();
+                    }
+                }
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        },
+
+        /**
+         * Q&A 삭제
+         */
+        fnDelete: function () {
+            const _this = this;
+
+            uiCommon.fnShowConfirmModal('해당 Q&A 문의를 삭제하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    const param = { qnaOid: _this.state.qnaOid };
+                    await API.patch('/api/admin/admin610/delete', param);
+                    uiCommon.fnShowAlertModal('삭제되었습니다.', () => _this.fnGoToListPage());
+                } catch (error) {
+                    console.error('삭제 실패:', error);
+                    uiCommon.fnShowAlertModal('삭제에 실패했습니다.');
+                }
+            });
+        },
+
+        /**
+         * 파일 선택 처리
+         */
+        fnHandleFileSelect: function (e) {
+            const _this = this;
+            const fileInput = e.target;
+            const files = Array.from(fileInput.files);
+
+            if (files.length === 0) return;
+
+            // 서버 설정값 가져오기
+            const maxMb = _this.state.maxFileSize;
+            const maxSize = maxMb * 1024 * 1024;
+            const rawExtensions = _this.state.allowedExtensions;
+            const allowedExtensions = rawExtensions.toLowerCase().split(',').map(ext => ext.trim());
+
+            const validFiles = [];
+            const rejectedFiles = [];
+
+            // 유효성 검사 루프
+            files.forEach(file => {
+                const fileExt = _this.extractFileExtension(file.name).toLowerCase();
+                let reason = "";
+
+                // 확장자 체크 (서버 허용 기준)
+                if (rawExtensions && !allowedExtensions.includes(fileExt)) {
+                    reason = "허용되지 않는 확장자입니다.";
+                }
+                // 용량 체크
+                else if (file.size > maxSize) {
+                    reason = "최대 " + maxMb + "MB까지만 업로드 가능합니다.";
+                }
+
+                if (reason) {
+                    // 태그 없이 텍스트로만 리스트 구성
+                    rejectedFiles.push(reason);
+                } else {
+                    validFiles.push(file);
+                }
+            });
+
+            // 제외된 파일 알림 및 유효 파일 처리
+            if (rejectedFiles.length > 0) {
+                const errorMsg = rejectedFiles.join('\n');
+                uiCommon.fnShowAlertModal(errorMsg, function() {
+                    if (validFiles.length > 0) {
+                        _this.fnApplyValidFiles(validFiles);
+                    }
+                });
+            } else {
+                this.fnApplyValidFiles(validFiles);
+            }
+
+            fileInput.value = '';
+        },
+
+        /**
+         * 검증된 파일을 기존 state 저장
+         */
+        fnApplyValidFiles: function (validFiles) {
+            validFiles.forEach(file => {
+                this.state.file.push(file);
+            });
+            this.fnRenderFileList();
+        },
+
+        /**
+         * 파일 목록 렌더링 (새로 업로드할 파일)
+         */
+        fnRenderFileList: function () {
+            const fileListContainer = document.getElementById('admin610_1_file_list_a');
+            const existingFiles = this.state.existingFiles || [];
+            let html = '';
+
+            existingFiles.forEach((file, index) => {
+                html += `<p>${file.orgnlFileNm} <a class="icon_del admin610_1_file_del_existing" href="javascript:;" data-index="${index}">파일삭제</a></p>`;
+            });
+
+            this.state.file.forEach((file, index) => {
+                html += `<p>${file.originalStrgFileNm} <a class="icon_del admin610_1_file_del" href="javascript:;" data-index="${index}">파일삭제</a></p>`;
+            });
+
+            fileListContainer.innerHTML = html;
+
+            fileListContainer.querySelectorAll('.admin610_1_file_del_existing').forEach((btn, index) => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.fnDeleteExistingFile(index);
+                });
+            });
+
+            fileListContainer.querySelectorAll('.admin610_1_file_del').forEach((btn, index) => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.fnDeleteFile(index);
+                });
+            });
+        },
+
+        /**
+         * 답변 첨부파일 렌더링 (조회된 기존 파일)
+         */
+        fnRenderAnswerFiles: function (files) {
+            if (!files || !Array.isArray(files)) {
+                files = [];
+            }
+
+            this.state.existingFiles = files;
+            this.fnRenderFileList();
+        },
+
+        /**
+         * 기존 파일 삭제
+         */
+        fnDeleteExistingFile: function (index) {
+            if (!this.state.existingFiles || !this.state.existingFiles[index]) {
+                return;
+            }
+
+            const file = this.state.existingFiles[index];
+            if (!file.attachNo) {
+                this.state.existingFiles = this.state.existingFiles.filter((f, i) => i !== index);
+                this.fnRenderFileList();
+                return;
+            }
+
+            this.state.deletedFiles.push(file.attachNo);
+            this.state.existingFiles = this.state.existingFiles.filter((f, i) => i !== index);
+            this.fnRenderFileList();
+        },
+
+        /**
+         * 파일 삭제
+         */
+        fnDeleteFile: function (index) {
+            this.state.file.splice(index, 1);
+            this.fnRenderFileList();
+        },
+
+        /**
+         * 확장자 추출 유틸리티
+         */
+        extractFileExtension: function (fileName) {
+            if (!fileName) return '';
+            const pos = fileName.lastIndexOf('.');
+            return pos > -1 ? fileName.substring(pos + 1).toLowerCase() : '';
+        },
+
+        /**
+         * 페이지 이동 - qna 목록
+         */
+        fnGoToListPage: function () {
+            window.location.href = contextPath + '/admin/page/admin610';
+        },
+
+        // CKEditor 업로드 응답(payload)을 admin 저장용 포맷으로 축약한다.
+        handleEditorUploadComplete: function (payload) {
+            if (!payload || !payload.strgFilePath || !payload.strgFileNm) {
+                return;
+            }
+            const meta = {
+                originalStrgFileNm: payload.originalStrgFileNm || payload.strgFileNm,
+                storedStrgFileNm: payload.strgFileNm,
+                strgFilePath: payload.strgFilePath,
+                strgFileCpct: payload.strgFileCpct || null,
+                fileTypeNm: payload.fileTypeNm || this.extractFileExtension(payload.originalStrgFileNm || payload.strgFileNm)
+            };
+            this.upsertEditorFile(meta);
+        },
+
+        // 동일 경로/파일명은 덮어쓰고 나머지는 push한다.
+        upsertEditorFile: function (fileMeta) {
+            if (!fileMeta || !fileMeta.strgFilePath || !fileMeta.storedStrgFileNm) {
+                return;
+            }
+            const key = `${fileMeta.strgFilePath}__${fileMeta.storedStrgFileNm}`;
+            const idx = this.state.editorFiles.findIndex(item => `${item.strgFilePath}__${item.storedStrgFileNm}` === key);
+            if (idx > -1) {
+                this.state.editorFiles[idx] = fileMeta;
+            } else {
+                this.state.editorFiles.push(fileMeta);
+            }
+        },
+    };
+
+    $(document).ready(function () {
+        admin610_1.init();
+    });
+</script>
+</body>
+</html>

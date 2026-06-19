@@ -1,0 +1,254 @@
+<th:block th:fragment="survey_user_list" xmlns:th="http://www.thymeleaf.org">
+    <div id="survey_user_list_modal" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap">
+                <h1 class="p_tit">설문 참여자 목록</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <div class="table_desc mt30">
+                                <p>총 <strong id="surveyUserTotalCnt">0</strong>명</p>
+                            </div>
+                            
+                            <div class="table_layout02 list_type mb20 o_h_300">
+                                <table>
+                                    <caption>참여자 목록</caption>
+                                    <colgroup>
+                                        <col style="width: 10%;">
+                                        <col style="width: auto;">
+                                        <col style="width: 30%;">
+                                    </colgroup>
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <input type="checkbox" id="surveyUserListCheckAll" title="전체선택">
+                                        </th>
+                                        <th scope="col">참여자</th>
+                                        <th scope="col">참여일시</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="surveyUserListTbody">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="btn_wrap mt30">
+                        	<a href="javascript:;" id="surveyUserListDelBtn" class="btn_basic bg_type01"><span>응답 삭제</span></a>
+                            <a href="javascript:;" id="surveyUserListCloseBtn" class="btn_basic bg_type02">닫기</a>
+                        </div>
+                    </div>
+                </div>
+                <a href="javascript:;" id="surveyUserListCloseX" class="pop_close">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let survey_user_list = {
+            /**
+             * 상태 관리
+             */
+            state: {
+                srvyOid : null,
+                userList : []
+            },
+
+            /**
+             * 모달 열기 (외부 호출용)
+             */
+            initModal: function (srvyOid) {
+                uiCommon.fnShowModal('survey_user_list_modal');
+                
+                if (!srvyOid) {
+                	uiCommon.fnShowAlertModal("잘못된 접근입니다.", function(){
+                        this.fnCloseModal();
+                	});
+                    return;
+                }
+                
+                // 초기화 및 데이터 로드
+                this.init(srvyOid);
+            },
+
+            /**
+             * 내부 초기화
+             */
+            init: function (srvyOid) {
+                this.state.srvyOid = srvyOid;
+                
+                // 목록 초기화
+                document.querySelector('#surveyUserListTbody').innerHTML = '';
+                document.querySelector('#surveyUserTotalCnt').textContent = '0';
+                document.querySelector('#surveyUserListCheckAll').checked = false;
+
+                // 이벤트 바인딩
+                this.initEvent();
+                
+                // 데이터 조회 호출
+                this.fnGetList();
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function () {
+                const _this = this;
+                
+                // 닫기 버튼 (X)
+                $('#surveyUserListCloseX').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    _this.fnCloseModal();
+                });
+                
+                // 닫기 버튼 (하단)
+                $('#surveyUserListCloseBtn').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    _this.fnCloseModal();
+                });
+
+                // 전체 선택 체크박스
+                $('#surveyUserListCheckAll').off('change').on('change', function() {
+                    const isChecked = $(this).is(':checked');
+                    $('input[name="chkRspd"]').prop('checked', isChecked);
+                });
+                
+                // 삭제 버튼
+                $('#surveyUserListDelBtn').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 체크된 박스 개수 확인
+                    const checkedCount = $('input[name="chkRspd"]:checked').length;
+
+                    if (checkedCount === 0) {
+                        uiCommon.fnShowAlertModal("삭제할 참여자를 선택해주세요.");
+                        return; 
+                    }
+                    
+                    _this.fnDeleteUsers();
+                });
+            },
+            
+            /**
+             * 목록 조회
+             */
+            fnGetList: async function() {
+                const _this = this;
+                try {
+                    const params = { srvyOid: _this.state.srvyOid };
+                    const response = await API.get('/api/admin/admin502/survey/user/response', params); 
+                    _this.renderTable(response);
+                } catch (err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal("참여자 목록을 불러오지 못했습니다.", ()=> uiCommon.fnHideAlertModal());
+                }
+            },
+            
+            /**
+             * 테이블 렌더링
+             */
+            renderTable: function(list) {
+                const tbody = document.getElementById('surveyUserListTbody');
+                tbody.innerHTML = ''; // 기존 내용 초기화
+                
+                // 총 건수 업데이트
+                const totalCnt = list ? list.length : 0;
+                document.getElementById('surveyUserTotalCnt').textContent = totalCnt;
+
+                // 데이터가 없을 경우
+                if (totalCnt === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="tac" style="padding: 50px 0;">
+                                참여한 사용자가 없습니다.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                list.forEach(item => {
+                    const displayName = item.rowNum + '번 사용자';
+                    
+                    html += `
+                        <tr>
+                            <td class="tac">
+                                <input type="checkbox" name="chkRspd" 
+                                       value="${item.rspdNo}" 
+                                       data-rspd-no="${item.rspdNo}"
+                                       title="${displayName} 선택">
+                            </td>
+                            <td class="tac">${displayName}</td>
+                            <td class="tac">${item.regDt}</td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+                
+             	//개별 체크박스 클릭 시 '전체 선택' 상태 동기화
+                $('input[name="chkRspd"]').on('change', function() {
+                    const total = $('input[name="chkRspd"]').length;
+                    const checked = $('input[name="chkRspd"]:checked').length;
+                    
+                    // 전부 체크되었을 때만 '전체 선택' 체크
+                    $('#surveyUserListCheckAll').prop('checked', total === checked);
+                });                
+            },            
+
+            /**
+             * 삭제 로직
+             */
+             fnDeleteUsers: async function() {
+                 const _this = this;
+
+                 // 체크된 항목 가져오기
+                 const checkedBoxes = $('input[name="chkRspd"]:checked');
+				
+                 uiCommon.fnShowConfirmModal('선택한 참여자의 응답을 삭제하시겠습니까?', async function(){
+                	 uiCommon.fnHideConfirmModal();
+                	 
+                	 let deleteList = [];
+                     
+                     checkedBoxes.each(function() {
+                         const rspdNo = $(this).attr('data-rspd-no');
+                         
+                         deleteList.push({
+                             srvyOid: _this.state.srvyOid, // 현재 설문 번호
+                             rspdNo: Number(rspdNo)          // 응답자 번호 (숫자 변환)
+                         });
+                     });
+
+                     try {
+                         await API.delete("/api/admin/admin502/survey/user/response/delete", {
+                        	 body: JSON.stringify(deleteList)
+                         });
+
+                         uiCommon.fnShowAlertModal("성공적으로 삭제되었습니다.", function() {
+                             
+                             
+                             $('#surveyUserListCheckAll').prop('checked', false);
+                             
+                             admin502_1.renderSurveyResults(_this.state.srvyOid);
+                             
+                             _this.fnCloseModal();
+                         });
+
+                     } catch (err) {
+                         console.error("삭제 실패:", err);
+                         const msg = err.message || "삭제 중 오류가 발생했습니다.";
+                         uiCommon.fnShowAlertModal(msg);
+                     }
+                 })
+             },
+
+            /**
+             * 모달 닫기
+             */
+            fnCloseModal: function() {
+                this.state.srvyOid = null;
+                uiCommon.fnHideModal('survey_user_list_modal');
+            }
+        };
+    </script>
+</th:block>

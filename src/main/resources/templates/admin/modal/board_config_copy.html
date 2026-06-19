@@ -1,0 +1,125 @@
+<th:block th:fragment="board_config_copy" xmlns:th="http://www.thymeleaf.org">
+    <div id="board_config_copy" class="layer_popup">
+        <div class="layer_popup_wrap">
+            <div class="popup_wrap">
+                <h1 class="p_tit">게시판 설정 복사</h1>
+                <div class="popup_inner">
+                    <div class="popup_cont_wrap">
+                        <div class="popup_cont_inner">
+                            <div class="table_layout02 mb10">
+                                <table>
+                                    <caption>게시판 설정 복사</caption>
+                                    <colgroup>
+                                        <col style="width: 140px;">
+                                        <col style="width: auto;">
+                                    </colgroup>
+                                    <tbody>
+                                    <tr>
+                                        <th scope="row"><label for="pop_lab_01">생성할 게시판 명칭</label></th>
+                                        <td><input type="text" name="" id="pop_lab_01" placeholder="" value="" title="생성할 게시판 명칭 입력"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn_wrap mt30">
+                        <a href="javascript:;" id="admin807BoardCofigCopyBtn" class="btn_basic bg_type01">확인</a>
+                        <a href="javascript:;" class="btn_basic bg_type02 config_copy_close">취소</a>
+                    </div>
+                </div>
+                <a href="javascript:;" class="pop_close config_copy_close">팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        let board_config_copy = {
+            /**
+             * 상태
+             */
+            state: {
+				data : []
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function (boardInfo) {
+                uiCommon.fnShowModal('board_config_copy');
+                
+                this.state.data = boardInfo;
+                
+                this.init(boardInfo);
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function (boardInfo) {
+                // 이벤트 바인딩
+                this.initEvent();
+
+                // 닫기 버튼 클릭
+                $(".config_copy_close").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    uiCommon.fnHideModal('board_config_copy');
+                });
+            },
+
+            /**
+             * 이벤트 바인딩
+             */
+            initEvent: function (){
+                const _this = this;
+                
+                document.querySelector('#admin807BoardCofigCopyBtn').onclick = async (e)=> {
+                	e.preventDefault();
+                	
+                	await _this.saveBoardConfigCopy();
+                };
+            },
+            
+            saveBoardConfigCopy : async function(){
+            	const _this = this;
+            	const boardTitle = document.querySelector('#pop_lab_01').value;
+            	
+            	if (!boardTitle.trim()) {
+            	    uiCommon.fnShowAlertModal('생성할 게시판 명칭을 입력해주세요.');
+            	    return;
+            	}
+            	
+            	if(_this.state.data && !_this.state.data.length){
+            	    uiCommon.fnShowAlertModal('복사된 설정이 존재하지않습니다.');
+            	    uiCommon.fnHideModal('board_config_copy');
+            	    return;
+            	}
+            	
+            	uiCommon.fnShowConfirmModal('게시판 설정을 복사하여 새 게시판을 생성하시겠습니까?', async ()=>{
+            		uiCommon.fnHideConfirmModal();
+            		
+                	const params = {
+                			..._this.state.data[0]
+                	}
+                	
+                	params.bbsOid = null;
+                	params.bbsNm = boardTitle;
+                	
+                	
+                 	try{
+        				await API.put("/api/admin/admin807/board/save", params);
+        				
+        	            uiCommon.fnShowAlertModal("저장이 완료되었습니다.", () => {
+        	                uiCommon.fnHideModal('board_config_copy');
+        	                uiCommon.fnHideAlertModal();
+        	                admin807.searchBoardList();
+        	            });
+                	}catch(error){
+        	            uiCommon.fnShowAlertModal(`[error] : ${error}`, () => {
+        	                uiCommon.fnHideAlertModal();
+        	            });
+                	}
+            	});
+            }
+        }
+    </script>
+</th:block>

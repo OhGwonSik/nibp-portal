@@ -1,0 +1,34 @@
+services:
+  app:
+    image: harbor.runtime.co.kr/nibp-portal/app:latest
+    container_name: nibp-portal
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:8014:8080"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: dev-runtime
+      TZ: Asia/Seoul
+      JASPER_PATH: /app/jasper
+
+      JAVA_OPTS: >-
+        -Xms512m
+        -Xmx2048m
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -Duser.timezone=Asia/Seoul
+        -Dfile.encoding=UTF-8
+
+    volumes:
+      - ./logs:/app/logs
+      - ./files:/app/upload
+      - ./files/temp:/app/temp  # CKEditor 임시 파일
+      - ./files/temp-chunk:/app/temp-chunk  # 청크 업로드 임시 파일
+
+    networks:
+      - nibp-portal-network
+
+networks:
+  nibp-portal-network:
+    driver: bridge

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin800.mapper.Admin805Mapper">
+
+    <select id="selectPermissionChangeLogWithFilter">
+        SELECT
+            pcl.prmsn_chg_log_oid AS prmsnChgLogOid,
+            pcl.chnrg_user_id AS chnrgUserId,
+            pcl.trgt_user_id AS trgtUserId,
+            pcl.user_menu_authrt_oid AS userMenuAuthrtOid,
+            pcl.menu_oid AS menuOid,
+            m.menu_nm AS menuNm,
+            pcl.prmsn_type AS prmsnType,
+            pcl.old_vl AS oldVl,
+            pcl.new_vl AS newVl,
+            pcl.chg_type AS chgType,
+            pcl.chg_dt AS chgDt,
+            pcl.rsn,
+            pcl.reg_dt AS regDt,
+            pcl.reg_id AS regId
+        FROM
+            ${schema}.prmsn_chg_log pcl
+        LEFT JOIN
+            ${schema}.menu m
+        ON
+            pcl.menu_oid = m.menu_oid
+        <where>
+            <if test="searchType != null and searchValue != null and searchValue != ''">
+                <choose>
+                    <when test="searchType == 'chnrgUserId'">
+                        AND pcl.chnrg_user_id LIKE CONCAT('%', #{searchValue}, '%')
+                    </when>
+                    <when test="searchType == 'trgtUserId'">
+                        AND pcl.trgt_user_id LIKE CONCAT('%', #{searchValue}, '%')
+                    </when>
+                    <when test="searchType == 'prmsnType'">
+                        AND pcl.prmsn_type LIKE CONCAT('%', #{searchValue}, '%')
+                    </when>
+                </choose>
+            </if>
+            <if test="chgType != null and chgType != ''">
+                AND pcl.chg_type = #{chgType}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND pcl.chg_dt <![CDATA[>=]]> STR_TO_DATE(#{startDate}, '%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND pcl.chg_dt <![CDATA[<=]]> STR_TO_DATE(#{endDate}, '%Y-%m-%d %H:%i:%s')
+            </if>
+			<if test="excelExportYm != null and excelExportYm != ''">
+			    AND pcl.reg_dt <![CDATA[>=]]> STR_TO_DATE(CONCAT(REPLACE(#{excelExportYm}, '-', ''), '01'), '%Y%m%d')
+			    
+			    AND pcl.reg_dt <![CDATA[<]]> DATE_ADD(STR_TO_DATE(CONCAT(REPLACE(#{excelExportYm}, '-', ''), '01'), '%Y%m%d'), INTERVAL 1 MONTH)
+			</if>              
+        </where>
+    </select>
+
+</mapper>

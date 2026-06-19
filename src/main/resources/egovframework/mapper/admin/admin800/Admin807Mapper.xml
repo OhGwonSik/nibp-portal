@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin800.mapper.Admin807Mapper">
+	<!-- 게시판 목록 조회-->
+	<select id="selectBoardList" resultType="egovframework.admin.admin800.domain.Admin807VO">
+		/* selectBoardList */
+		SELECT
+			tb.bbs_oid, tb.bbs_se_cd, tb.use_yn, tb.stats_yn, tb.bbs_nm
+			, tb.upend_fix_yn, tb.prvt_yn, tb.mbr_wrt_yn, tb.prev_next_expsr_yn
+			, tb.cmnt_psblty_yn, tb.ctgry_yn, tb.list_cn_expsr_yn
+			, tb.ctgry_list, tb.file_uld_cnt, tb.file_uld_size
+			, tb.pst_oid_expsr_yn, tb.wrtr_expsr_yn, tb.wrt_dt_expsr_yn, tb.ddln_dt_expsr_yn
+			, tb.atch_file_en_yn, tb.prgrs_stts_expsr_yn, tb.inq_cnt_expsr_yn
+			, tb.srch_use_yn, tb.page_cnt, tb.paging_cnt, tb.img_wdth_cnt, tb.img_vrtc_cnt
+			, tb.bbs_expln, tb.bbs_sub_se_cd, tb.reg_id, tb.reg_dt, tb.mdfcn_id, tb.mdfcn_dt
+		    , CASE WHEN tb.use_yn = 'Y' THEN '사용'
+		      WHEN tb.use_yn = 'N' THEN '미사용'
+              ELSE '-'
+              END AS use_yn_str
+			<!-- 게시판 위치 설정용 -->
+			, tm.menu_oid AS positionMenuOid
+			, tm.menu_nm AS positionMenuNm
+			, tm.up_menu_oid AS upMenuOid
+			, tm.menu_url AS positionMenuUrl
+			, tm.use_yn AS menuUseYn
+			, tm.menu_cd AS menuCd
+			, parent_menu.menu_nm AS parentMenuNm
+		FROM
+			${schema}.bbs tb
+		LEFT JOIN ${schema}.menu tm
+			ON tm.bbs_oid = tb.bbs_oid
+			AND (
+				tb.bbs_sub_se_cd IS NULL
+				<if test='menuAuthLv != null and menuAuthLv != ""'>
+					OR tm.menu_auth_lv = #{menuAuthLv}
+				</if>
+			)
+			AND tm.use_yn = 'Y'
+		LEFT JOIN ${schema}.menu parent_menu
+		    ON parent_menu.menu_oid = tm.up_menu_oid
+		<where>
+			<!-- 화면 내 전체 검색조건은 뭔지 모르니까 추후 추가 -->
+			<if test='bbsOid != null and bbsOid != 0'>
+				AND tb.bbs_oid = #{bbsOid}
+			</if>
+			<if test='bbsSeCd != null and bbsSeCd != ""'>
+				AND tb.bbs_se_cd = #{bbsSeCd}
+			</if>
+			<if test='useYn != null and useYn != ""'>
+				AND tb.use_yn = #{useYn}
+			</if>
+			<if test='regStartDt != null and regStartDt != ""'>
+				<![CDATA[
+					AND tb.reg_dt >= #{regStartDt}
+				]]>
+			</if>
+			<if test='regEndDt != null and regEndDt != ""'>
+				<![CDATA[
+					AND tb.reg_dt < DATE_ADD(#{regEndDt}, INTERVAL 1 DAY)
+				]]>
+			</if>
+			<if test="srchKywd != null and srchKywd != ''">
+            <choose>
+                <when test="searchCondition == 'POSTNM'">
+                    AND tb.bbs_nm LIKE CONCAT('%', #{srchKywd}, '%')
+                </when>
+                
+                <otherwise>
+                    AND (
+                        tb.bbs_nm LIKE CONCAT('%', #{srchKywd}, '%')
+                        
+                        )
+                </otherwise>
+            </choose>
+        </if>			
+		</where>
+	</select>
+
+	<!-- 게시판 등록-->
+	<insert id="insertBoard" parameterType="egovframework.admin.admin800.domain.Admin807DTO">
+		/* insertBoard */
+		INSERT INTO ${schema}.bbs (
+			bbs_se_cd, use_yn, stats_yn, bbs_nm
+			, upend_fix_yn, prvt_yn, mbr_wrt_yn, prev_next_expsr_yn
+			, cmnt_psblty_yn, ctgry_yn, list_cn_expsr_yn
+			, ctgry_list, file_uld_cnt, file_uld_size
+			, pst_oid_expsr_yn, wrtr_expsr_yn, wrt_dt_expsr_yn, ddln_dt_expsr_yn
+			, atch_file_en_yn, prgrs_stts_expsr_yn, inq_cnt_expsr_yn
+			, srch_use_yn, page_cnt, paging_cnt, img_wdth_cnt, img_vrtc_cnt
+			, bbs_expln, reg_id, reg_dt, mdfcn_id, mdfcn_dt
+		)
+		VALUES (
+			#{bbsSeCd}, #{useYn}, #{statsYn}, #{bbsNm}
+			, #{upendFixYn}, #{prvtYn}, #{mbrWrtYn}, #{prevNextExpsrYn}
+			, #{cmntPsbltyYn}, #{ctgryYn}, #{listCnExpsrYn}
+			, #{ctgryList}, #{fileUldCnt}, #{fileUldSize}
+			, #{pstOidExpsrYn}, #{wrtrExpsrYn}, #{wrtDtExpsrYn}, #{ddlnDtExpsrYn}
+			, #{atchFileEnYn}, #{prgrsSttsExpsrYn}, #{inqCntExpsrYn}
+			, #{srchUseYn}, #{pageCnt}, #{pagingCnt}, #{imgWdthCnt}, #{imgVrtcCnt}
+			, #{bbsExpln}, #{regId}, NOW(), #{mdfcnId}, NOW()
+		)
+	</insert>
+
+	<!-- 게시판 수정-->
+	<update id="updateBoard" parameterType="egovframework.admin.admin800.domain.Admin807DTO">
+		/* updateBoard */
+		UPDATE ${schema}.bbs
+			SET
+				bbs_se_cd = #{bbsSeCd}
+				, use_yn = #{useYn}
+				, stats_yn = #{statsYn}
+				, bbs_nm = #{bbsNm}
+				, upend_fix_yn = #{upendFixYn}
+				, prvt_yn = #{prvtYn}
+				, mbr_wrt_yn = #{mbrWrtYn}
+				, prev_next_expsr_yn = #{prevNextExpsrYn}
+				, cmnt_psblty_yn = #{cmntPsbltyYn}
+				, ctgry_yn = #{ctgryYn}
+				, list_cn_expsr_yn = #{listCnExpsrYn}
+				, ctgry_list = #{ctgryList}
+				, file_uld_cnt = #{fileUldCnt}
+				, file_uld_size = #{fileUldSize}
+				, pst_oid_expsr_yn = #{pstOidExpsrYn}
+				, wrtr_expsr_yn = #{wrtrExpsrYn}
+				, wrt_dt_expsr_yn = #{wrtDtExpsrYn}
+				, ddln_dt_expsr_yn = #{ddlnDtExpsrYn}
+				, atch_file_en_yn = #{atchFileEnYn}
+				, prgrs_stts_expsr_yn = #{prgrsSttsExpsrYn}
+				, inq_cnt_expsr_yn = #{inqCntExpsrYn}
+				, srch_use_yn = #{srchUseYn}
+				, page_cnt = #{pageCnt}
+				, paging_cnt = #{pagingCnt}
+				, img_wdth_cnt = #{imgWdthCnt}
+				, img_vrtc_cnt = #{imgVrtcCnt}
+				, bbs_expln = #{bbsExpln}
+				, mdfcn_id = #{mdfcnId}
+				, mdfcn_dt = NOW()
+			WHERE
+				bbs_oid = #{bbsOid}
+	</update>
+
+	<!--메뉴 삭제-->
+	<update id="deleteBoard" parameterType="egovframework.admin.admin800.domain.Admin807DeleteDTO">
+		UPDATE ${schema}.bbs
+			SET
+				use_yn = #{useYn},
+				mdfcn_id = #{mdfcnId},
+				mdfcn_dt = NOW()
+		WHERE
+			bbs_oid = #{bbsOid}
+	</update>
+</mapper>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${boardInfo.bbsNm}">Q&A</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit" th:text="${boardInfo.bbsNm}">Q&amp;A</h3>
+    <div class="human_intro_wrap">
+        <strong th:utext="${boardInfo.bbsSubSeCd == 'BIOETHICS_QNA'
+                ? '본 게시판은 「생명윤리 및 안전에 관한 법률」에 따른 일반적인 사항을 안내하는 공간으로 <br> 개별안건에 대한 구체적인 판단이나 답변은 제공해 드리지 않습니다.'
+                : '질의하시고자 하는 정확한 항목에 질의사항 입력 부탁드립니다.'}"></strong>
+        <p th:if="${boardInfo.bbsSubSeCd == 'BIOETHICS_QNA'}" class="mb50">기관위원회 · 운영 및 평가 · 인증(
+	        <a href="https://review.irb.or.kr" target="_blank" title="새창열림" style="text-decoration: underline;" class="color_01">review.irb.or.kr</a>
+	        ) 
+	        또는 공용기관생명윤리위원회 (
+	        <a href="https://public.irb.or.kr" target="_blank" title="새창열림" style="text-decoration: underline;" class="color_01">public.irb.or.kr</a>
+	        ) 이용 및 심의에 관한 질의는 해당 사이트를 통해 질의하실 수 있습니다.
+        </p>
+    </div>
+    <div class="sub_tab_menu" th:if="${boardInfo.ctgryYn == 'Y' and boardInfo.ctgryList != null}">
+        <ul id="category_tabs">
+            <li class="on"><a href="javascript:;" data-category="">전체</a></li>
+            <li th:each="cat : ${#strings.arraySplit(#strings.replace(#strings.replace(#strings.replace(boardInfo.ctgryList, '(', ''), ')', ''), '''', ''), ',')}" >
+                <a href="javascript:;" th:data-category="${#strings.trim(cat)}" th:text="${#strings.trim(cat)}"></a>
+            </li>
+        </ul>
+    </div>
+    <div class="board_search mb10" th:if="${boardInfo.srchUseYn == 'Y'}">
+        <p class="count">총 <strong class="color_01" id="qna_total_count" th:text="${boardPostList.total}">0</strong> 건</p>
+        <fieldset>
+            <legend>Q&A 검색</legend>
+            <select id="qna_search_type" title="검색 옵션 선택" class="wp100">
+                <option value="title">제목</option>
+                <option value="content">내용</option>
+                <option value="all">제목+내용</option>
+            </select>
+            <input type="text" id="qna_keyword" title="검색어를 입력해주세요." class="wp200">
+            <button id="qna_btn_search" class="btn_basic_ss">검색</button>
+        </fieldset>
+    </div>
+    <div class="table_layout">
+        <table>
+            <caption>Q&amp;A 테이블</caption>
+            <colgroup>
+                <col style="width: 90px;">
+                <col style="width: auto;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+                <col th:if="${boardInfo.inqCntExpsrYn == 'Y'}" style="width: 80px;">
+            </colgroup>
+            <thead>
+            <tr>
+                <th scope="col">번호</th>
+                <th scope="col">제목</th>
+                <th scope="col">답변여부</th>
+                <th scope="col">등록일</th>
+                <th scope="col" th:if="${boardInfo.inqCntExpsrYn == 'Y'}">조회수</th>
+            </tr>
+            </thead>
+            <tbody id="qna_board_tbody">
+            <tr th:if="${boardPostList == null or boardPostList.list == null or boardPostList.list.isEmpty()}">
+                <td class="tac" th:colspan="${4 + (boardInfo.inqCntExpsrYn == 'Y' ? 1 : 0)}">조회된 결과가 없습니다.</td>
+            </tr>
+
+            <th:block th:if="${boardPostList != null and boardPostList.list != null}">
+                <tr th:each="item : ${boardPostList.list}">
+                    <td th:text="${item.bbsPstOid}"></td>
+                    <td class="tal">
+                        <a href="javascript:" class="link qna_link" th:data-id="${item.bbsPstOid}">
+                            <i th:if="${item.prvtPstYn == 'Y'}" class="px_lock">잠금</i>
+                            <span th:text="${item.bbsPstTtl}"></span>
+                        </a>
+                    </td>
+                    <td th:text="${item.qnaStatus == '대기' ? '작성중' : item.qnaStatus}"></td>
+                    <td th:text="${#temporals.format(item.regDt, 'yyyy-MM-dd')}"></td>
+                    <td th:if="${boardInfo.inqCntExpsrYn == 'Y'}" th:text="${item.inqCnt}"></td>
+                </tr>
+            </th:block>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+    <div id="paging_wrap" class="paging_wrap">
+        <a href="javascript:" class="first page_first">첫 페이지</a>
+        <a href="javascript:" class="previous page_prev">전 페이지</a>
+        <div class="namber pagination_container"></div>
+        <a href="javascript:" class="next page_next">다음 페이지</a>
+        <a href="javascript:" class="last page_last">끝 페이지</a>
+    </div>
+
+    <div class="btn_wrap mt20">
+        <a href="javascript:;" id="qna_btn_write" class="btn_basic">질문등록</a>
+    </div>
+</div>
+<th:block layout:fragment="main_modal">
+    <th:block th:replace="~{portal/modal/qna_secret :: qna_secret}"></th:block>
+</th:block>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const qna_board = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: /*[[${boardPostList}]]*/ {},
+            config: /*[[${boardInfo}]]*/ {},
+            reqDto: /*[[${boardRequestDto}]]*/ {},
+            pageIndex: 1,
+            pageCnt: /*[[${boardInfo.pageCnt}]]*/ 10,
+            pagingCnt: /*[[${boardInfo.pagingCnt}]]*/ 5,
+            selectedCategory: /*[[${param.ctgry != null ? param.ctgry[0] : ''}]]*/ ''
+        },
+
+        /**
+         * 초기 로드
+         */
+        getSearchStateId: function() {
+            return 'portal_qna_board_' + this.state.config.bbsOid;
+        },
+
+        init: function () {
+            const _this = this;
+            _this.initEvent();
+
+            $('#category_tabs li').removeClass('on');
+            $('#category_tabs a[data-category="' + (_this.state.selectedCategory || '') + '"]')
+                    .parent('li')
+                    .addClass('on');
+
+            // 검색조건 복원
+            _this.fnRestoreState();
+
+            /*qna_main.html 페이지 삭제로 인한 변경*/
+            /*if (_this.state.selectedCategory) {
+                _this.state.pageIndex = 1;
+                _this.getListData();
+            } else {
+                _this.renderPagination();
+            }*/
+            _this.getListData();
+            _this.renderPagination();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 분류 탭 클릭 이벤트
+            $(document).on('click', '#category_tabs a', function (e) {
+                e.preventDefault();
+
+                const category = $(this).data('category') || '';
+                const searchParams = new URLSearchParams(window.location.search);
+
+                if (category) {
+                    searchParams.set('category', category);
+                } else {
+                    searchParams.delete('category');
+                }
+
+                const newUrl = window.location.pathname + '?' + searchParams.toString();
+
+                // URL 변경 + 페이지 리로드
+                window.location.href = newUrl;
+            });
+
+            // 검색 버튼 클릭 이벤트
+            const searchBtn = document.getElementById('qna_btn_search');
+            if (searchBtn) {
+                searchBtn.addEventListener('click', function () {
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                });
+            }
+
+            // 검색어 입력 시 엔터키 이벤트
+            const keywordInput = document.getElementById('qna_keyword');
+            if (keywordInput) {
+                keywordInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        _this.state.pageIndex = 1;
+                        _this.getListData();
+                    }
+                });
+            }
+
+            // Q&A 상세 링크 클릭 이벤트
+            $(document).on('click', '.qna_link', function (e) {
+                e.preventDefault();
+                const bbsPstOid = $(this).data('id');
+                _this.fnGoToDetail(bbsPstOid);
+            });
+
+            // 문의하기 버튼 클릭 이벤트 (2개)
+            const writeBtn = document.getElementById('qna_btn_write');
+            if (writeBtn) {
+                writeBtn.addEventListener('click', function () {
+                    _this.fnGoToWrite();
+                });
+            }
+
+            const writeBtnB = document.getElementById('qna_btn_write_b');
+            if (writeBtnB) {
+                writeBtnB.addEventListener('click', function () {
+                    _this.fnGoToWrite();
+                });
+            }
+        },
+
+        /**
+         * Q&A 목록 조회
+         */
+        getListData: async function () {
+            const _this = this;
+            SearchState.saveForm(_this.getSearchStateId(), '.board_search', { pageIndex: _this.state.pageIndex });
+
+            const keywordInput = document.getElementById('qna_keyword');
+            const searchType = document.getElementById('qna_search_type');
+
+            const param = new URLSearchParams({
+                bbsOid: _this.state.config.bbsOid,
+                menuCd: _this.state.reqDto.menuCd,
+                page: _this.state.pageIndex,
+                size: _this.state.pageCnt,
+                keyword: keywordInput ? keywordInput.value.trim() : '',
+                searchType: searchType ? searchType.value : 'all',
+                ctgry: _this.state.selectedCategory
+            });
+
+            SearchState.updateUrl(param);
+
+            try {
+                const response = await API.get('/api/common/board/list/filter?' + param);
+                _this.state.all = response;
+                _this.renderQnaList();
+                _this.renderPagination();
+            } catch (error) {
+                console.error('Q&A 목록 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('Q&A 목록 조회에 실패했습니다.');
+            }
+        },
+
+        /**
+         * Q&A 목록 렌더링
+         */
+        renderQnaList: function () {
+            const _this = this;
+            const tbody = document.getElementById('qna_board_tbody');
+            tbody.innerHTML = '';
+
+            // 총 건수 업데이트
+            const totalCountEl = document.getElementById('qna_total_count');
+            if (totalCountEl) {
+                totalCountEl.textContent = _this.state.all ? _this.state.all.total : 0;
+            }
+
+            const list = _this.state.all ? _this.state.all.list : [];
+
+            if (!list || list.length === 0) {
+                tbody.innerHTML = '<tr><td class="tac" colspan="5">조회된 결과가 없습니다.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            list.forEach(function (item) {
+                const lockIcon = item.prvtPstYn === 'Y' ? '<i class="px_lock">잠금</i> ' : '';
+                const answerStatus = (item.qnaStatus === '대기') ? '작성중' : item.qnaStatus;
+                const regDate = common.formatDate(item.regDt);
+
+                html += `
+                    <tr>
+                        <td>${item.bbsPstOid}</td>
+                        <td class="tal">
+                            <a href="javascript:" class="link qna_link" data-id="${item.bbsPstOid}">
+                                ${lockIcon}${item.bbsPstTtl}
+                            </a>
+                        </td>
+                        <td>${answerStatus}</td>
+                        <td>${regDate}</td>
+                        <td>${item.inqCnt || 0 }</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            if (!_this.state.all) {
+                return;
+            }
+
+            const totalPages = _this.state.all.pages || 1;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: totalPages,
+                onPageChange: function(page) {
+                    _this.state.pageIndex = page;
+                    _this.getListData();
+                }
+            });
+        },
+
+        /**
+         * Q&A 상세 페이지 이동
+         */
+        fnGoToDetail: async function (bbsPstOid) {
+            const menuCd = this.state.reqDto.menuCd;
+            try {
+                // 조회수 증가
+                await this.updateViewCount(bbsPstOid);
+
+                // Q&A 읽기 권한 체크
+                const response = await API.get(`/api/common/board/post/verify-access/${bbsPstOid}/${menuCd}`, {}, {
+                    handleAuthError: false,
+                    showLoading: false
+                });
+
+                // 권한 있음 / 비밀번호 요구 모두 200이지만
+                // 비밀번호 요구는 action에 행위 값이 담겨있음 (REQUIRED_PASSWORD)
+                if(response && response.action){
+                	const boardConfig = {
+                			menuCd: menuCd,
+                			bbsOid: this.state.config.bbsOid
+                	}
+                    qna_secret.initModal(bbsPstOid, null, 'board', boardConfig);
+                }else{
+                    // 200 : 권한 있음 (공개글, 관리자, 본인, 세션인증[비밀번호 입력후 성공시 5분간 세션])
+                    window.location.href = contextPath + `/board/post?menuCd=${menuCd}&bbsOid=${this.state.config.bbsOid}&bbsPstOid=${bbsPstOid}`;
+                }
+            } catch (error) {
+                if (error.stts === 403) {
+                    // 403 Forbidden -> 회원 글 (접근 불가)
+                    // (타인이 회원 비밀글을 클릭한 경우)
+                    uiCommon.fnShowAlertModal('비밀글에 접근할 권한이 없습니다.');
+                } else if (error.stts === 404) {
+                    uiCommon.fnShowAlertModal('게시글이 존재하지 않습니다.');
+                } else {
+                    console.error(error);
+                    uiCommon.fnShowAlertModal('오류가 발생했습니다.');
+                }
+            }
+        },
+
+        /**
+         * Q&A 작성 페이지 이동
+         */
+        fnGoToWrite: function () {
+            SearchState.clear(this.getSearchStateId());
+            const menuCd = this.state.reqDto.menuCd;
+            window.location.href = contextPath + `/board/write?menuCd=${menuCd}&bbsOid=${this.state.config.bbsOid}`;
+        },
+
+        /**
+         * 조회수 증가
+         */
+        updateViewCount: async function (bbsPstOid) {
+            const _this = this;
+            try {
+
+                const param = {
+                    bbsPstOid: bbsPstOid,
+                    menuCd: _this.state.reqDto.menuCd
+                }
+
+                await API.patch('/api/common/board/view-count', param);
+            } catch (error) {
+                console.error('조회수 증가 실패:', error);
+            }
+        },
+
+        /**
+         * 검색조건 복원
+         */
+        fnRestoreState: function () {
+            const _this = this;
+
+            // 1. URL 파라미터로 복원
+            const _fieldMap = { keyword: 'qna_keyword', searchType: 'qna_search_type' };
+            const urlPage = SearchState.restoreFromUrl(_fieldMap);
+            if (urlPage !== null) {
+                _this.state.pageIndex = urlPage;
+            } else {
+                // 2. sessionStorage 로 복원
+                const saved = SearchState.restoreForm(_this.getSearchStateId(), '.board_search');
+                if (saved) {
+                    _this.state.pageIndex = saved._extra.pageIndex || 1;
+                }
+            }
+
+            // 3. 뒤로가기 / 앞으로가기 시
+            SearchState.handlePopState(_fieldMap, 'page', function(page) {
+                _this.state.pageIndex = page;
+                _this.getListData();
+            });
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        qna_board.init();
+    });
+</script>
+</body>
+</html>

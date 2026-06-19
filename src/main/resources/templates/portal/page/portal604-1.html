@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>소통·참여 > 메일링 신청 > 서비스 신청하기</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">메일링 신청</h3>
+    <div class="human_intro_wrap">
+        <strong>개인정보 수집 및 이용 동의</strong>
+    </div>
+    <div class="frm_box">
+        <p>
+            정책원 메일링 신청을 위해 수집되는 개인정보는 신청자 확인 및 메일 서비스 안내 등을 위해 사용되며 그외의 목적으로 사용되지 않음을 알려드립니다.<br>
+            또한 수집 목적 및 법적 보유기간이 종료된 개인정보는 복구가 불가능한 방식으로 파기됩니다.
+        </p>
+        <dl>
+            <dt>■ 수집하는 개인정보 항목</dt>
+            <dd class="bul2">- 필수 항목 : 이름, 메일 주소, 전화번호(휴대폰 번호)</dd>
+            <dd class="bul2">- 선택 항목 : 소속, 직위</dd>
+        </dl>
+        <dl>
+            <dt>■ 개인정보의 수집 및 이용목적</dt>
+            <dd class="bul2">- 정책원 메일링 신청을 위해 수집되는 개인정보는 신청자 확인 및 메일 서비스 안내 등을 위해 사용되며 그 외의 목적으로 사용되지 않음을 알려드립니다.</dd>
+            <dd class="bul2 mt10">※ 개인정보 제공자가 동의한 내용 외의 다른 목적으로 활용하지 않으며, 제공된 개인정보의 이용을 거부하고자 할 때에는 개인정보 관리책임자를 통해 열람, 정정, 삭제를 요구할 수 있음.</dd>
+        </dl>
+        <dl>
+            <dt>■ 개인정보의 보유 및 이용기간</dt>
+            <dd class="bul2 bl">- 서비스 해지(회원 탈퇴) 시 개인정보는 복구가 불가능한 방식으로 파기됩니다.</dd>
+        </dl>
+    </div>
+    <p class="mt20">
+        <label><input type="checkbox" id="ps_info_agree_yn"> 개인정보 수집 및 이용에 동의합니다.</label>
+    </p>
+    <p>※ 귀하는 위의 개인정보 수집ㆍ이용에 대한 동의를 거부할 수 있습니다. 다만, 동의하지 않을 경우 정책원 메일링 서비스를 이용 하실 수 없습니다.</p>
+    <p class="btn_wrap_right mb10"><em class="point"></em>표시는 필수 입력 항목입니다.</p>
+    <div class="table_layout t_tal">
+        <table>
+            <caption>메일링 신청 테이블</caption>
+            <colgroup>
+                <col style="min-width: 130px;">
+                <col style="width: auto;">
+                <col style="min-width: 130px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row" class="point"><label for="user_nm">이름</label></th>
+                <td>
+                    <input type="text" id="user_nm" title="이름 입력" class="w100">
+                </td>
+                <th scope="row" class="point"><label for="mpno_full">전화번호</label></th>
+                <td>
+                    <input type="text" id="mpno_full" title="전화번호 입력" class="w100" placeholder="010-0000-0000" maxlength="13">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><label for="eml_local">메일 주소</label></th>
+                <td colspan="3">
+                    <div class="flex_col">
+                        <input type="text" title="메일 아이디 입력" name="m_email1" id="eml_local" class="wp200">
+                        @
+                        <input type="text" title="메일 도메인 입력" name="m_email2" id="eml_dmn" class="wp200">
+                        <select title="메일 도메인 선택" id="eml_dmn_sel" class="wp200">
+                            <option value="">직접 입력</option>
+                            <option value="hanmail.net">hanmail.net</option>
+                            <option value="daum.net">daum.net</option>
+                            <option value="naver.com">naver.com</option>
+                            <option value="nate.com">nate.com</option>
+                            <option value="gmail.com">gmail.com</option>
+                            <option value="korea.com">korea.com</option>
+                            <option value="hotmail.com">hotmail.com</option>
+                            <option value="outlook.com">outlook.com</option>
+                        </select>
+                        <a href="javascript:;" class="btn_basic btn_ts" id="btn_auth_req">인증 요청</a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><label for="auth_code">인증번호 입력</label></th>
+                <td colspan="3">
+                    <div class="flex_col">
+                        <input type="text" title="인증번호 입력" id="auth_code" class="wp200">
+                        <a href="javascript:;" class="btn_basic btn_ts" id="btn_auth_verify">인증 확인</a>
+                        <span id="auth_timer" role="timer" aria-live="polite" style="color: #d9534f; margin-left: 10px; font-weight: bold;"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="org_nm">소속</label></th>
+                <td>
+                    <input type="text" id="org_nm" title="소속 입력" class="w100">
+                </td>
+                <th scope="row"><label for="pstn_nm">직위</label></th>
+                <td>
+                    <input type="text" id="pstn_nm" title="직위 입력" class="w100">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+    <div class="etc_text mt10">
+        <p>※ 현재 gmail, yahoo 등 특정 주소는 일시적으로 발송이 불가합니다.</p>
+        <p>※ 소속 및 직위는 선택 입력 사항입니다.</p>
+    </div>
+    <div class="tac mt50">
+        <a href="javascript:;" class="btn_basic btn_bg_type00" id="btn_submit" style="display: none;">서비스 신청하기</a>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal6041 = {
+        // State
+        state: {
+            isAuthRequested: false,
+            isAuthVerified: false, 
+            timerInterval: null,   
+            isTimerActive: false   
+        },
+
+        // Init
+        init: function () {
+            this.initEvent();
+        },
+
+        // Event
+        initEvent: function () {
+            const _this = this;
+
+            // Email Domain Change
+            document.getElementById("eml_dmn_sel").addEventListener("change", function() {
+                document.getElementById("eml_dmn").value = this.value;
+            });
+
+            // Phone Auto Format
+            document.getElementById("mpno_full").addEventListener("input", function() {
+                this.value = this.value
+                    .replace(/[^0-9]/g, "")
+                    .replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`)
+                    .substr(0, 13);
+            });
+
+            // Auth Request
+            document.getElementById("btn_auth_req").addEventListener("click", function(e) {
+                e.preventDefault();
+                _this.requestAuth();
+            });
+
+            // Auth Verify
+            document.getElementById("btn_auth_verify").addEventListener("click", function(e) {
+                e.preventDefault();
+                _this.verifyAuth();
+            });
+
+            // Submit
+            document.getElementById("btn_submit").addEventListener("click", function(e) {
+                e.preventDefault();
+                _this.submit();
+            });
+        },
+
+        // Request Auth
+        requestAuth: async function() {
+            const _this = this;
+            const btnReq = document.getElementById("btn_auth_req");
+
+            if (_this.state.isTimerActive) {
+                uiCommon.fnShowAlertModal("이미 인증번호가 발송되었습니다.");
+                return;
+            }
+
+            const userNm = document.getElementById("user_nm").value.trim();
+            const mpnoFull = document.getElementById("mpno_full").value.trim();
+            const emlLocal = document.getElementById("eml_local").value.trim();
+            const emlDmn = document.getElementById("eml_dmn").value.trim();
+
+            // Validation (Required)
+            if (!userNm) { uiCommon.fnShowAlertModal("이름을 입력해 주세요."); return; }
+            if (!mpnoFull || mpnoFull.length < 12) { uiCommon.fnShowAlertModal("전화번호를 정확히 입력해 주세요."); return; }
+            if (!emlLocal) { uiCommon.fnShowAlertModal("메일 아이디를 입력해 주세요."); return; }
+            if (!emlDmn) { uiCommon.fnShowAlertModal("메일 도메인을 입력해 주세요."); return; }
+
+            try {
+                // UI Block
+                btnReq.style.pointerEvents = "none";
+                btnReq.style.opacity = "0.5";
+
+                await API.post('/api/common/mailing/mail/auth', {
+                    userNm: userNm,
+                    mpnoFull: mpnoFull,
+                    emlLcal: emlLocal,
+                    emlDmn: emlDmn
+                });
+                
+                _this.state.isAuthRequested = true;
+                document.getElementById("eml_dmn_sel").disabled = true;
+                document.getElementById("eml_local").readOnly = true;
+                document.getElementById("eml_dmn").readOnly = true;
+                uiCommon.fnShowAlertModal("인증번호가 발송되었습니다.", function() {
+                    _this.startTimer(300);
+                });
+                
+            } catch (e) {
+                btnReq.style.pointerEvents = "auto";
+                btnReq.style.opacity = "1";
+                uiCommon.fnShowAlertModal(e?.details || "인증번호 발송 실패");
+            }
+        },
+
+        // Timer Start
+        startTimer: function(duration) {
+            const _this = this;
+            const display = document.getElementById("auth_timer");
+            const btnReq = document.getElementById("btn_auth_req");
+            let timer = duration;
+
+            if (_this.state.timerInterval) clearInterval(_this.state.timerInterval);
+
+            _this.state.isTimerActive = true;
+            btnReq.style.display = "none";
+
+            _this.state.timerInterval = setInterval(function () {
+                let minutes = parseInt(timer / 60, 10);
+                let seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    _this.stopTimer();
+                    btnReq.style.display = "inline-block";
+                    btnReq.style.pointerEvents = "auto";
+                    btnReq.style.opacity = "1";
+                    btnReq.textContent = "인증 재요청";
+                    _this.state.isAuthRequested = false;
+                    
+                    document.getElementById("eml_dmn_sel").disabled = false;
+                    document.getElementById("eml_local").readOnly = false;
+                    document.getElementById("eml_dmn").readOnly = false;
+                    
+                    uiCommon.fnShowAlertModal("인증 시간이 만료되었습니다.");
+                }
+            }, 1000);
+        },
+
+        // Timer Stop
+        stopTimer: function() {
+            const _this = this;
+            if (_this.state.timerInterval) {
+                clearInterval(_this.state.timerInterval);
+                _this.state.timerInterval = null;
+            }
+            _this.state.isTimerActive = false;
+        },
+
+        // Verify Auth
+        verifyAuth: async function() {
+            const _this = this;
+            
+            if (!_this.state.isAuthRequested) {
+                uiCommon.fnShowAlertModal("인증 요청을 먼저 진행해 주세요.");
+                return;
+            }
+            
+            const authCode = document.getElementById("auth_code").value.trim();
+            const emlLocal = document.getElementById("eml_local").value.trim();
+            const emlDmn = document.getElementById("eml_dmn").value.trim();
+
+            // Validation (Required)
+            if (!authCode) {
+                uiCommon.fnShowAlertModal("인증번호를 입력해 주세요.");
+                return;
+            }
+
+            try {
+                await API.post('/api/common/mailing/mail/verify/auth', { emlLcal: emlLocal, emlDmn, certCd: authCode });
+
+                uiCommon.fnShowAlertModal("인증이 완료되었습니다.", function() {
+                    _this.state.isAuthVerified = true;
+                    _this.stopTimer();
+                    document.getElementById("auth_timer").textContent = ""; 
+                    
+                    // UI Lock
+                    document.getElementById("btn_submit").style.display = "inline-block";
+                    document.getElementById("btn_auth_req").style.display = "none";
+                    document.getElementById("btn_auth_verify").style.display = "none";
+                    
+                    ["user_nm", "mpno_full", "eml_local", "eml_dmn", "auth_code"].forEach(id => {
+                        document.getElementById(id).readOnly = true;
+                    });
+                    document.getElementById("eml_dmn_sel").disabled = true;
+                });
+            } catch (e) {
+                uiCommon.fnShowAlertModal(e?.details || "인증번호 불일치");
+            }
+        },
+
+        // Submit
+        submit: async function() {
+            const self = this;
+            const agreeChk = document.getElementById("ps_info_agree_yn");
+
+            // Validation (Required)
+            if (!agreeChk.checked) {
+                uiCommon.fnShowAlertModal("개인정보 수집 및 이용에 동의해야 합니다.");
+                return;
+            }
+
+            if (!self.state.isAuthVerified) {
+                uiCommon.fnShowAlertModal("이메일 인증을 완료해 주세요.");
+                return;
+            }
+
+            const params = {
+                userNm: document.getElementById("user_nm").value.trim(),
+                mpnoFull: document.getElementById("mpno_full").value.trim(),
+                emlLcal: document.getElementById("eml_local").value.trim(),
+                emlDmn: document.getElementById("eml_dmn").value.trim(),
+                instNm: document.getElementById("org_nm").value.trim(),
+                jbpsNm: document.getElementById("pstn_nm").value.trim(),
+                prvcPvsnAgreYn: 'Y'
+            };
+
+            uiCommon.fnShowConfirmModal('서비스를 신청하시겠습니까?', async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    await API.put('/api/common/mailing/insert', params);
+                    
+                    uiCommon.fnShowAlertModal("정상적으로 신청되었습니다.", function() {
+                        location.href = contextPath + "/page/portal604";
+                    });
+                } catch (e) {
+                    uiCommon.fnShowAlertModal(e?.details || "신청 중 오류 발생");
+                }
+            });
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        portal6041.init();
+    });
+</script>
+</body>
+</html>

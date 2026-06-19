@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin600.mapper.Admin606Mapper">
+
+	<!--FAQ 목록 조회-->
+	<select id="selectAdmin606List" parameterType="egovframework.admin.admin600.domain.Admin606FilterDTO"  resultType="egovframework.admin.admin600.domain.Admin606VO">
+		SELECT
+			f.faq_dtl_oid,
+			f.faq_ctgry_oid,
+			c.ctgry_nm,
+			f.qstn_cn,
+			f.ans_cn,
+			f.ans_cn_txt,
+			f.sort_seq,
+			f.open_yn,
+			f.use_yn,
+			f.inq_cnt,
+			f.reg_id,
+			f.reg_dt,
+			f.mdfcn_id,
+			f.mdfcn_dt
+		FROM ${schema}.faq_dtl f
+		LEFT JOIN ${schema}.faq_ctgry c
+		  ON f.faq_ctgry_oid = c.faq_ctgry_oid
+		<where>
+			<if test="faqCtgryOid != null">
+				AND f.faq_ctgry_oid = #{faqCtgryOid}
+			</if>
+			<if test="keyword != null and keyword != ''">
+				AND (
+				f.faq_dtl_oid LIKE CONCAT('%', #{keyword}, '%')
+				OR f.qstn_cn LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+			<if test="openYn != null and openYn != ''">
+				AND f.open_yn = #{openYn}
+			</if>
+			<if test="regDtSt != null and regDtEd != null">
+				AND DATE_FORMAT(f.reg_dt, '%Y-%m-%d') <![CDATA[ >= ]]> #{regDtSt}
+				AND DATE_FORMAT(f.reg_dt, '%Y-%m-%d') <![CDATA[ <= ]]> #{regDtEd}
+			</if>
+		</where>
+	</select>
+
+	<!-- FAQ 카테고리 목록 조회 -->
+	<select id="selectAdmin606CategoryList" resultType="egovframework.admin.admin600.domain.Admin606CategoryVO">
+		SELECT faq_ctgry_oid,
+			   ctgry_nm,
+			   sort_seq,
+			   use_yn,
+			   reg_id,
+			   reg_dt,
+			   mdfcn_id,
+			   mdfcn_dt
+		FROM ${schema}.faq_ctgry
+		WHERE use_yn = 'Y'
+		ORDER BY sort_seq, faq_ctgry_oid
+	</select>
+
+	<!--FAQ 단건 조회-->
+	<select id="selectAdmin606" parameterType="Long" resultType="egovframework.admin.admin600.domain.Admin606VO">
+		SELECT
+			f.faq_dtl_oid,
+			f.faq_ctgry_oid,
+			c.ctgry_nm,
+			f.qstn_cn,
+			f.ans_cn,
+			f.ans_cn_txt,
+			f.sort_seq,
+			f.open_yn,
+			f.use_yn,
+			f.inq_cnt,
+			f.reg_id,
+			f.reg_dt,
+			f.mdfcn_id,
+			f.mdfcn_dt
+		FROM ${schema}.faq_dtl f
+		LEFT JOIN ${schema}.faq_ctgry c
+		  ON f.faq_ctgry_oid = c.faq_ctgry_oid
+		WHERE f.faq_dtl_oid = #{faqDtlOid}
+	</select>
+
+	<!-- FAQ 등록 -->
+	<insert id="insertAdmin606" parameterType="egovframework.admin.admin600.domain.Admin606DetailDTO" useGeneratedKeys="true" keyProperty="faqDtlOid">
+		INSERT INTO ${schema}.faq_dtl (
+			faq_ctgry_oid
+			, qstn_cn
+			, ans_cn
+			, ans_cn_txt
+			, sort_seq
+			, open_yn
+			, use_yn
+			, inq_cnt
+			, reg_id
+			, reg_dt
+			, mdfcn_id
+			, mdfcn_dt
+		) VALUES (
+			#{faqCtgryOid}
+			, #{qstnCn}
+			, #{ansCn}
+			, #{ansCnTxt}
+			, COALESCE(#{sortSeq}, 0)
+			, #{openYn}
+			, 'Y'
+			, 0
+			, #{regId}
+			, NOW()
+			, #{regId}
+			, NOW()
+		)
+	</insert>
+
+	<!-- FAQ 수정 -->
+	<update id="updateAdmin606" parameterType="egovframework.admin.admin600.domain.Admin606DetailDTO">
+		UPDATE ${schema}.faq_dtl
+		<set>
+			<if test="faqCtgryOid != null">
+				faq_ctgry_oid = #{faqCtgryOid},
+			</if>
+			<if test="qstnCn != null and qstnCn != ''">
+				qstn_cn = #{qstnCn},
+			</if>
+			<if test="ansCn != null and ansCn != ''">
+				ans_cn = #{ansCn},
+			</if>
+            <if test="ansCnTxt != null and ansCnTxt != ''">
+                ans_cn_txt = #{ansCnTxt},
+            </if>
+			<if test="sortSeq != null">
+				sort_seq = #{sortSeq},
+			</if>
+			<if test="openYn != null">
+				open_yn = #{openYn},
+			</if>
+			mdfcn_id = #{mdfcnId},
+			mdfcn_dt = NOW(),
+            use_yn = 'Y'
+		</set>
+		WHERE faq_dtl_oid = #{faqDtlOid}
+	</update>
+
+	<!-- FAQ 일괄 삭제 -->
+	<update id="deleteAdmin606" parameterType="egovframework.admin.admin600.domain.Admin606DeleteDTO">
+		UPDATE ${schema}.faq_dtl
+		SET
+			use_yn = 'N'
+			, mdfcn_dt = NOW()
+		WHERE faq_dtl_oid IN
+		<foreach collection="faqDtlOids" item="faqDtlOid" open="(" separator="," close=")">
+			#{faqDtlOid}
+		</foreach>
+	</update>
+
+	<!-- FAQ 조회수 증가 -->
+	<update id="updateAdmin606inqCnt" parameterType="Long">
+		UPDATE ${schema}.faq_dtl
+		SET inq_cnt = inq_cnt + 1
+		WHERE faq_dtl_oid = #{faqDtlOid}
+	</update>
+
+	<!-- FAQ 엑셀 다운로드용 목록 조회 -->
+	<select id="selectAdmin606ExcelList" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" resultType="egovframework.admin.admin600.domain.Admin606ExcelDTO">
+		SELECT
+			f.faq_dtl_oid AS faqDtlOid,
+			c.ctgry_nm AS ctgryNm,
+			f.qstn_cn AS qstn_cn,
+			f.open_yn AS openYn,
+			f.use_yn AS useYn,
+			DATE(f.reg_dt) AS regDt,
+			f.inq_cnt AS inqCnt
+		FROM ${schema}.faq_dtl f
+		LEFT JOIN ${schema}.faq_ctgry c
+		  ON f.faq_ctgry_oid = c.faq_ctgry_oid
+		<where>
+			f.use_yn = 'Y'
+			<if test="keyword != null and keyword != ''">
+				AND (
+					f.faq_dtl_oid LIKE CONCAT('%', #{keyword}, '%')
+					OR f.qstn_cn LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+			<if test="openYn != null and openYn != ''">
+				AND f.open_yn = #{openYn}
+			</if>
+			<if test="faqCtgryOid != null">
+				AND f.faq_ctgry_oid = #{faqCtgryOid}
+			</if>
+			<if test="regDtSt != null and regDtSt != ''">
+				AND f.reg_dt <![CDATA[ >= ]]> #{regDtSt}
+			</if>
+			<if test="regDtEd != null and regDtEd != ''">
+				AND f.reg_dt <![CDATA[ < ]]> DATE_ADD(#{regDtEd}, INTERVAL 1 DAY)
+			</if>
+		</where>
+		ORDER BY
+			f.sort_seq, f.faq_dtl_oid DESC
+	</select>
+
+	<insert id="insertFaqData" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" useGeneratedKeys="true" keyProperty="faqDtlOid">
+		INSERT INTO ${schema}.faq_dtl (
+			faq_ctgry_oid
+			, qstn_cn
+			, ans_cn
+			, ans_cn_txt
+			, sort_seq
+			, open_yn
+			, use_yn
+			, inq_cnt
+			, reg_id
+			, reg_dt
+			, mdfcn_id
+			, mdfcn_dt
+		) VALUES (
+			#{faqCtgryOid}
+			, #{qstnCn}
+			, #{ansCn}
+			, #{ansCnTxt}
+			, COALESCE(#{sortSeq}, 0)
+			, #{openYn}
+			, 'Y'
+			, 0
+			, #{regId}
+			, NOW()
+			, #{regId}
+			, NOW()
+		)
+        <selectKey keyProperty="faqDtlOid" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+	</insert>
+
+	<!-- FAQ 수정 -->
+	<update id="updateFaqData" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap">
+		UPDATE ${schema}.faq_dtl
+		<set>
+			<if test="faqCtgryOid != null">
+				faq_ctgry_oid = #{faqCtgryOid},
+			</if>
+			<if test="qstnCn != null and qstnCn != ''">
+				qstn_cn = #{qstnCn},
+			</if>
+			<if test="ansCn != null and ansCn != ''">
+				ans_cn = #{ansCn},
+			</if>
+            <if test="ansCnTxt != null and ansCnTxt != ''">
+                ans_cn_txt = #{ansCnTxt},
+            </if>
+			<if test="sortSeq != null">
+				sort_seq = #{sortSeq},
+			</if>
+			<if test="openYn != null">
+				open_yn = #{openYn},
+			</if>
+			mdfcn_id = #{mdfcnId},
+			mdfcn_dt = NOW(),
+            use_yn = 'Y'
+		</set>
+		WHERE faq_dtl_oid = #{faqDtlOid}
+	</update>
+</mapper>

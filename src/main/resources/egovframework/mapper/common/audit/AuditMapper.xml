@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.common.audit.mapper.AuditMapper">
+
+    <insert id="insertLoginLog" parameterType="egovframework.common.audit.domain.LoginLog">
+        <!-- insertLoginLog -->
+        INSERT INTO ${schema}.lgn_log (
+            user_oid,
+            user_id,
+            lgn_dt,
+            lgn_rslt,
+            lgn_fail_rsn,
+            ip_addr,
+            user_agt,
+            brwsr_nm,
+            brwsr_ver,
+            os_nm,
+            os_ver,
+            dvc_type,
+            ssn_id,
+            lgt_dt,
+            ssn_contn_hr,
+            ntn_cd,
+            cty_nm,
+            reg_id,
+            reg_dt,
+            mdfcn_id,
+            mdfcn_dt
+        )
+        VALUES (
+            #{userOid},
+            #{userId},
+            #{lgnDt},
+            #{lgnRslt},
+            #{lgnFailRsn},
+            #{ipAddr},
+            #{userAgt},
+            #{brwsrNm},
+            #{brwsrVer},
+            #{osNm},
+            #{osVer},
+            #{dvcType},
+            #{ssnId},
+            #{lgtDt},
+            #{ssnContnHr},
+            #{ntnCd},
+            #{ctyNm},
+            IFNULL(#{regId}, 'SYSTEM'),
+            IFNULL(#{regDt}, NOW()),
+            IFNULL(#{mdfcnId}, 'SYSTEM'),
+            IFNULL(#{mdfcnDt}, NOW())
+        )
+    </insert>
+
+    <!-- 임시 -->
+    <insert id="insertChangeAuthLog" parameterType="egovframework.common.auth.domain.BaseUser">
+        <!-- insertChangeAuthLog -->
+        INSERT INTO CHANGE_AUTH_LOG (
+            CHANGE_AUTH_LOG_ID, USER_ID, CHANGE_AUTH_TIME
+        )
+        VALUES (
+            CHANGE_AUTH_LOG_ID_SEQ.NEXTVAL, #{userOid}, #{changeAuthTime}
+        )
+    </insert>
+
+    <update id="updateLoginLogForExpiredToken" parameterType="java.time.LocalDateTime">
+        UPDATE
+            ${schema}.lgn_log l
+        INNER JOIN
+            ${schema}.user u ON l.user_oid = u.user_oid
+        SET
+            l.lgt_dt = #{baseTime},
+            l.ssn_contn_hr = TIMESTAMPDIFF(SECOND, l.lgn_dt, #{baseTime})
+        WHERE
+            l.lgt_dt IS NULL
+        AND
+            l.lgn_dt <![CDATA[<]]> #{baseTime}
+        AND
+            u.user_authrt = #{userRole}
+    </update>
+
+	<update id="updateUserOnLoginSuccess" parameterType="String">
+        <!-- updateUserOnLoginSuccess -->
+		UPDATE
+			${schema}.user
+		SET
+			lgn_fail_cnt = 0,
+			last_login_dt = NOW()
+		WHERE
+			user_id = #{userId}
+	</update>
+
+	<update id="updateLgnFailCnt" parameterType="String">
+        <!-- updateLoginFailCnt -->
+		UPDATE
+			${schema}.user
+		SET
+			lgn_fail_cnt = lgn_fail_cnt + 1
+		WHERE
+			user_id = #{userId}
+	</update>
+
+	<update id="updateLogoutInfo" parameterType="map">
+		<!-- updateLogoutInfo -->
+		UPDATE
+			${schema}.lgn_log
+		SET
+			lgt_dt = #{lgtDt},
+			ssn_contn_hr = TIMESTAMPDIFF(SECOND, lgn_dt, #{lgtDt})
+		WHERE
+			user_id = #{dto.userId}
+			AND user_oid = #{dto.userOid}
+			AND ssn_id = #{dto.loginSsnId}
+			AND lgt_dt IS NULL
+	</update>
+
+	<!-- ============================================
+	     접근 로그 쿼리 (API + 페이지)
+	     ============================================ -->
+
+	<insert id="insertAccessLog" parameterType="egovframework.common.audit.domain.ApiAccessLog">
+		<!-- insertAccessLog -->
+        INSERT INTO ${schema}.user_acs_log (
+            user_oid,
+            user_id,
+            acs_type,
+            rqt_uri,
+            rqt_mthd,
+            rqt_qry,
+            rqt_bdy_sz,
+            stts_cd,
+            rspns_bdy_sz,
+            rspns_time_ms,
+            error_msg,
+            rfpr_url,
+            rfpr_type,
+            srch_kywd,
+            ip_addr,
+            user_agt,
+            brwsr_nm,
+            brwsr_ver,
+            os_nm,
+            os_ver,
+            dvc_type,
+            ssn_id,
+            reg_id,
+            reg_dt
+        )
+        VALUES (
+            #{userOid},
+            #{userId},
+            #{acsType},
+            #{rqtUri},
+            #{rqtMthd},
+            #{rqtQry},
+            #{rqtBdySz},
+            #{sttsCd},
+            #{rspnsBdySz},
+            #{rspnsTimeMs},
+            #{errorMsg},
+            #{rfprUrl},
+            #{rfprType},
+            #{srchKywd},
+            #{ipAddr},
+            #{userAgt},
+            #{brwsrNm},
+            #{brwsrVer},
+            #{osNm},
+            #{osVer},
+            #{dvcType},
+            #{ssnId},
+            IFNULL(#{regId}, 'SYSTEM'),
+            IFNULL(#{regDt}, NOW())
+        )
+	</insert>
+
+	<select id="selectExpiredPrivacyAuth" resultType="egovframework.common.auth.domain.BaseUser">
+		<!-- 만료된 개인정보 처리권한 대상 조회 -->
+		SELECT
+			user_oid,
+			user_id,
+			prvc_use_yn
+		FROM
+			${schema}.user
+		WHERE
+			prvc_use_yn = 'Y'
+		AND
+			prvc_end_dt <![CDATA[<]]> NOW()
+	</select>
+
+	<update id="deactivateExpiredPrivacyAuth">
+		<!-- 만료된 개인정보 처리권한 비활성화 -->
+		UPDATE
+			${schema}.user
+		SET
+			prvc_use_yn = 'N',
+			mdfcn_id = 'SYSTEM',
+			mdfcn_dt = NOW()
+		WHERE
+			prvc_use_yn = 'Y'
+		AND
+			prvc_end_dt <![CDATA[<]]> NOW()
+	</update>
+</mapper>

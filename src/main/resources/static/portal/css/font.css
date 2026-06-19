@@ -1,0 +1,64 @@
+﻿@font-face {
+    font-family:'NotoSansKR';
+    font-weight:300;
+    src:url(../font/NotoSans-DemiLight.eot);
+    src:url(../font/NotoSans-DemiLight.eot?#iefix) format('embedded-opentype'),
+    url(../font/NotoSans-DemiLight.woff) format('woff'),
+    url(../font/NotoSans-DemiLight.woff2) format('woff2');
+}
+@font-face {
+    font-family:'NotoSansKR';
+    font-weight:400;
+    src:url(../font/NotoSans-Regular.eot);
+    src:url(../font/NotoSans-Regular.eot?#iefix) format('embedded-opentype'),
+    url(../font/NotoSans-Regular.woff) format('woff'),
+    url(../font/NotoSans-Regular.woff2) format('woff2');
+}
+@font-face {
+    font-family:'NotoSansKR';
+    font-weight:700;
+    src:url(../font/NotoSans-Medium.eot);
+    src:url(../font/NotoSans-Medium.eot?#iefix) format('embedded-opentype'),
+    url(../font/NotoSans-Medium.woff) format('woff'),
+    url(../font/NotoSans-Medium.woff2) format('woff2');
+}
+@font-face {
+    font-family:'NotoSansKR';
+    font-weight:800;
+    src:url(../font/NotoSans-Bold.eot);
+    src:url(../font/NotoSans-Bold.eot?#iefix) format('embedded-opentype'),
+    url(../font/NotoSans-Bold.woff) format('woff'),
+    url(../font/NotoSans-Bold.woff2) format('woff2');
+}
+@font-face {
+    font-family:'montserrat';
+    font-weight:300;
+    src:url(../font/montserrat-v14-latin-300.eot);
+    src:url(../font/montserrat-v14-latin-300.eot?#iefix) format('embedded-opentype'),
+    url(../font/montserrat-v14-latin-300.woff) format('woff'),
+    url(../font/montserrat-v14-latin-300.woff2) format('woff2');
+}
+@font-face {
+    font-family:'montserrat';
+    font-weight:500;
+    src:url(../font/montserrat-v14-latin-500.eot);
+    src:url(../font/montserrat-v14-latin-500.eot?#iefix) format('embedded-opentype'),
+    url(../font/montserrat-v14-latin-500.woff) format('woff'),
+    url(../font/montserrat-v14-latin-500.woff2) format('woff2');
+}
+@font-face {
+    font-family:'montserrat';
+    font-weight:600;
+    src:url(../font/montserrat-v14-latin-600.eot);
+    src:url(../font/montserrat-v14-latin-600.eot?#iefix) format('embedded-opentype'),
+    url(../font/montserrat-v14-latin-600.woff) format('woff'),
+    url(../font/montserrat-v14-latin-600.woff2) format('woff2');
+}
+@font-face {
+    font-family:'montserrat';
+    font-weight:800;
+    src:url(../font/montserrat-v14-latin-800.eot);
+    src:url(../font/montserrat-v14-latin-800.eot?#iefix) format('embedded-opentype'),
+    url(../font/montserrat-v14-latin-800.woff) format('woff'),
+    url(../font/montserrat-v14-latin-800.woff2) format('woff2');
+}

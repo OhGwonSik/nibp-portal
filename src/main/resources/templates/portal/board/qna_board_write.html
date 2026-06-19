@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>Q&A 문의하기</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit"
+        th:text="${boardInfo.bbsSubSeCd == 'BIOETHICS_QNA' ? '생명윤리법 Q&A' : 'Q&A'}">
+        Q&A
+    </h3>
+    <p class="btn_wrap_right mb10"><em class="point"></em>표시는 필수 입력 항목입니다.</p>
+    <div class="table_layout t_tal">
+        <table>
+            <caption>Q&amp;A_문의하기 테이블</caption>
+            <colgroup>
+                <col style="width: 150px;">
+                <col style="width: auto;">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_writer_nm">작성자명</label></th>
+                <td><input type="text" id="qna_writer_nm" title="작성자명 입력" placeholder="작성자명을 입력해 주세요" class="wp200"></td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_title">제목</label></th>
+                <td><input type="text" id="qna_title" class="wp500" title="제목 입력" placeholder="제목을 입력해 주세요"></td>
+            </tr>
+            <tr th:if="${boardInfo.ctgryYn == 'Y'}">
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_category">분류</label></th>
+                <td>
+                    <select title="분류선택" class="wp200" id="qna_category">
+                        <option value="">선택</option>
+                        <th:block th:if="${boardInfo.ctgryList != null}">
+                            <option th:each="category : ${#strings.arraySplit(boardInfo.ctgryList, ',')}"
+                                    th:value="${#strings.trim(ctgry)}"
+                                    th:text="${#strings.trim(ctgry)}">
+                            </option>
+                        </th:block>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label>공개여부</label></th>
+                <td>
+                    <div class="radio-box">
+                        <span><input type="radio" id="qna_secret_n" name="qna_secret" value="N" checked><label for="qna_secret_n">공개</label></span>
+                        <span><input type="radio" id="qna_secret_y" name="qna_secret" value="Y"><label for="qna_secret_y">비공개</label></span>
+                    </div>
+                </td>
+            </tr>
+            <tr id="qna_pwd_row" th:if="${boardRequestDto.bbsPstOid == null}">
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_pwd">비밀번호</label></th>
+                <td>
+                    <div class="flex_col">
+                        <input type="password" id="qna_pwd" title="비밀번호 입력" placeholder="비밀번호를 입력해 주세요." class="wp200" maxlength="14" inputmode="latin">
+                        <p>* 영문, 숫자, 특수문자 포함 (공백, &amp; 제외 / 9~14자)</p>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_editor">내용</label></th>
+                <td>
+                    <textarea name="qna_editor" id="qna_editor" rows="30"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row" class="point"><i class="hidden">필수입력</i><label for="qna_captcha">자동등록방지</label></th>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+
+                        <img id="captchaImg"
+                             th:src="@{/api/common/captcha/image}"
+                             alt="자동등록방지 문자"
+                             title="자동등록방지 문자"
+                             style="height: 32px; width: 120px; border: 1px solid #ccc; cursor: pointer; display: block;">
+
+                        <button type="button" id="qnaPlayAudio" title="음성듣기" class="btn_basic_s"
+                                style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; justify-content: center; align-items: center; background: #fff; border: 1px solid #ccc; cursor: pointer;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                        </button>
+
+                        <button type="button" id="qnaRefreshCaptcha" title="새로고침" class="btn_basic_s"
+                                style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; justify-content: center; align-items: center; background: #fff; border: 1px solid #ccc; cursor: pointer;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                        </button>
+
+                        <input type="text" id="qna_captcha" title="자동등록방지 숫자 입력"
+                               class="wp150" placeholder="" maxlength="5"
+                               style="height: 32px; line-height: 32px; margin: 0; box-sizing: border-box;">
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <span class="scroll_img">스크롤</span>
+    </div>
+    <div class="btn_wrap mt20">
+        <a href="javascript:;" id="btn_qna_submit" class="btn_basic">확인</a>
+        <a href="javascript:;" id="btn_qna_cancel" class="btn_basic bg_gray">취소</a>
+    </div>
+</div>
+<th:block layout:fragment="main_modal">
+    <th:block th:replace="~{portal/modal/qna_secret :: qna_secret}"></th:block>
+</th:block>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const edu303_2 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            file: [],
+            isLogin: /*[[${#authorization.expression('isAuthenticated()')}]]*/ false,
+            bbsOid: /*[[${boardInfo?.bbsOid}]]*/ null, // 게시판 번호 추가
+            boardRequestDto: /*[[${boardRequestDto}]]*/ {},
+            useCategory: /*[[${boardInfo.ctgryYn == 'Y'}]]*/ false,
+            postData: /*[[${post}]]*/ null,
+            // CKEditor 업로드 이미지를 임시 보관하는 영역
+            editorFiles: [],
+            existingEditorFileKeys: [],
+            deleteEditorAttachNos: []
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+        	const _this = this;
+            // CKEditor 초기화
+            _this.initCkEditor();
+
+            // 이벤트 바인딩
+            _this.initEvent();
+            
+         	// 수정 모드인 경우 기존 데이터 세팅
+            if (_this.state.boardRequestDto && _this.state.boardRequestDto.bbsPstOid) {
+            	_this.fnSetModifyData();
+            }
+
+            // 분류 선택하고 와서 분류 첫 렌더링
+            if (_this.state.useCategory) {
+                const params = new URLSearchParams(window.location.search);
+                const category = params.get("category");
+                const selectBox = document.getElementById('qna_category');
+
+                if (selectBox) {
+                    if (category === 'ALL' || !category) {
+                        selectBox.selectedIndex = 0;
+                    } else {
+                        selectBox.value = category;
+                    }
+                }
+            }
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 확인 버튼 클릭
+            document.getElementById('btn_qna_submit').addEventListener('click', function (e) {
+                e.preventDefault();
+                _this.fnSubmit();
+            });
+
+            // 취소 버튼 클릭
+            document.getElementById('btn_qna_cancel').addEventListener('click', function (e) {
+                e.preventDefault();
+                uiCommon.fnShowConfirmModal('작성을 취소하시겠습니까?', function () {
+                    uiCommon.fnHideConfirmModal();
+                    window.location.href = `${contextPath}/board?bbsOid=${_this.state.bbsOid}&menuCd=${_this.state.boardRequestDto.menuCd}`;
+                })
+            });
+
+            // 캡차 이미지 클릭 시 새로고침
+            document.getElementById('qnaRefreshCaptcha').addEventListener('click', function () {
+                _this.fnRefreshCaptcha();
+            });
+
+            // 캡차 사운드 클릭시
+            document.getElementById('qnaPlayAudio').addEventListener('click', function(){
+                _this.fnPlayAudio();
+            });
+        },
+        
+        /**
+         * 수정 데이터 화면 바인딩
+         */
+        fnSetModifyData: function () {
+            const post = this.state.postData;
+            if (!post) return;
+
+            // 작성자명 및 제목 세팅
+            if (document.getElementById('qna_writer_nm')) {
+                document.getElementById('qna_writer_nm').value = post.wrtrNm || '';
+            }
+            
+            if (document.getElementById('qna_title')) {
+                document.getElementById('qna_title').value = post.bbsPstTtl || '';
+            }
+
+            // 공개/비공개 라디오 버튼 세팅
+            const prvtPstYn = post.prvtPstYn || 'N';
+            
+            const secretRadio = document.querySelector(`input[name="qna_secret"][value="${prvtPstYn}"]`);
+            if (secretRadio) {
+                secretRadio.checked = true;
+            }
+
+            // 카테고리(분류) 세팅
+            if (this.state.useCategory && post.ctgryNm) {
+                const categorySelect = document.getElementById('qna_category');
+                if (categorySelect) {
+                    categorySelect.value = post.ctgryNm;
+                }
+            }
+            
+        },        
+
+        /**
+         * CK Editor 초기화
+         */
+        initCkEditor: function () {
+        	const _this = this;
+            CommonCKEditor.destroy('qna_editor');
+
+            document.getElementById('qna_editor').style.display = 'block';
+            document.getElementById('qna_editor').style.visibility = 'visible';
+
+            CommonCKEditor.init({
+                editorId: 'qna_editor',
+                content: _this.state.postData ? _this.state.postData.bbsPstCn : '',
+                chunkUpload: {
+                    enabled: true,
+                    chunkUrl: '/api/common/file/tmp/ck-image/chunk',
+                    chunkSize: _this.state.chunkSize,
+                    thresholdBytes: 5 * 1024 * 1024,
+                    onUploadComplete: (payload) => {
+                    	_this.handleEditorUploadComplete(payload);
+                    }
+                },
+                config: {
+                    height: 300,
+                    allowedContent: true,
+                    removePlugins: "image",
+                    image2_alignClasses: ['image-left', 'image-center', 'image-right'],
+                    image2_disableResizer: false,
+                    uploadImage_supportedTypes: /(jpeg|jpg|png|gif)$/i,
+                    uploadImage_maxSize: 52428800
+                },
+                onReady: function (editor) {
+                }
+            });
+        },
+
+        fnValidate: function () {
+            // 작성자명 필수값 벨리데이션
+            const writerNm = document.getElementById('qna_writer_nm');
+            if (!writerNm.value.trim()) {
+                uiCommon.fnShowAlertModal('작성자명을 입력해 주세요.', function() {
+                    writerNm.focus();
+                });
+                return false;
+            }
+
+            // 제목 필수값 벨리데이션
+            const title = document.getElementById('qna_title');
+            if (!title.value.trim()) {
+                uiCommon.fnShowAlertModal('제목을 입력해 주세요.', function() {
+                    title.focus();
+                });
+                return false;
+            }
+
+            // 분류 선택 필수값 벨리데이션
+            if (this.state.useCategory) { // category_yn이 'Y'일 때만 체크
+                const category = document.getElementById('qna_category');
+                if (category && !category.value) {
+                    uiCommon.fnShowAlertModal('분류를 선택해 주세요.', function() {
+                        category.focus();
+                    });
+                    return false;
+                }
+            }
+
+            // 비밀번호 검증 필수값이지만 조건이 있음
+            // 비공개(Y) 선택 AND 비로그인(!this.state.isLogin) 상태 및 수정모드일 때만 검증
+            const secretYn = document.querySelector('input[name="qna_secret"]:checked').value;
+
+            if (!this.state.isLogin && !this.state.boardRequestDto.bbsPstOid) {
+                const pwdInput = document.getElementById('qna_pwd');
+                const pswd = pwdInput.value.trim();
+
+                if (!pswd) {
+                    uiCommon.fnShowAlertModal('비밀번호를 입력해 주세요.', function() {
+                        pwdInput.focus();
+                    });
+                    return false;
+                }
+
+                // 비밀번호 형식 검증 (영문, 숫자, 특수문자 포함 9~14자)
+                const pwdRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^*+=-])[A-Za-z\d!@#$%^*+=-]{9,14}$/;
+                if (!pwdRegex.test(pswd)) {
+                    uiCommon.fnShowAlertModal('비밀번호는 영문, 숫자, 특수문자를 포함하여 9~14자로 입력해 주세요.\n(공백, & 제외)', function() {
+                        pwdInput.focus();
+                    });
+                    return false;
+                }
+            }
+
+            // 내용 필수값 벨리데이션
+            let contentData = '';
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances.qna_editor) {
+                contentData = CKEDITOR.instances.qna_editor.getData();
+            } else {
+                contentData = document.getElementById('qna_editor').value;
+            }
+
+            if (contentData.trim().length === 0) {
+                uiCommon.fnShowAlertModal('내용을 입력해 주세요.', function() {
+                    if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances.qna_editor) {
+                        CKEDITOR.instances.qna_editor.focus();
+                    } else {
+                        document.getElementById('qna_editor').focus();
+                    }
+                });
+                return false;
+            }
+
+            // 자동등록방지 벨리데이션
+            const captcha = document.getElementById('qna_captcha');
+            if (!captcha.value.trim()) {
+                uiCommon.fnShowAlertModal('자동등록방지 문자를 입력해 주세요.', function() {
+                    captcha.focus();
+                });
+                return false;
+            }
+
+            return true;
+        },
+
+        /**
+         * 파라미터 생성
+         */
+        fnBuildParam: function () {
+            const secretYn = document.querySelector('input[name="qna_secret"]:checked').value;
+
+            const data = {
+           		bbsPstOid: this.state.boardRequestDto.bbsPstOid || null,
+                bbsOid: this.state.bbsOid || null, // 게시판 번호 추가 (필요시 설정)
+                wrtrNm: document.getElementById('qna_writer_nm').value.trim(),
+                bbsPstTtl: document.getElementById('qna_title').value.trim(),
+                ctgry: this.state.useCategory ? document.getElementById('qna_category').value : '',
+                prvtPstYn: secretYn,
+                bbsPstCn: CommonCKEditor.getContent('qna_editor'),
+                menuCd: this.state.boardRequestDto.menuCd,
+                stts: 'PEND',
+                editorFiles: this.state.editorFiles
+            };
+
+            // 비공개인 경우에만 비밀번호 포함
+			if (!this.state.isLogin && !this.state.boardRequestDto.bbsPstOid) {
+			    data.wrtrPswd = document.getElementById('qna_pwd').value.trim();
+			}
+
+            return data;
+        },
+
+        /**
+         * Q&A 문의 등록
+         */
+        fnSubmit: function () {
+            const _this = this;
+
+            if (!this.fnValidate()) {
+                return;
+            }
+
+            const payload = this.fnBuildParam();
+            const menuCd = this.state.boardRequestDto.menuCd;
+            const captchaAnswer = document.getElementById('qna_captcha').value.trim();
+
+            const isUpdate = !!this.state.boardRequestDto.bbsPstOid; 
+            const url = isUpdate ? '/api/common/board/post/update' : '/api/common/board/post/insert';
+            const successMsg = isUpdate ? '수정되었습니다.' : '문의가 등록되었습니다. 담당자가 확인 후 답변드리겠습니다';
+            
+            
+            const requestConfig = {
+                url: url,
+                method: 'POST',
+                editorId: 'qna_editor',
+                data: payload,
+                sendDataAsJsonBlob: true,
+                extraFormData: {
+                    captchaAnswer: new Blob([captchaAnswer], { type: 'text/plain' })
+                },
+                onSuccess: function () {
+                    uiCommon.fnShowAlertModal(successMsg, function () {
+                        window.location.href = `${contextPath}/board?menuCd=${menuCd}&bbsOid=${_this.state.bbsOid}`;
+                    });
+                },
+                onError: function (xhr) {
+                	// 권한 부족(403) 에러 발생 시 처리
+                    if (xhr.stts === 403 && xhr.responseJSON && xhr.responseJSON.message.includes("비밀번호 인증")) {
+                        const boardConfig = {
+                            menuCd: menuCd,
+                            bbsOid: _this.state.bbsOid
+                        };
+                        // 비밀번호 확인 모달 호출 + 성공 시 fnSubmit 재실행 콜백 전달
+                        qna_secret.initModal(
+                            _this.state.boardRequestDto.bbsPstOid, 
+                            null, 
+                            'board', 
+                            boardConfig, 
+                            'upd', 
+                            _this.fnSubmit.bind(_this) // 성공 시 다시 저장 시도
+                        );
+                    } else {
+                        const message = (xhr.responseJSON && xhr.responseJSON.message) || '등록에 실패했습니다.';
+                        uiCommon.fnShowAlertModal(message);
+                    }
+                }
+            };
+
+            CommonCKEditor.saveWithFiles(requestConfig);
+        },
+
+        /**
+         * 캡차 이미지 새로고침
+         */
+        fnRefreshCaptcha: function () {
+            const captchaImage = document.getElementById('captchaImg');
+            // 캐시 방지를 위해 타임스탬프를 쿼리 파라미터로 추가
+            captchaImage.src = contextPath + '/api/common/captcha/image?t=' + new Date().getTime();
+            // 입력된 캡차 값 초기화
+            document.getElementById('qna_captcha').value = '';
+        },
+
+        /**
+         * 캡차 음성 듣기
+         */
+        fnPlayAudio: function () {
+            const soundUrl = contextPath + '/api/common/captcha/audio?t=' + new Date().getTime();
+            const uAgent = navigator.userAgent;
+
+            if (uAgent.indexOf('Trident') > -1 || uAgent.indexOf('MSIE') > -1) {
+                let audioPlayer = document.getElementById('captchaAudioPlayer');
+                if (!audioPlayer) {
+                    audioPlayer = document.createElement('bgsound');
+                    audioPlayer.id = 'captchaAudioPlayer';
+                    document.body.appendChild(audioPlayer);
+                }
+                audioPlayer.src = soundUrl;
+            } else {
+                const audio = new Audio(soundUrl);
+                audio.play();
+            }
+        },
+
+        // CKEditor 업로드 응답(payload)을 admin 저장용 포맷으로 축약한다.
+        handleEditorUploadComplete: function (payload) {
+            if (!payload || !payload.strgFilePath || !payload.strgFileNm) {
+                return;
+            }
+            const meta = {
+                originalStrgFileNm: payload.originalStrgFileNm || payload.strgFileNm,
+                storedStrgFileNm: payload.strgFileNm,
+                strgFilePath: payload.strgFilePath,
+                strgFileCpct: payload.strgFileCpct || null,
+                fileTypeNm: payload.fileTypeNm || this.extractFileExtension(payload.originalStrgFileNm || payload.strgFileNm)
+            };
+            this.upsertEditorFile(meta);
+        },
+
+        // 동일 경로/파일명은 덮어쓰고 나머지는 push한다.
+        upsertEditorFile: function (fileMeta) {
+            if (!fileMeta || !fileMeta.strgFilePath || !fileMeta.storedStrgFileNm) {
+                return;
+            }
+            const key = `${fileMeta.strgFilePath}__${fileMeta.storedStrgFileNm}`;
+            const idx = this.state.editorFiles.findIndex(item => `${item.strgFilePath}__${item.storedStrgFileNm}` === key);
+            if (idx > -1) {
+                this.state.editorFiles[idx] = fileMeta;
+            } else {
+                this.state.editorFiles.push(fileMeta);
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        edu303_2.init();
+    });
+</script>
+</body>
+</html>

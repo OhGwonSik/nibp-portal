@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 기관 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="search_wrap">
+        <ul>
+            <li>
+                <label for="instOid">기관번호</label>
+                <input type="text" id="instOid" placeholder="기관번호를 입력해주세요." title="기관번호 입력">
+            </li>
+            <li>
+                <label for="instNm">기관명</label>
+                <input type="text" id="instNm" placeholder="기관명을 입력해주세요." title="기관명 입력">
+            </li>
+            <li>
+                <label for="bizRegNo">사업자등록번호</label>
+                <input type="text" id="bizRegNo" maxlength="12" placeholder="숫자만 입력해주세요." title="사업자등록번호 입력">
+            </li>
+            <li>
+                <label for="repNm">대표자명</label>
+                <input type="text" id="repNm" placeholder="대표자명을 입력해주세요." title="대표자명 입력">
+            </li>
+            <li>
+                <label for="telNo">전화번호</label>
+                <input type="text" id="telNo" maxlength="12" placeholder="숫자만 입력해주세요." title="전화번호 입력">
+            </li>
+            <li>
+                <label for="faxNo">팩스번호</label>
+                <input type="text" id="faxNo" maxlength="12" placeholder="숫자만 입력해주세요." title="팩스번호 입력">
+            </li>
+            <li>
+                <label for="zipCd">우편번호</label>
+                <input type="text" id="zipCd" maxlength="6" placeholder="숫자만 입력해주세요." title="우편번호 입력">
+            </li>
+            <li>
+                <label for="addr">주소</label>
+                <input type="text" id="addr" placeholder="주소를 입력해주세요." title="주소 입력">
+            </li>
+        </ul>
+        <div class="s_wrap"><a id="admin810_btn_search" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_desc">
+            <p>총 <strong id="admin810_total_count"></strong>건</p>
+            <div class="table_top_btn">
+                <a href="javascript:;" id="btn_register_org" class="btn_basic bg_type01">등록</a>
+                <a href="javascript:;" id="btn_delete_org" class="btn_basic bg_type01">삭제</a>
+            </div>
+        </div>
+        <div class="table_layout02 list_type mb20 big_table">
+            <table>
+                <caption>기관 목록</caption>
+                <colgroup>
+                    <col style="width: 60px;">
+                    <col style="width: 60px;">
+                    <col style="width: 180px;">
+                    <col style="width: 120px;">
+                    <col style="width: 100px;">
+                    <col style="width: 120px;">
+                    <col style="width: 120px;">
+                    <col style="width: auto;">
+                    <col style="width: 100px;">
+                    <col style="width: 160px;">
+                    <col style="width: 100px;">
+                    <col style="width: 160px;">
+                    <col style="width: 80px;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col"><input type="checkbox" id="all_check"></th>
+                    <th scope="col">기관번호</th>
+                    <th scope="col">기관명</th>
+                    <th scope="col">사업자등록번호</th>
+                    <th scope="col">대표자명</th>
+                    <th scope="col">전화번호</th>
+                    <th scope="col">팩스번호</th>
+                    <th scope="col">주소</th>
+                    <th scope="col">등록자ID</th>
+                    <th scope="col">등록일시</th>
+                    <th scope="col">수정자ID</th>
+                    <th scope="col">수정일시</th>
+                    <th scope="col">사용 여부</th>
+                </tr>
+                </thead>
+                <tbody id="org_list_container"></tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin810 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: null,  // 조회한 데이터
+            pageIndex: 1,
+            pageCnt: 10
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin810', '.search_wrap');
+            if (saved) {
+                this.state.pageIndex = saved._extra.pageIndex || 1;
+            }
+
+            // 데이터 조회
+            this.getListData();
+
+            // 이벤트 바인딩
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 사업자등록번호 자동 포맷
+            common.bindBizRegNo('bizRegNo');
+
+            // 전화번호, 팩스번호, 우편번호 숫자만 입력
+            common.bindNumericOnly('telNo', 'faxNo', 'zipCd');
+
+            // 검색 버튼 클릭
+            document.getElementById("admin810_btn_search").addEventListener("click", function (e) {
+                e.preventDefault();
+
+                // 검색하면 첫 페이지로 이동
+                _this.state.pageIndex = 1;
+                _this.getListData();
+            });
+
+            // 등록 버튼 클릭
+            document.getElementById("btn_register_org").addEventListener("click", function (e) {
+                e.preventDefault();
+
+                _this.fnRegister();
+            });
+
+            // 삭제 버튼 클릭
+            document.getElementById("btn_delete_org").addEventListener("click", async function (e) {
+                e.preventDefault();
+
+                _this.fnDelete();
+            });
+
+            // 전체 선택 체크박스
+            document.getElementById("all_check").addEventListener("change", function () {
+                const isChecked = this.checked;
+                document.querySelectorAll(".row_check").forEach(function(checkbox) {
+                    checkbox.checked = isChecked;
+                });
+            });
+
+            // 개별 체크박스 클릭 시 전체 선택 체크박스 상태 업데이트
+            document.addEventListener("change", function (e) {
+                if (e.target.classList.contains("row_check")) {
+                    const totalCheckboxes = document.querySelectorAll(".row_check").length;
+                    const checkedCheckboxes = document.querySelectorAll(".row_check:checked").length;
+                    document.getElementById("all_check").checked = totalCheckboxes === checkedCheckboxes;
+                }
+            });
+
+            // 기관명 클릭 시 수정 페이지로 이동
+            document.addEventListener("click", function (e) {
+                if (e.target.classList.contains("org_link")) {
+                    e.preventDefault();
+                    const instOid = e.target.getAttribute("data-inst-oid");
+                    if (instOid) {
+                        window.location.href = contextPath + '/admin/page/admin810-1?instOid=' + instOid;
+                    }
+                }
+            });
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            if (!_this.state.all) {
+                return;
+            }
+
+            const totalPages = _this.state.all.pages;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: totalPages,
+                onPageChange: function(page) {
+                    _this.state.pageIndex = page;
+                    _this.getListData();
+                }
+            });
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+            const tbody = document.getElementById("org_list_container");
+            tbody.innerHTML = '';
+
+            if (!this.state.all || !this.state.all.list || this.state.all.list.length === 0) {
+                tbody.innerHTML = '<tr><td class="tac" colspan="13">조회된 결과가 없습니다.</td></tr>';
+                document.getElementById('admin810_total_count').textContent = '';
+                return;
+            }
+
+            const list = this.state.all.list;
+
+            let html = '';
+            list.forEach(function(item) {
+                html += `
+                <tr>
+                    <td class="tac">
+                        <input type="checkbox" class="row_check" value="${item.instOid || ''}">
+                    </td>
+                    <td class="tac">${item.instOid || ''}</td>
+                    <td class="tac"><a href="javascript:;" class="org_link a_link" data-inst-oid="${item.instOid || ''}">${item.instNm || ''}</a></td>
+                    <td class="tac">${item.bizRegNo || ''}</td>
+                    <td class="tac">${item.repNm || ''}</td>
+                    <td class="tac">${common.joinPhoneNumber(item.telPfx, item.telMid, item.telSfx)}</td>
+                    <td class="tac">${common.joinPhoneNumber(item.faxPfx, item.faxMid, item.faxSfx)}</td>
+                    <td class="tal">${common.formatValues(item.addr, item.addrDtl)}</td>
+                    <td class="tac">${item.regId || ''}</td>
+                    <td class="tac">${item.regDt || ''}</td>
+                    <td class="tac">${item.mdfcnId || ''}</td>
+                    <td class="tac">${common.formatDateTime(item.mdfcnDt)}</td>
+                    <td class="tac">${common.formatUseYn(item.useYn)}</td>
+                </tr>
+            `;
+            });
+            tbody.innerHTML = html;
+
+            document.getElementById('admin810_total_count').textContent = this.state.all.total;
+        },
+
+        /**
+         * 목록 데이터 조회
+         */
+        getListData: async function () {
+            SearchState.saveForm('admin810', '.search_wrap', { pageIndex: this.state.pageIndex });
+
+            const param = {
+                page: this.state.pageIndex,
+                size: this.state.pageCnt,
+                instOid: document.getElementById('instOid').value.trim() || null,
+                instNm: document.getElementById('instNm').value.trim() || null,
+                bizRegNo: document.getElementById('bizRegNo').value.trim() || null,
+                repNm: document.getElementById('repNm').value.trim() || null,
+                zipCd: document.getElementById('zipCd').value.trim() || null,
+                addr: document.getElementById('addr').value.trim() || null,
+                telNo: document.getElementById('telNo').value.trim() || null,
+                faxNo: document.getElementById('faxNo').value.trim() || null
+            };
+
+            try {
+                const response = await API.get('/api/admin/admin810/org/list?', param);
+
+                // 페이지 데이터에 저장
+                this.state.all = response;
+                this.renderTable();
+                this.renderPagination();
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+                // uiCommon.fnShowAlertModal('목록 조회에 실패했습니다.');
+            }
+        },
+
+        /**
+         * 기관 등록
+         */
+        fnRegister: function () {
+            SearchState.clear('admin810');
+            window.location.href = contextPath + '/admin/page/admin810-1';
+        },
+
+        /**
+         * 기관 삭제
+         */
+        fnDelete: function () {
+            const _this = this;
+
+            // 체크된 항목 찾기
+            const checkedItems = document.querySelectorAll(".row_check:checked");
+            if (checkedItems.length === 0) {
+                uiCommon.fnShowAlertModal('삭제할 기관을 선택해주세요.');
+                return;
+            }
+
+            // 선택된 기관번호 배열 생성
+            const instOids = [];
+            checkedItems.forEach(function(item) {
+                instOids.push(item.value);
+            });
+
+            uiCommon.fnShowConfirmModal(`선택한 ${instOids.length}개의 기관을 삭제하시겠습니까?`, async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    // 각 기관번호에 대해 삭제 API 호출
+                    for (const instOid of instOids) {
+                        await API.patch('/api/admin/admin810/org/delete', { instOid: instOid });
+                    }
+                    uiCommon.fnShowAlertModal('삭제되었습니다.');
+                    // 목록 새로고침
+                    await _this.getListData();
+                } catch (error) {
+                    console.error('삭제 실패:', error);
+                    uiCommon.fnShowAlertModal('삭제에 실패했습니다.');
+                }
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        admin810.init();
+    });
+</script>
+</body>
+</html>

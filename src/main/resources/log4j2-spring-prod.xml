@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- prod : 정책원운영서버- 정책원운영 DB -->
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <!-- 운영 환경: 로그 패턴 (스택트레이스 포함) -->
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n%throwable</Property>
+        <!-- MDC 패턴 (요청 추적용 - 필요시 활성화) -->
+        <Property name="LOG_PATTERN_WITH_MDC">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] [%X{requestId}] %-5level %logger{36} - %msg%n%throwable</Property>
+        <Property name="LOG_PATH">/app/logs</Property>
+        <Property name="LOG_FILE">${LOG_PATH}/prod.log</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- 일반 로그 파일 -->
+        <RollingFile name="RollingFile"
+                     fileName="${LOG_FILE}"
+                     filePattern="${LOG_PATH}/prod-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout>
+                <Pattern>${LOG_PATTERN}</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30">
+                <Delete basePath="${LOG_PATH}" maxDepth="1">
+                    <IfFileName glob="prod-*.log.gz" />
+                    <IfLastModified age="30d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- Error 로그 파일 (ERROR 이상만) -->
+        <RollingFile name="ErrorFile"
+                     fileName="${LOG_PATH}/error.log"
+                     filePattern="${LOG_PATH}/error-%d{yyyy-MM-dd}-%i.log.gz">
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout>
+                <Pattern>${LOG_PATTERN}</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="50 MB"/>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="60">
+                <Delete basePath="${LOG_PATH}" maxDepth="1">
+                    <IfFileName glob="error-*.log.gz" />
+                    <IfLastModified age="60d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- 비동기 Appender (성능 향상) -->
+        <Async name="AsyncRollingFile" bufferSize="512" blocking="false">
+            <AppenderRef ref="RollingFile"/>
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+            </Filters>
+        </Async>
+
+        <Async name="AsyncErrorFile" bufferSize="256" blocking="true">
+            <AppenderRef ref="ErrorFile"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <!-- ============================================================ -->
+        <!-- 애플리케이션 코드: INFO (비즈니스 로그 출력)                     -->
+        <!-- ============================================================ -->
+        <Logger name="egovframework" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncRollingFile"/>
+            <AppenderRef ref="AsyncErrorFile"/>
+        </Logger>
+        <Logger name="org.egovframe" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncRollingFile"/>
+        </Logger>
+
+        <!-- ============================================================ -->
+        <!-- SQL / P6Spy / JDBC 로깅: 완전 비활성화                         -->
+        <!-- ============================================================ -->
+        <Logger name="java.sql" level="OFF" additivity="false"/>
+        <Logger name="jdbc.sqltiming" level="OFF" additivity="false"/>
+        <Logger name="jdbc.sqlonly" level="OFF" additivity="false"/>
+        <Logger name="jdbc.audit" level="OFF" additivity="false"/>
+        <Logger name="jdbc.resultset" level="OFF" additivity="false"/>
+        <Logger name="jdbc.resultsettable" level="OFF" additivity="false"/>
+        <Logger name="jdbc.connection" level="OFF" additivity="false"/>
+        <Logger name="p6spy" level="OFF" additivity="false"/>
+        <Logger name="log4jdbc" level="OFF" additivity="false"/>
+
+        <!-- Hibernate SQL: OFF -->
+        <Logger name="org.hibernate.SQL" level="OFF" additivity="false"/>
+        <Logger name="org.hibernate.type" level="OFF" additivity="false"/>
+        <Logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="OFF" additivity="false"/>
+
+        <!-- ============================================================ -->
+        <!-- 프레임워크 / 라이브러리: WARN (내부 노이즈 억제)                 -->
+        <!-- ============================================================ -->
+
+        <!-- Spring Framework -->
+        <Logger name="org.springframework" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncRollingFile"/>
+        </Logger>
+
+        <!-- Spring Web: INFO (요청 매핑, 컨트롤러 로그 확인용) -->
+        <Logger name="org.springframework.web" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncRollingFile"/>
+        </Logger>
+
+        <!-- Spring Security: WARN (필터 체인 로그가 많아 억제) -->
+        <Logger name="org.springframework.security" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncRollingFile"/>
+            <AppenderRef ref="AsyncErrorFile"/>
+        </Logger>
+
+        <!-- 예외 처리 -->
+        <Logger name="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncRollingFile"/>
+            <AppenderRef ref="AsyncErrorFile"/>
+        </Logger>
+
+        <!-- Hibernate (SQL 제외) -->
+        <Logger name="org.hibernate" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncRollingFile"/>
+        </Logger>
+
+        <!-- MyBatis -->
+        <Logger name="org.mybatis" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncRollingFile"/>
+        </Logger>
+
+        <!-- Apache 라이브러리 -->
+        <Logger name="org.apache" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncRollingFile"/>
+        </Logger>
+
+        <!-- ============================================================ -->
+        <!-- Root Logger: WARN                                             -->
+        <!-- ============================================================ -->
+        <Root level="WARN">
+            <AppenderRef ref="AsyncRollingFile"/>
+            <AppenderRef ref="AsyncErrorFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

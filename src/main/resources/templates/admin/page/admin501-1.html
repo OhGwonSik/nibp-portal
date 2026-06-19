@@ -1,0 +1,3282 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>만족도 조사 > 설문 > 설문등록/수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02 mb10">
+            <table>
+                <caption>설문등록</caption>
+                <colgroup>
+                    <col style="width: 170px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+	                <tr>
+	                    <th scope="row"><label for="lab_01">설문 제목</label></th>
+	                    <td>
+	                        <input type="text" id="lab_01" title="설문 제목" class="w100">
+	                    </td>
+	                </tr>
+	                <tr>
+	                    <th scope="row"><label for="admin5011EduOrgStartDt">설문 기간</label></th>
+	                    <td>
+	                        <div class="flex_col"><span class="datepicker"><input type="text" value="시작일"
+	                                                                              id="admin5011EduOrgStartDt"
+	                                                                              class="datepick"><img
+	                                class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택"
+	                                title="선택"></span> ~ <span class="datepicker"><input type="text" value="종료일"
+	                                                                                     id="admin5011EduOrgEndDt"
+	                                                                                     class="datepick"><img
+	                                class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택"
+	                                title="선택"></span></div>
+	                    </td>
+	                </tr>
+	                <tr>
+	                    <th scope="row"><label>설문 유형</label></th>
+	                    <td>
+	                        <span class="radio-box"><input type="radio" id="survey_type_01" name="survey_type"
+	                                                       value="COMMON" checked><label for="survey_type_01">일반
+	                            설문 </label></span>
+	                    </td>
+	                </tr>
+	                <tr>
+	                    <th scope="row"><label>설문 대상</label></th>
+	                    <td>
+	                        <span class="radio-box"><input type="radio" id="radio_01_01" name="radio_01" value="ALL"
+	                                                       checked><label for="radio_01_01">비회원 (로그인 불필요)</label></span>
+	                    </td>
+	                </tr>
+	                <tr>
+	                    <th scope="row"><label>추가 수집 정보</label></th>
+	                    <td>
+	                        <span class="radio-box"><input type="checkbox" id="chec_01"><label
+	                                for="chec_01">성명</label></span>
+	                        <span class="radio-box ml10"><input type="checkbox" id="chec_02"><label for="chec_02">성별</label></span>
+	                        <span class="radio-box ml10"><input type="checkbox" id="chec_03"><label
+	                                for="chec_03">소속기관</label></span>
+	                        <span class="radio-box ml10"><input type="checkbox" id="chec_04"><label
+	                                for="chec_04">휴대폰번호</label></span>
+	                        <span class="radio-box ml10"><input type="checkbox" id="chec_05"><label
+	                                for="chec_05">이메일</label></span>
+	                        <span class="radio-box ml10"><input type="checkbox" id="chec_06"><label for="chec_06">주소</label></span>
+	                    </td>
+	                </tr>
+	                <tr>
+	                    <th scope="row"><label for="sur_editor">설문 안내</label></th>
+	                    <td>
+	                        <textarea name="sur_editor" id="sur_editor" rows="30"></textarea>
+	                    </td>
+	                </tr>
+	  				<tr id="shareTableRow" style="display:none;">
+					    <th scope="row">공유하기</th>
+					    <td>
+					        <div style="display:flex; align-items:center; gap:5px; margin-bottom:10px;">
+					            <input type="text" id="survey_url" class="w60" readonly>
+					            <button type="button" id="copyUrlBtn" class="btn_basic line_type02">URL 복사</button>
+					            <button type="button" id="viewQrBtn" class="btn_basic line_type02">QR 보기</button>
+					        </div>
+					
+					        <div id="qr_code_area" style="display:none; margin-top:10px; padding:10px; border:1px solid #ddd; width:fit-content;">
+					            <div id="qrcode"></div>
+					        </div>
+					    </td>
+					</tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table_layout02">
+            <table>
+                <caption>설문등록</caption>
+                <colgroup>
+                    <col style="width: 170px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row"><label for="chapter_01">챕터 관리</label></th>
+                    <td>
+                        <p><span class="radio-box"><input type="checkbox" id="chapter_01"><label for="chapter_01">챕터
+                            사용</label></span></p>
+                        <div class="chapter_wrap">
+                            <div class="option-row">
+                                <label>챕터 1</label>
+                                <input type="text">
+                                <p>
+                                    <button type="button">추가</button>
+                                    <button type="button" class="del">삭제</button>
+                                </p>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="question_wrap">
+            <div class="question_inner">
+                <div class="tit_wrap">
+                    <strong>문항 관리</strong>
+                    <select title="구분" class="chapter-select">
+                        <option value="">챕터 선택</option>
+                    </select>
+                </div>
+                <div class="question_con">
+                    <div class="question_row">
+                        <ul>
+                            <li>
+                                <label>설문유형</label>
+                                <select class="qst_type_select" title="설문유형">
+                                    <option value="MULTI">객관식</option>
+                                    <option value="SHORT">주관식 단답</option>
+                                    <option value="LONG">주관식 서술</option>
+                                    <option value="LIKERT">리커트 척도</option>
+                                    <option value="RANK">순위</option>
+                                    <option value="IMG_SEL">이미지 선택형</option>
+                                    <option value="IMG_RESP">이미지 응답형</option>
+                                    <option value="RATIO">비율</option>
+                                </select>
+                            </li>
+							<li>
+					            <label>필수여부</label>
+					            <select class="required-type" title="필수여부">
+					                <option value="Y">필수</option>
+					                <option value="N">선택</option>
+					            </select>
+					        </li>
+                            <!-- 객관식에만 쓰이는 영역 -->
+                            <li class="qst-type-multi-setting">
+                                <span class="radio-box"><input type="checkbox" id="chec_07"><label
+                                        for="chec_07">복수선택</label></span>
+                                <select class="multi-limit-type" title="복수선택" style="display:none">
+                                    <option value="NONE">제한 없음</option>
+                                    <option value="LIMIT">개수 제한</option>
+                                </select>
+								<input type="text" 
+								       class="multi-limit-count chec_07 wp50" 
+								       style="display:none" 
+								       value="1" 
+								       placeholder="개수"
+								       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            </li>
+
+                            <!-- 단답형 옵션 -->
+                            <li class="qst-type-short-setting" style="display:none">
+                                <label>답변 최대 글자수</label>
+                                <input type="text" maxlength="100" class="wp50" placeholder="100"> (100자 이하)
+                            </li>
+
+                            <!-- 서술형 옵션 -->
+                            <li class="qst-type-long-setting" style="display:none">
+                                <label>답변 최대 글자수</label>
+                                <input type="text" maxlength="2000" class="wp50" placeholder="2000"> (2000자 이하)
+                            </li>
+
+                            <!-- 리커트 옵션 -->
+                            <li class="qst-type-likert-setting" style="display:none">
+                                <label for="likertCount">척도 수</label>
+                                <select id="likertCount" title="척도 수 선택">
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </li>
+                            <!-- 비율(점수단계) 설정 -->
+                            <li class="qst-type-ratio-setting" style="display:none">
+                                <label>점수 단계</label>
+                                <select class="ratio-step">
+                                    <option value="1">1점</option>
+                                    <option value="2">2점</option>
+                                    <option value="3">3점</option>
+                                    <option value="4">4점</option>
+                                    <option value="5">5점</option>
+                                    <option value="6">6점</option>
+                                    <option value="7">7점</option>
+                                    <option value="8">8점</option>
+                                    <option value="9">9점</option>
+                                    <option value="10">10점</option>
+                                </select>
+                            </li>
+                        </ul>
+                        <button type="button" class="del_btn">문항삭제</button>
+                    </div>
+
+                    <!-- 공통 질문 입력 -->
+                    <div class="list_row qst-common-row">
+                        <input type="text" value="1" class="wp50 list_first">
+                        <textarea placeholder="질문 입력" class="w100"></textarea>
+                        <div class="file_wrap list_last">
+                            <label for="fileInput1" class="file_label">파일 선택</label>
+                            <span class="fileName">첨부 파일 선택</span>
+                            <input type="file" id="fileInput1" class="fileInput" style="display:none;"
+                                   th:accept="${#strings.substringBefore(allowedExtensions, ',') == allowedExtensions ? '.' + allowedExtensions : '.' + #strings.replace(allowedExtensions, ',', ',.')}"
+                                   th:attr="data-allowed-ext=${allowedExtensions}">
+                            <div class="file_list"></div>
+                        </div>
+                    </div>
+
+                    <!-- 리커트 항목 렌더링 위치 -->
+                    <div class="qst-type-likert-items" style="display:none;">
+                        <div class="list_row likert-template" style="display:none;">
+                            <label class="list_first"></label>
+                            <input type="text" class="w100" placeholder="">
+                        </div>
+                    </div>
+
+                    <!-- 객관식 옵션 목록 -->
+                    <div class="list_row qst-type-multi">
+                        <label class="list_first">항목1</label>
+                        <input type="text" placeholder="항목 입력" class="w100">
+                        <div class="list_last">
+                            <button type="button" class="del">삭제</button>
+                        </div>
+                    </div>
+
+                    <!-- 기타 -->
+                    <div class="list_row qst-type-multi-etc" style="display:none;">
+                        <label class="list_first">기타</label>
+                        <input type="text" class="w100" value="기타" placeholder="기타 입력">
+                        <div class="list_last">
+                            <button type="button" class="del">삭제</button>
+                        </div>
+                    </div>
+
+                    <!-- 단답형 -->
+                    <div class="list_row qst-type-short" style="display:none;">
+                        <label class="list_first">항목</label>
+                        <input type="text" class="w100" placeholder="100자 이내로 작성해 주세요." disabled>
+                        <div class="list_last">
+                            <span class="radio-box"><input type="checkbox" id="chec_08"><label for="chec_08">숫자만
+                                입력</label></span>
+                        </div>
+                    </div>
+
+                    <!-- 서술형 -->
+                    <div class="list_row qst-type-long" style="display:none;">
+                        <label class="list_first">항목</label>
+                        <input type="text" class="w100" placeholder="2,000자 이내로 작성해 주세요." disabled>
+                    </div>
+
+                    <!-- 이미지 선택형 -->
+                    <div class="list_row qst-type-img-sel" style="display:none;">
+                        <label class="list_first">항목</label>
+                        <input type="text" class="w100" placeholder="">
+                        <div class="list_last">
+                            <div class="file_wrap">
+                                <label for="fileInput2" class="file_label">파일 선택</label>
+                                <span class="fileName">첨부 파일 선택</span>
+                                <input type="file" id="fileInput2" class="fileInput" style="display:none;"
+                                       accept="image/jpeg, image/png, image/gif, image/bmp"
+                                       th:attr="data-allowed-ext=${allowedExtensions}"
+                                >
+                                <div class="file_list"></div>
+                                <button type="button" class="del">삭제</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 이미지 응답형 -->
+                    <div class="list_row qst-type-img-resp" style="display:none;">
+                        <label class="list_first">항목</label>
+                        <span class="radio-box"><input type="radio" name="radio_02_01"><label> 파일만 업로드</label></span>
+                        <span class="radio-box">
+                            <input type="radio" name="radio_02_01">
+                            <label> 파일 업로드 + 글 입력 (답변 최대 글자수
+                                <input type="text" class="wp100 tar" placeholder="2,000"> (2,000자 이하))
+                            </label>
+                        </span>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="question_btn_bottom">
+                        <div class="bottom_bnt">
+                            <a href="javascript:;" class="btn-add-option">+항목 추가</a>
+                            <a href="javascript:;" class="btn-add-etc">기타 추가</a>
+                        </div>
+                        <div class="bottom_bnt">
+                            <a href="javascript:;" class="btn-sub-question">하위 질문</a>
+                            <a href="javascript:;">문항 복사</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <p class="question_btn"><a href="javascript:;">+ 문항추가</a></p>
+        </div>
+        <div class="btn_wrap mt20">
+        	<a href="javascript:;" id="admin5011SurveyPreview" class="btn_basic bg_type01" style="display:none;">미리보기</a>
+            <a href="javascript:;" id="admin5011SurveyTmpSave" class="btn_basic bg_type01">임시저장</a>
+            <a href="javascript:;" id="admin5011SurveySave" class="btn_basic bg_type01">등록</a>
+            <a href="javascript:;" id="admin501_1_btn_survey_cancel" class="btn_basic line_type02">취소</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    // admin501 전용으로 파일칩 높이/정렬만 조정 (공용 CSS는 그대로 유지)
+    (() => {
+        const style = document.createElement("style");
+        style.textContent = `
+            .question_wrap .file_wrap {
+            	align-items: center;
+            	gap: 8px;
+			}
+            .question_wrap .file_wrap .file_list {
+				margin-bottom: 0px;
+            }
+            .question_wrap .file_wrap .file_list p {
+                align-items: center;
+                gap: 8px;
+                margin: 0;
+                padding: 6px 60px 6px 12px;
+                background: #ddebff;
+                position: relative;
+                max-width: 160px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .question_wrap .file_wrap .file_list p a {
+                position: absolute;
+                top: 50%;
+                right: 15px;
+                margin-top: -10px;
+            }
+        `;
+        document.head.appendChild(style);
+    })();
+    let admin501_1 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: null,        // 조회한 데이터
+            chapters: [],
+            mode: 'insert',
+            srvyOid: null,
+            deletedQstList: [],
+            deletedOptList: [],
+            deletedQstAttachList: [], // 조회된 문항 첨부파일 삭제 대상
+            fileInputSeq: 1,
+            editorFiles: [],            // 에디터에 새로 추가된 이미지 메타데이터
+            existingEditorFileKeys: [], // (수정 시) 에디터에 있던 기존 이미지 키
+            deleteEditorAttachNos: [],   // 에디터에서 삭제된 이미지 번호들
+            maxFileSize: /*[[${maxFileSize}]]*/ 10,
+            allowedExtensions: /*[[${allowedExtensions}]]*/ '',
+        },
+
+        /**
+         * 조회되어 있는 문항 첨부파일을 삭제할 때 호출한다.
+         * - 동일 파일번호가 중복해서 들어가지 않도록 한 번만 push
+         * - 등록(PUT/POST) 시 deletedQstAttachList로 서버에 전달되어 use_yn=N 처리/삭제된다.
+         */
+        fnMarkDeletedAttach: function (attachNo) {
+            if (!attachNo) return;
+            if (!this.state.deletedQstAttachList.includes(attachNo)) {
+                this.state.deletedQstAttachList.push(attachNo);
+            }
+        },
+
+        /**
+         * 파일 UI를 초기 상태로 되돌린다.
+         * - file input 값 비우기
+         * - 안내 문구 복원
+         * - 첨부칩 영역 비우기
+         * 문항별 첨부를 교체/삭제할 때 공통으로 호출한다.
+         */
+        fnResetFileUI: function (wrap) {
+            if (!wrap) return;
+            const input = wrap.querySelector(".fileInput");
+            if (input) {
+                input.value = "";
+            }
+            const nameSpan = wrap.querySelector(".fileName");
+            if (nameSpan) {
+                nameSpan.textContent = "첨부 파일 선택";
+                nameSpan.style.display = ""; // 안내 문구 다시 노출
+            }
+            const fileListBox = wrap.querySelector(".file_list");
+            if (fileListBox) {
+                fileListBox.innerHTML = "";
+            }
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            const _this = this;
+            const queryParams = new URLSearchParams(location.search);
+            this.state.srvyOid = queryParams.get('srvyOid'); // 있으면 수정모드
+
+            this.initEvent();
+            this.fnRefreshFileInputs(document.querySelector(".question_inner"));
+
+            // CKEditor 초기화
+            CommonCKEditor.destroy('sur_editor');
+
+            const surEditor = document.querySelector('#sur_editor');
+            if (surEditor) {
+                surEditor.style.display = 'block';
+                surEditor.style.visibility = 'visible';
+            }
+
+            // CKEditor 생성
+            await CommonCKEditor.init({
+                editorId: 'sur_editor',
+                content: '',
+                onReady: function (editor) {
+                    console.log('CKEditor 준비 완료', editor);
+                },
+                chunkUpload: {
+                    enabled: true,
+                    chunkUrl: '/api/common/file/tmp/ck-image/chunk', // 에디터용 청크 URL
+                    chunkSize: this.state.chunkSize,
+                    thresholdBytes: 5 * 1024 * 1024,
+                    // 에디터 내 이미지 업로드 완료 시 메타데이터 저장
+                    onUploadComplete: (payload) => {
+                        _this.handleEditorUploadComplete(payload);
+                    }
+                }
+            });
+
+            uiCommon.datepicker.init('#admin5011EduOrgStartDt', {
+                onSelect: function (selectedDate) {
+                    // 시작일 선택 시 종료일의 최소 날짜를 시작일로 설정
+                    $('#admin5011EduOrgEndDt').datepicker('option', 'minDate', selectedDate);
+
+                    // 종료일이 이미 선택되어 있고 시작일보다 빠른 경우 경고
+                    const endDate = $('#admin5011EduOrgEndDt').val();
+                    if (endDate && selectedDate > endDate) {
+                        uiCommon.fnShowAlertModal('시작일은 종료일보다 빨라야 합니다.', function () {
+                            $('#admin5011EduOrgStartDt').val('');
+                        });
+                    }
+                }
+            });
+
+            // 종료일 datepicker 초기화
+            uiCommon.datepicker.init('#admin5011EduOrgEndDt', {
+                onSelect: function (selectedDate) {
+                    // 종료일 선택 시 시작일의 최대 날짜를 종료일로 설정
+                    $('#admin5011EduOrgStartDt').datepicker('option', 'maxDate', selectedDate);
+
+                    // 시작일이 이미 선택되어 있고 종료일보다 늦은 경우 경고
+                    const startDate = $('#admin5011EduOrgStartDt').val();
+                    if (startDate && startDate > selectedDate) {
+                        uiCommon.fnShowAlertModal('종료일은 시작일보다 늦어야 합니다.', function () {
+                            $('#admin5011EduOrgEndDt').val('');
+                        });
+                    }
+                }
+            });
+
+            const today = new Date();
+            const weekAgo = new Date();
+            weekAgo.setDate(today.getDate() - 30);
+
+            $('#admin5011EduOrgStartDt').datepicker('setDate', weekAgo);
+            $('#admin5011EduOrgEndDt').datepicker('setDate', today);
+
+            if (this.state.srvyOid) {
+                // 수정 모드: 상세 조회 후 폼 바인딩
+                this.state.mode = 'update';
+            
+            	const btnSurveyPreview = document.getElementById("admin5011SurveyPreview");
+            	if(btnSurveyPreview){
+            		btnSurveyPreview.style.display = "inline";
+            	}
+
+            	// 공유하기 tr 보이게
+            	const shareRow = document.getElementById("shareTableRow");
+                if (shareRow) {
+                    shareRow.style.display = "table-row";
+                    
+                    // 설문 URL 생성
+                    const domain = window.location.origin;
+                    const surveyPath = "/page/portal602-1"; 
+                    const fullUrl = `${domain}${contextPath}${surveyPath}?srvyOid=${this.state.srvyOid}`;
+                    
+                    document.getElementById("survey_url").value = fullUrl;
+                }
+                
+                await admin501_1.searchSurveyDetail();
+            } else {
+                this.state.mode = 'insert';
+            }
+        },
+
+        fnGenerateFileInputId: function () {
+            return `fileInput${this.state.fileInputSeq++}`;
+        },
+
+        fnRefreshFileInputs: function (target) {
+            if (!target) return;
+            const wraps = target.querySelectorAll(".file_wrap");
+            wraps.forEach(wrap => {
+                const fileInput = wrap.querySelector("input[type='file']");
+                if (!fileInput) return;
+                const newId = this.fnGenerateFileInputId();
+                fileInput.id = newId;
+                const label = wrap.querySelector("label.file_label");
+                if (label) {
+                    label.setAttribute("for", newId);
+                }
+            });
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+            
+            // 미리보기 클릭 시
+            const btnSurveyPreview = document.getElementById("admin5011SurveyPreview");
+            btnSurveyPreview.addEventListener("click", function() {
+           	 	window.open(`${contextPath}/admin/page/admin501-1_preview?srvyOid=${_this.state.srvyOid}`, '_blank');
+            });
+            
+         	// URL 복사 (수정시)
+            const btnCopy = document.getElementById("copyUrlBtn");
+            
+			if (btnCopy) {
+			   btnCopy.addEventListener("click", function() {
+			       const urlInput = document.getElementById("survey_url");
+			       if (!urlInput || !urlInput.value) return;
+			
+			       // 클립보드에 복사
+			       if (navigator.clipboard && navigator.clipboard.writeText) {
+			           navigator.clipboard.writeText(urlInput.value)
+			               .then(() => {
+			                   uiCommon.fnShowAlertModal("URL이 복사되었습니다.");
+			               })
+			               .catch(err => {
+			                   console.error("Clipboard API 실패:", err);
+			                   // 실패 시 Fallback
+			                   document.execCommand("copy");
+			                   uiCommon.fnShowAlertModal("URL이 복사되었습니다.");
+			               });
+			       } else {
+			           // 구형 브라우저 대응
+			           urlInput.select();
+			           document.execCommand("copy");
+			           uiCommon.fnShowAlertModal("URL이 복사되었습니다.");
+			       }
+			   });
+			}
+			// QR 보이게 (수정시)
+            const btnViewQr = document.getElementById("viewQrBtn");
+
+            if (btnViewQr) {
+                btnViewQr.addEventListener("click", function() {
+                    const qrArea = document.getElementById("qr_code_area");
+                    const qrContainer = document.getElementById("qrcode");
+                    const urlInput = document.getElementById("survey_url");
+
+                    if (!urlInput || !urlInput.value) {
+                        uiCommon.fnShowAlertModal("QR코드를 생성할 URL이 없습니다.");
+                        return;
+                    }
+
+                    if (qrArea.style.display !== "none") {
+                        return;
+                    }
+
+                    qrArea.style.display = "block";
+
+                    qrContainer.innerHTML = "";
+
+                    // QR 생성
+                    new QRCode(qrContainer, {
+                        text: urlInput.value,
+                        width: 100,
+                        height: 100,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.M
+                    });
+                });
+            }
+			
+         	// 복수선택 개수 제한
+            document.addEventListener("input", function (e) {
+                if (e.target.matches(".multi-limit-count")) {
+                    // 숫자 이외의 문자 제거 (한글, 영문 등 방지)
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+
+                    // 값이 있고 1보다 작으면(0이면) '1'로 강제 변경
+                    if (e.target.value !== "" && parseInt(e.target.value) < 1) {
+                        e.target.value = "1";
+                    }
+                }
+            });    
+
+            // 임시 저장 버튼 클릭
+            document.querySelector('#admin5011SurveyTmpSave').addEventListener('click', async function (e) {
+                e.preventDefault();
+                await admin501_1.fnSaveSurvey("REG");
+            });
+
+            // 저장 버튼 클릭
+            document.querySelector('#admin5011SurveySave').addEventListener('click', async function (e) {
+                e.preventDefault();
+
+                await admin501_1.fnSaveSurvey("PROG");
+            });
+
+            const cancelBtn = document.querySelector("#admin501_1_btn_survey_cancel");
+            if (cancelBtn) {
+                cancelBtn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    uiCommon.fnShowConfirmModal('목록으로 이동하시겠습니까?', () => _this.fnGoToListPage());
+                });
+            }
+
+            // 문항 추가 버튼
+            document.querySelector(".question_btn a").addEventListener("click", (e) => {
+                e.preventDefault();
+
+                // 현재 화면에 보이는 모든 최상위 문항 선택 (display:none 제외)
+                const wrap = document.querySelector(".question_wrap");
+                const allQuestions = wrap.querySelectorAll(".question_inner:not(.sub-question)");
+
+                // 실제로 보이는 문항만 필터링
+                const visibleQuestions = Array.from(allQuestions).filter(q => {
+                    const display = window.getComputedStyle(q).display;
+                    return display !== "none";
+                });
+
+                // 새로운 번호는 현재 보이는 문항 개수 + 1
+                const newNo = visibleQuestions.length + 1;
+
+                // 마지막 최상위 문항을 찾음
+                const lastTopLevelQuestion = visibleQuestions[visibleQuestions.length - 1];
+
+                // 삽입 기준점 찾기: 마지막 최상위 문항 다음의 하위문항 컨테이너가 있으면 그 뒤, 없으면 문항 바로 뒤
+                let insertTarget = lastTopLevelQuestion;
+                if (lastTopLevelQuestion) {
+                    const nextElement = lastTopLevelQuestion.nextElementSibling;
+                    if (nextElement && nextElement.classList.contains("sub-question-container")) {
+                        insertTarget = nextElement; // 하위문항 컨테이너 뒤에 삽입
+                    }
+                }
+
+                // 문항 추가 함수 호출 시 번호와 삽입 기준점을 전달
+                admin501_1.fnAddQuestion(newNo, insertTarget);
+            });
+
+            // 파일 리스트의 삭제(X) 클릭 시 선택된 파일 초기화
+            document.addEventListener("click", function (e) {
+                if (!e.target.classList.contains("icon_del")) return;
+                const wrap = e.target.closest(".file_wrap");
+                if (!wrap || !wrap.closest(".question_wrap")) return;
+
+                e.preventDefault();
+                const chip = e.target.closest("p");
+                // 기존 첨부(X) 삭제 시 백엔드로 알리기 위해 번호를 삭제 리스트에 넣어둔다.
+                if (chip && chip.dataset.fileType === "existing") {
+                    const attachNo = Number(chip.dataset.attachNo);
+                    admin501_1.fnMarkDeletedAttach(attachNo);
+                }
+                // 파일 UI 초기화 (칩 제거 + 안내 문구 복원)
+                admin501_1.fnResetFileUI(wrap);
+            });
+
+            // 객관식 복수 선택 시
+            document.addEventListener("change", function (e) {
+
+                // 문항 파일 첨부 시 파일명 표시(문항당 1개만 표시/교체)
+                if (e.target.matches(".question_wrap .fileInput")) {
+                    const _this = admin501_1;
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const maxMb = _this.state.maxFileSize;
+                    const maxSize = maxMb * 1024 * 1024;
+                    const rawExtensions = _this.state.allowedExtensions;
+                    const allowedExtensions = rawExtensions.toLowerCase().split(',').map(ext => ext.trim());
+
+                    // 이미지 전용 확장자 (이미지 선택형용)
+                    const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+                    const finalImgAllowed = imgExts.filter(ext => allowedExtensions.includes(ext));
+
+                    const fileExt = file.name.split('.').pop().toLowerCase();
+                    const isImgSelType = e.target.closest(".qst-type-img-sel") !== null; // 이미지 선택형인지 체크
+
+                    let reason = "";
+
+                    // 확장자 체크
+                    if (isImgSelType) {
+                        // 이미지 선택형은 무조건 이미지여야 함
+                        if (!finalImgAllowed.includes(fileExt)) {
+                            reason = "이미지 파일이 아닙니다.";
+                        }
+                    } else {
+                        // 일반 문항 첨부는 서버 허용 확장자 기준
+                        if (rawExtensions && !allowedExtensions.includes(fileExt)) {
+                            reason = "허용되지 않는 확장자입니다.";
+                        }
+                    }
+
+                    // 2. 용량 체크
+                    if (!reason && file.size > maxSize) {
+                        reason = "최대 " + maxMb + "MB까지만 업로드 가능합니다.";
+                    }
+
+                    // 3. 에러 발생 시 처리
+                    if (reason) {
+                        uiCommon.fnShowAlertModal(reason);
+                        e.target.value = "";
+                        return;
+                    }
+
+                    // UI 처리 로직
+                    const wrap = e.target.closest(".file_wrap");
+                    const nameSpan = wrap?.querySelector(".fileName");
+                    const fileListBox = wrap?.querySelector(".file_list");
+
+                    if (fileListBox) {
+                        const existingChip = fileListBox.querySelector("p[data-file-type='existing']");
+                        if (existingChip) {
+                            _this.fnMarkDeletedAttach(Number(existingChip.dataset.attachNo));
+                        }
+                        fileListBox.innerHTML = "";
+                        const p = document.createElement("p");
+                        p.innerHTML = `${file.name} <a class="icon_del" href="javascript:;">파일삭제</a>`;
+                        fileListBox.appendChild(p);
+                    }
+                    if (nameSpan) {
+                        nameSpan.textContent = "";
+                        nameSpan.style.display = "none";
+                    }
+                    return;
+                }
+
+                // 복수선택 체크박스
+                if (e.target.matches("#chec_07")) {
+                    const li = e.target.closest(".qst-type-multi-setting");
+                    const typeSel = li.querySelector(".multi-limit-type");
+                    const countSel = li.querySelector(".multi-limit-count");
+
+                    if (e.target.checked) {
+                        // ON → 제한옵션 보이게 하고 count는 숨김
+                        typeSel.style.display = "";
+                        countSel.style.display = "none";
+                        typeSel.value = "NONE";
+                    } else {
+                        // OFF → 둘 다 숨기고 값 초기화
+                        typeSel.value = "NONE";
+                        countSel.value = "1";
+                        typeSel.style.display = "none";
+                        countSel.style.display = "none";
+                    }
+                }
+
+                // 제한옵션 선택 변경시
+                if (e.target.matches(".multi-limit-type")) {
+                    const li = e.target.closest(".qst-type-multi-setting");
+                    const countSel = li.querySelector(".multi-limit-count");
+
+                    if (e.target.value === "LIMIT") {
+                        countSel.style.display = "";
+                    } else {
+                        countSel.style.display = "none";
+                    }
+                }
+
+                // 챕터 사용 체크박스 change 이벤트 (ON/OFF 로직 처리)
+                if (e.target.matches("#chapter_01")) {
+                    const chapterUseChk = e.target;
+                    const chapterWrap = document.querySelector(".chapter_wrap");
+                    if (!chapterWrap) return;
+
+                    const isOn = chapterUseChk.checked;
+
+                    if (!isOn) {
+                        // OFF 상태
+                        chapterWrap.style.display = "none";
+
+                        // update 모드라면 기존 챕터 srvyQitemOid를 삭제 리스트에 추가
+                        if (admin501_1.state.mode === "update") {
+                            const rows = document.querySelectorAll(".chapter_wrap .option-row");
+                            rows.forEach(row => {
+                                const srvyQitemOid = row.getAttribute("data-qst-no");
+                                if (srvyQitemOid && !admin501_1.state.deletedQstList.includes(Number(srvyQitemOid))) {
+                                    admin501_1.state.deletedQstList.push(Number(srvyQitemOid));
+                                }
+                            });
+                        }
+                        admin501_1.state.chapters = [];
+
+                        // 문항관리 select 옵션만 초기화
+                        document.querySelectorAll(".chapter-select").forEach(select => {
+                            select.innerHTML = `<option value="">챕터 선택</option>`;
+                        });
+                    } else {
+                        // ON 상태
+                        chapterWrap.style.display = "block";
+
+                        // 챕터 목록이 비어 있으면 기본 챕터 1을 생성
+                        if (chapterWrap.querySelectorAll(".option-row").length === 0) {
+                            admin501_1.fnAddChapterRow(0);
+                        }
+
+                        // 삭제 리스트에서 level=0 챕터 제거 (복원)
+                        if (admin501_1.state.mode === "update") {
+                            const rows = document.querySelectorAll(".chapter_wrap .option-row");
+                            rows.forEach(row => {
+                                const srvyQitemOid = row.getAttribute("data-qst-no");
+                                if (srvyQitemOid) {
+                                    admin501_1.state.deletedQstList = admin501_1.state.deletedQstList.filter(
+                                            no => no !== Number(srvyQitemOid)
+                                    );
+                                }
+                            });
+                        }
+
+                        admin501_1.fnRefreshChapterState();
+                        admin501_1.fnRenderChapterSelectForAllQuestions();
+                    }
+                }
+            });
+
+            // 문항 삭제
+            document.addEventListener("click", function (e) {
+                if (!e.target.classList.contains("del_btn")) return;
+
+                const allQuestions = document.querySelectorAll(".question_inner:not([style*='none'])"); // 보이는 문항만 카운트
+                if (allQuestions.length <= 1) {
+                    uiCommon.fnShowAlertModal("최소 1개의 문항은 필요합니다.");
+                    return;
+                }
+
+                const qst = e.target.closest(".question_inner");
+                if (!qst) return;
+
+                // UPDATE 모드 처리: DB에 존재하는 문항/옵션을 삭제 리스트에 추가
+                if (admin501_1.state.mode === 'update') {
+                    const srvyQitemOid = qst.getAttribute("data-qst-no");
+
+                    if (srvyQitemOid) {
+                        const numSrvyQitemOid = Number(srvyQitemOid);
+                        // 1. 문항 번호 추가
+                        if (!admin501_1.state.deletedQstList.includes(numSrvyQitemOid)) {
+                            admin501_1.state.deletedQstList.push(numSrvyQitemOid);
+                        }
+
+                        // 해당 문항의 모든 옵션 번호 추가 (DOM에 data-opt-no가 있다고 가정)
+                        qst.querySelectorAll('[data-opt-no]').forEach(optEl => {
+                            const optNo = optEl.getAttribute("data-opt-no");
+                            const numOptNo = Number(optNo);
+                            if (optNo && !admin501_1.state.deletedOptList.includes(numOptNo)) {
+                                admin501_1.state.deletedOptList.push(numOptNo);
+                            }
+                        });
+                    }
+                }
+
+                // DOM에서 문항 제거
+                qst.remove();
+
+                // 문항 삭제 후 챕터 셀렉트 옵션 재렌더링
+                admin501_1.fnRenderChapterSelectForAllQuestions();
+            });
+
+            // 리커트 척도 수 변경 이벤트 (전역) - update 모드 로딩 문항 포함
+            document.addEventListener("change", function (e) {
+                if (e.target.matches("#likertCount")) {
+                    const likertSelect = e.target;
+                    const block = likertSelect.closest(".question_con");
+                    const qInner = likertSelect.closest(".question_inner");
+
+                    // 설문유형이 LIKERT일 때만 항목 렌더링 함수를 호출
+                    if (block && block.querySelector(".qst_type_select").value === "LIKERT") {
+
+                        // UPDATE 모드: 기존 리커트 옵션들을 삭제 리스트에 추가
+                        if (admin501_1.state.mode === 'update') {
+                            const srvyQitemOid = qInner.getAttribute("data-qst-no");
+
+                            if (srvyQitemOid) {
+                                // 리커트 항목들의 data-opt-no 수집
+                                const likertItems = block.querySelectorAll(".qst-type-likert-items .list_row:not(.likert-template)[data-opt-no]");
+                                likertItems.forEach(row => {
+                                    const optNo = row.getAttribute("data-opt-no");
+                                    if (optNo) {
+                                        const numOptNo = Number(optNo);
+                                        if (!admin501_1.state.deletedOptList.includes(numOptNo)) {
+                                            admin501_1.state.deletedOptList.push(numOptNo);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+
+                        // 리커트 항목 재렌더링
+                        admin501_1.fnRenderLikertItems(block, Number(likertSelect.value));
+                    }
+                }
+            });
+
+            // 문항 복사
+            document.addEventListener("click", function (e) {
+                if (e.target.textContent.trim() !== "문항 복사") return;
+
+                const original = e.target.closest(".question_inner");
+                if (!original || original.style.display === "none") return; // 템플릿(숨겨진 문항) 복사 방지
+
+                // 상위/하위 문항 구분
+                const isSub = original.classList.contains("sub-question");
+
+                let newNo = "";
+                let insertTarget = null;
+
+                if (isSub) {
+                    // 하위 문항 복사: 같은 부모를 가진 하위 문항들의 개수를 세어 다음 번호 부여
+                    const container = original.closest(".sub-question-container");
+                    if (!container) return;
+
+                    const parentNo = original.querySelector(".qst-common-row .list_first").value.trim().split("-")[0];
+                    const siblings = container.querySelectorAll(".question_inner.sub-question");
+
+                    // 보이는 하위 문항만 카운트
+                    const visibleSiblings = Array.from(siblings).filter(s => {
+                        const display = window.getComputedStyle(s).display;
+                        return display !== "none";
+                    });
+
+                    const subCount = visibleSiblings.length;
+                    newNo = `${parentNo}-${subCount + 1}`;
+
+                    // 같은 컨테이너의 마지막 하위 문항 뒤에 삽입
+                    insertTarget = visibleSiblings[visibleSiblings.length - 1];
+
+                } else {
+                    // 상위 문항 복사: 화면에 보이는 최상위 문항 개수를 세어 다음 번호 채번
+                    const wrap = document.querySelector(".question_wrap");
+                    const allTopQuestions = wrap.querySelectorAll(".question_inner:not(.sub-question)");
+
+                    // 실제로 보이는 문항만 필터링
+                    const visibleTopQuestions = Array.from(allTopQuestions).filter(q => {
+                        const display = window.getComputedStyle(q).display;
+                        return display !== "none";
+                    });
+
+                    newNo = (visibleTopQuestions.length + 1).toString();
+
+                    // 마지막 최상위 문항을 찾음
+                    const lastTopLevelQuestion = visibleTopQuestions[visibleTopQuestions.length - 1];
+
+                    // 삽입 기준점 찾기: 마지막 최상위 문항 다음의 하위문항 컨테이너가 있으면 그 뒤, 없으면 문항 바로 뒤
+                    insertTarget = lastTopLevelQuestion;
+                    if (lastTopLevelQuestion) {
+                        const nextElement = lastTopLevelQuestion.nextElementSibling;
+                        if (nextElement && nextElement.classList.contains("sub-question-container")) {
+                            insertTarget = nextElement; // 하위문항 컨테이너 뒤에 삽입
+                        }
+                    }
+                }
+
+
+                // 원본 제목 미리 저장 (나중에 UI 초기화 후 다시 넣기 위해)
+                const originalTitle = original.querySelector(".qst-common-row textarea.w100").value;
+
+                // 문항 그대로 복제
+                const clone = original.cloneNode(true);
+
+                // 문항 ID, NO 속성 초기화 (신규 문항으로 처리하기 위함)
+                clone.removeAttribute("data-qst-no");
+                clone.removeAttribute("data-parent-qst-no");
+
+                // 번호 적용
+                clone.querySelector(".qst-common-row .list_first").value = newNo;
+
+                // 파일 input 초기화
+                clone.querySelectorAll("input[type='file']").forEach(f => {
+                    f.value = "";
+                    const span = f.closest(".file_wrap")?.querySelector(".fileName");
+                    if (span) {
+                        span.textContent = "첨부 파일 선택";
+                        span.style.display = ""; // 안내 문구 노출 상태로 초기화
+                    }
+                    const listBox = f.closest(".file_wrap")?.querySelector(".file_list");
+                    if (listBox) listBox.innerHTML = ""; // 파일 표시 영역 초기화
+                });
+                admin501_1.fnRefreshFileInputs(clone);
+
+                // 챕터 복사
+                const origChapter = original.querySelector(".chapter-select")?.value;
+                const cloneChapter = clone.querySelector(".chapter-select");
+                if (cloneChapter) cloneChapter.value = origChapter;
+
+                // 설문유형
+                const originalType = original.querySelector(".qst_type_select").value;
+                const cloneTypeSelect = clone.querySelector(".qst_type_select");
+                cloneTypeSelect.value = originalType;
+
+                // 모든 옵션 데이터를 백업 (유형별로)
+                const optionData = admin501_1.fnGetQuestionOptions(original, originalType);
+
+                // UI 토글을 통해 기본 항목으로 초기화 (LIKERT는 항목 삭제 방지 위해 skipReset=true)
+                // 여기서 skipReset=false이면 제목(input.w100)이 초기화됨
+                if (originalType === "LIKERT") {
+                    const origCnt = original.querySelector("#likertCount")?.value;
+                    clone.querySelector("#likertCount").value = origCnt;
+                    admin501_1.fnToggleQuestionTypeUI(clone.querySelector(".question_con"), originalType, true);
+                } else {
+                    admin501_1.fnToggleQuestionTypeUI(clone.querySelector(".question_con"), originalType, false);
+                }
+
+                // UI 토글(초기화) 실행 후에 제목을 다시 입력해야 함
+                clone.querySelector(".qst-common-row textarea.w100").value = originalTitle;
+
+                // 백업된 옵션 데이터를 다시 렌더링하여 값 채우기
+                admin501_1.fnRenderClonedOptions(clone, originalType, optionData);
+
+                // 최종 삽입(문항 / 하위문항 구분)
+                if (isSub) {
+                    // 하위 문항 복사: 같은 컨테이너 내에서 마지막 하위문항 뒤에 추가
+                    if (insertTarget && insertTarget.parentNode) {
+                        insertTarget.after(clone);
+                        clone.classList.add("sub-question");
+                    }
+                } else {
+                    // 상위 문항 복사: insertTarget 뒤에 삽입
+                    if (insertTarget && insertTarget.parentNode) {
+                        insertTarget.after(clone);
+                        clone.classList.remove("sub-question");
+                    } else {
+                        // 안전 장치: 문항추가 버튼 바로 위에 삽입
+                        const btnRow = document.querySelector(".question_btn");
+                        btnRow.before(clone);
+                        clone.classList.remove("sub-question");
+                    }
+                }
+
+                // 이벤트 재바인딩
+                admin501_1.fnBindQuestionTypeEvents();
+                admin501_1.fnRenderChapterSelectForAllQuestions();
+            });
+
+            // 객관식 기타 추가
+            document.addEventListener("click", function (e) {
+                if (!e.target.classList.contains("btn-add-etc")) return;
+
+                const qBlock = e.target.closest(".question_inner");
+                if (!qBlock) return;
+
+                // 이미 기타가 있으면 추가 금지
+                const existEtc = qBlock.querySelector(".qst-type-multi-etc");
+                if (existEtc && existEtc.style.display !== "none") return;
+
+                // 기타 row 보이게
+                const etcRow = qBlock.querySelector(".qst-type-multi-etc");
+                if (etcRow) {
+                    etcRow.style.display = "";
+                }
+
+                // 기타 추가 버튼 숨기기
+                e.target.style.display = "none";
+            });
+
+            // 객관식 기타 삭제 버튼 처리
+            document.addEventListener("click", function (e) {
+                if (!e.target.classList.contains("btn-add-option")) return;
+
+                const qInner = e.target.closest(".question_inner");
+                const qCon = qInner.querySelector(".question_con");
+                const type = qInner.querySelector(".qst_type_select").value;
+
+                // 항목 추가 가능한 유형
+                const allowedTypes = ["MULTI", "RANK", "IMG_SEL", "RATIO"];
+                if (!allowedTypes.includes(type)) return;
+
+                // 객관식(MULTI)
+                if (type === "MULTI") {
+                    const multiRows = qCon.querySelectorAll(".qst-type-multi");
+                    const newIndex = multiRows.length + 1;
+
+                    const newRow = document.createElement("div");
+                    newRow.classList.add("list_row", "qst-type-multi");
+                    newRow.innerHTML = `
+			            <label class="list_first">항목${newIndex}</label>
+			            <input type="text" class="w100">
+			            <div class="list_last"><button type="button" class="del">삭제</button></div>
+			        `;
+
+                    const etcRow = qCon.querySelector(".qst-type-multi-etc");
+                    if (etcRow && etcRow.style.display !== "none") {
+                        etcRow.before(newRow);
+                    } else {
+                        // 항목이 하나도 없을 경우 대비
+                        if (multiRows.length > 0) {
+                            multiRows[multiRows.length - 1].after(newRow);
+                        } else {
+                            qCon.querySelector(".qst-common-row").after(newRow);
+                        }
+                    }
+                    return;
+                }
+
+                //순위형(RANK)
+                if (type === "RANK") {
+                    const rankRows = qCon.querySelectorAll(".qst-type-multi");
+                    const newIndex = rankRows.length + 1;
+
+                    const newRow = document.createElement("div");
+                    newRow.classList.add("list_row", "qst-type-multi");
+                    newRow.innerHTML = `
+			            <label class="list_first">항목${newIndex}</label>
+			            <input type="text" class="w100">
+			            <div class="list_last"><button type="button" class="del">삭제</button></div>
+			        `;
+
+                    // 항목이 하나도 없을 경우 대비
+                    if (rankRows.length > 0) {
+                        rankRows[rankRows.length - 1].after(newRow);
+                    } else {
+                        qCon.querySelector(".qst-common-row").after(newRow);
+                    }
+                    return;
+                }
+
+                // 이미지 선택형(IMG_SEL)
+                if (type === "IMG_SEL") {
+                    const imgRows = qCon.querySelectorAll(".qst-type-img-sel");
+                    const newIndex = imgRows.length + 1; // 인덱스 계산 추가
+                    const newRow = document.createElement("div");
+
+                    newRow.classList.add("list_row", "qst-type-img-sel");
+                    newRow.innerHTML = `
+			            <label class="list_first">항목${newIndex}</label>
+			            <input type="text" class="w100" placeholder="">
+			            <div class="list_last">
+			                <div class="file_wrap">
+			                    <label class="file_label">파일 선택</label>
+			                    <span class="fileName">첨부 파일 선택</span>
+			                    <input type="file" class="fileInput" style="display:none;">
+			                    <div class="file_list"></div>
+			                    <button type="button" class="del">삭제</button>
+			                </div>
+			            </div>
+			        `;
+
+                    // 항목이 하나도 없을 경우 대비
+                    if (imgRows.length > 0) {
+                        imgRows[imgRows.length - 1].after(newRow);
+                    } else {
+                        qCon.querySelector(".qst-common-row").after(newRow);
+                    }
+                    admin501_1.fnRefreshFileInputs(newRow);
+                    return;
+                }
+
+                // 비율(RATIO) - 여기가 에러 나던 부분입니다
+                if (type === "RATIO") {
+                    const ratioRows = qCon.querySelectorAll(".qst-type-multi");
+                    const newIndex = ratioRows.length + 1;
+
+                    const newRow = document.createElement("div");
+                    newRow.classList.add("list_row", "qst-type-multi");
+                    newRow.innerHTML = `
+			            <label class="list_first">항목${newIndex}</label>
+			            <input type="text" class="w100" placeholder="">
+			            <div class="list_last"><button type="button" class="del">삭제</button></div>
+			        `;
+
+                    // 항목이 0개일 때 에러 방지 로직 추가
+                    if (ratioRows.length > 0) {
+                        ratioRows[ratioRows.length - 1].after(newRow);
+                    } else {
+                        // 기존 항목이 없으면 공통 질문 로우 바로 뒤에 추가
+                        qCon.querySelector(".qst-common-row").after(newRow);
+                    }
+                    return;
+                }
+            });
+
+            // 항목 삭제 공통 처리
+            document.addEventListener("click", function (e) {
+                if (!e.target.classList.contains("del")) return;
+
+                const row = e.target.closest(".list_row");
+                if (!row) return;
+
+                const qInner = row.closest(".question_inner");
+                const qCon = qInner.querySelector(".question_con");
+                const type = qInner.querySelector(".qst_type_select").value;
+
+                // 리커트는 항목 삭제 없음
+                if (type === "LIKERT") return;
+
+                // 기타 삭제이면 숨기기만 처리
+                if (row.classList.contains("qst-type-multi-etc")) {
+                    row.style.display = "none";
+
+                    // 기타 추가 버튼 다시 활성화
+                    const etcBtn = qInner.querySelector(".btn-add-etc");
+                    if (etcBtn) etcBtn.style.display = "";
+
+                    // UPDATE 모드 처리: DB에 존재하는 기타 옵션을 삭제 리스트에 추가
+                    if (admin501_1.state.mode === 'update') {
+                        const optNo = row.getAttribute("data-opt-no"); // data-opt-no 속성은 .list_row에 있어야 함
+
+                        if (optNo) {
+                            const numOptNo = Number(optNo);
+                            // 이미 삭제 리스트에 없으면 추가
+                            if (!admin501_1.state.deletedOptList.includes(numOptNo)) {
+                                admin501_1.state.deletedOptList.push(numOptNo);
+                            }
+
+                            // 삭제 후 다시 추가될 경우 신규 항목으로 등록되도록 data-opt-no 속성을 제거합니다.
+                            row.removeAttribute("data-opt-no");
+                        }
+                    }
+                    return;
+                }
+
+                // 최소 1개 보호 처리 (MULTI / RANK / IMG_SEL / RATIO)
+                const removableTypes = {
+                    "MULTI": ".qst-type-multi",
+                    "RANK": ".qst-type-multi",
+                    "RATIO": ".qst-type-multi",
+                    "IMG_SEL": ".qst-type-img-sel"
+                };
+
+                const selector = removableTypes[type];
+                if (selector) {
+                    const items = qCon.querySelectorAll(selector);
+
+                    // 항목이 1개뿐이면 삭제 금지
+                    if (items.length <= 1) {
+                        uiCommon.fnShowAlertModal("항목은 최소 1개 이상 필요합니다.");
+                        return;
+                    }
+                }
+
+                // UPDATE 모드 처리: DB에 존재하는 옵션을 삭제 리스트에 추가
+                if (admin501_1.state.mode === 'update') {
+                    const optNo = row.getAttribute("data-opt-no"); // data-opt-no 속성은 .list_row에 있어야 함
+
+                    if (optNo) {
+                        const numOptNo = Number(optNo);
+                        if (!admin501_1.state.deletedOptList.includes(numOptNo)) {
+                            admin501_1.state.deletedOptList.push(numOptNo);
+                        }
+                    }
+                }
+
+                // 정상 삭제
+                row.remove();
+
+                // 삭제 후 번호 재정렬
+                if (["MULTI", "RANK", "RATIO"].includes(type)) {
+                    // .qst-type-multi 항목만 선택하되, 기타 항목은 제외하고 순번을 매김
+                    const rows = qCon.querySelectorAll(".qst-type-multi:not(.qst-type-multi-etc)");
+                    rows.forEach((r, idx) => {
+                        const label = r.querySelector(".list_first");
+                        if (label) label.textContent = `항목${idx + 1}`;
+                    });
+                }
+
+                if (type === "IMG_SEL") {
+                    const rows = qCon.querySelectorAll(".qst-type-img-sel");
+                    rows.forEach((r, idx) => {
+                        const label = r.querySelector(".list_first");
+                        if (label) label.textContent = `항목${idx + 1}`;
+                    });
+                }
+            });
+
+            // 하위 질문 생성
+            document.addEventListener("click", function (e) {
+                if (!e.target.classList.contains("btn-sub-question")) return;
+
+                const parent = e.target.closest(".question_inner");
+                if (!parent) return;
+
+                const parentNo = parent.querySelector(".list_first").value.trim();
+
+                // 1단계 제한
+                if (parentNo.includes("-")) {
+                    uiCommon.fnShowAlertModal("하위 질문은 1단계까지만 생성 가능합니다.");
+                    return;
+                }
+
+                // 부모 다음 위치에 container 확보
+                let container = parent.nextElementSibling;
+                if (!container || !container.classList.contains("sub-question-container")) {
+                    container = document.createElement("div");
+                    container.classList.add("sub-question-container");
+                    parent.after(container);
+                }
+
+                // 번호 고정 (번호 채번 없음)
+                const newNo = parentNo + "-";
+
+                // 템플릿 기반 복제
+                const template = document.querySelector(".question_wrap > .question_inner");
+                const clone = template.cloneNode(true);
+                clone.style.display = "flex";
+                // 입력 초기화
+                clone.querySelectorAll("input[type='text']").forEach(i => i.value = "");
+                clone.querySelectorAll("input[type='file']").forEach(f => {
+                    f.value = "";
+                    const span = f.closest(".file_wrap")?.querySelector(".fileName");
+                    if (span) {
+                        span.textContent = "첨부 파일 선택";
+                        span.style.display = ""; // 안내 문구 노출 상태로 초기화
+                    }
+                    const listBox = f.closest(".file_wrap")?.querySelector(".file_list");
+                    if (listBox) listBox.innerHTML = ""; // 파일 표시 영역 초기화
+                });
+
+                // 하위 버튼 제거
+                const subBtn = clone.querySelector(".btn-sub-question");
+                if (subBtn) subBtn.remove();
+
+                // 들여쓰기
+                clone.classList.add("sub-question");
+
+                // 하위 질문은 항상 객관식으로 고정
+                const defaultType = "MULTI";
+                clone.querySelector(".qst_type_select").value = defaultType;
+                admin501_1.fnToggleQuestionTypeUI(clone.querySelector(".question_con"), defaultType);
+                admin501_1.fnRefreshFileInputs(clone);
+
+                // 챕터 유지
+                const parentChapter = parent.querySelector(".chapter-select").value || "";
+                clone.querySelector(".chapter-select").value = parentChapter;
+
+                // append 후 번호 적용
+                container.appendChild(clone);
+                clone.querySelector(".list_first").value = newNo;
+
+                admin501_1.fnBindQuestionTypeEvents();
+            });
+
+            _this.fnToggleChapter();
+            _this.fnInitChapterEvents();
+            _this.fnBindQuestionTypeEvents();
+        },
+
+        /**
+         * 챕터 사용 토글
+         */
+        fnToggleChapter: function () {
+            const chapterUseChk = document.querySelector("#chapter_01");
+            const chapterWrap = document.querySelector(".chapter_wrap");
+            if (!chapterUseChk || !chapterWrap) return;
+
+            chapterWrap.style.display = chapterUseChk.checked ? "block" : "none";
+
+            chapterUseChk.addEventListener("change", function () {
+                const isOn = chapterUseChk.checked;
+
+                if (!isOn) {
+                    // OFF 상태
+                    chapterWrap.style.display = "none";
+
+                    // update 모드라면 기존 챕터 srvyQitemOid를 삭제 리스트에 추가
+                    if (admin501_1.state.mode === "update") {
+                        const rows = document.querySelectorAll(".chapter_wrap .option-row");
+                        rows.forEach(row => {
+                            const srvyQitemOid = row.getAttribute("data-qst-no");
+                            if (srvyQitemOid && !admin501_1.state.deletedQstList.includes(Number(srvyQitemOid))) {
+                                admin501_1.state.deletedQstList.push(Number(srvyQitemOid));
+                            }
+                        });
+                    }
+
+                    // 챕터 상태 초기화
+                    admin501_1.state.chapters = [];
+
+                    // 문항관리 select 옵션만 초기화 (disable 금지)
+                    document.querySelectorAll(".chapter-select").forEach(select => {
+                        select.innerHTML = `<option value="">챕터 선택</option>`;
+                    });
+                } else {
+                    // ON 상태
+                    chapterWrap.style.display = "block";
+
+                    // 삭제 리스트에서 level=0 챕터 제거 (복원)
+                    if (admin501_1.state.mode === "update") {
+                        const rows = document.querySelectorAll(".chapter_wrap .option-row");
+                        rows.forEach(row => {
+                            const srvyQitemOid = row.getAttribute("data-qst-no");
+                            if (srvyQitemOid) {
+                                admin501_1.state.deletedQstList = admin501_1.state.deletedQstList.filter(
+                                        no => no !== Number(srvyQitemOid)
+                                );
+                            }
+                        });
+                    }
+
+                    // 챕터 상태 갱신 + 문항 select 옵션 복원
+                    admin501_1.fnRefreshChapterState();
+                    admin501_1.fnRenderChapterSelectForAllQuestions();
+                }
+            });
+        },
+
+        /**
+         * 챕터 관련 이벤트 초기화
+         */
+        fnInitChapterEvents: function () {
+            this.fnRebindChapterRowEvents();
+            this.fnRefreshChapterState();
+        },
+
+        fnRebindChapterRowEvents: function () {
+            const _this = this;
+            const rows = document.querySelectorAll(".chapter_wrap .option-row");
+
+            rows.forEach((row, index) => {
+                const addBtn = row.querySelector("button:not(.del)");
+                const delBtn = row.querySelector("button.del");
+                const input = row.querySelector("input");
+
+                row.querySelector("label").textContent = `챕터 ${index + 1}`;
+
+                if (input) {
+                    input.oninput = () => {
+                        _this.fnRefreshChapterState();
+                        _this.fnRenderChapterSelectForAllQuestions();
+                    };
+                }
+
+                if (addBtn) addBtn.onclick = () => _this.fnAddChapterRow(index);
+                if (delBtn) delBtn.onclick = () => _this.fnDeleteChapterRow(row);
+            });
+        },
+
+        fnAddChapterRow: function (index) {
+            const chapterWrap = document.querySelector(".chapter_wrap");
+            if (!chapterWrap) return;
+
+            const newRow = document.createElement("div");
+            newRow.classList.add("option-row");
+            newRow.innerHTML = `
+                 <label>챕터</label>
+                 <input type="text">
+                 <p><button type="button">추가</button> <button type="button" class="del">삭제</button></p>
+             `;
+
+            const rows = chapterWrap.querySelectorAll(".option-row");
+            if (rows[index]) rows[index].after(newRow);
+            else chapterWrap.appendChild(newRow);
+
+            this.fnRebindChapterRowEvents();
+            this.fnRefreshChapterState();
+            this.fnRenderChapterSelectForAllQuestions();
+        },
+
+        fnDeleteChapterRow: function (rowElement) {
+            const rows = document.querySelectorAll(".chapter_wrap .option-row");
+
+            if (rows.length <= 1) {
+                uiCommon.fnShowAlertModal("최소 1개의 챕터가 필요합니다.");
+                return;
+            }
+
+            // 삭제 대상 챕터의 인덱스 및 ID 획득 (UI 갱신용)
+            const index = [...rows].findIndex(r => r === rowElement);
+            const deletedChapterId = index + 1; // 챕터 ID (1-based)
+
+            // DB delete tracking (srvyQitemOid 획득)
+            const srvyQitemOid = rowElement.getAttribute("data-qst-no");
+            if (this.state.mode === "update" && srvyQitemOid) {
+                this.state.deletedQstList.push(Number(srvyQitemOid));
+            }
+
+            // 삭제된 챕터에 할당된 문항들의 매핑 해제
+            document.querySelectorAll(".question_inner").forEach(qEl => {
+                const chapterSelect = qEl.querySelector(".chapter-select");
+
+                // 해당 챕터 ID로 매핑된 문항을 찾음 (select.value == deletedChapterId)
+                if (chapterSelect && chapterSelect.value == deletedChapterId) {
+
+                    // 챕터 선택을 "챕터 선택"으로 초기화
+                    chapterSelect.value = "";
+
+                    // Level 1 문항의 parentSrvyQitemOid를 NULL로 정리 (Level 1은 챕터에 종속)
+                    if (qEl.dataset.level === '1') {
+                        qEl.dataset.upSrvyQitemOid = null;
+                    }
+                }
+            });
+
+            // DOM 제거
+            rowElement.remove();
+
+            // 재정렬 + state 갱신 + 문항 셀렉트 갱신
+            this.fnRebindChapterRowEvents();
+            this.fnRefreshChapterState();
+            this.fnRenderChapterSelectForAllQuestions();
+        },
+
+        fnRefreshChapterState: function () {
+            const rows = document.querySelectorAll(".chapter_wrap .option-row");
+            this.state.chapters = [...rows].map((row, index) => ({
+                id: index + 1,
+                val: `CH${index + 1}`,
+                title: row.querySelector("input").value.trim() || `챕터 ${index + 1}`
+            }));
+        },
+
+        /**
+         * 설문유형 변경 이벤트 등록
+         */
+        fnBindQuestionTypeEvents: function () {
+            const _this = this; // this scope 확보
+
+            // 기존 이벤트 제거 후 재바인딩
+            document.querySelectorAll(".qst_type_select").forEach(select => {
+                // 기존 이벤트 핸들러 복제 방지를 위해 새로 생성
+                const newSelect = select.cloneNode(true);
+
+                // 복제 시 스크립트로 변경된 value는 따라오지 않으므로 명시적으로 주입
+                newSelect.value = select.value;
+
+                select.parentNode.replaceChild(newSelect, select);
+
+                newSelect.onchange = function () {
+                    const block = this.closest(".question_con");
+                    const qInner = this.closest(".question_inner");
+
+                    // UPDATE 모드: 기존 타입의 옵션들을 삭제 리스트에 추가
+                    if (_this.state.mode === 'update') {
+                        const srvyQitemOid = qInner.getAttribute("data-qst-no");
+
+                        if (srvyQitemOid) {
+                            // 현재 문항의 모든 옵션을 삭제 리스트에 추가
+                            qInner.querySelectorAll('[data-opt-no]').forEach(optEl => {
+                                const optNo = optEl.getAttribute("data-opt-no");
+                                if (optNo) {
+                                    const numOptNo = Number(optNo);
+                                    if (!_this.state.deletedOptList.includes(numOptNo)) {
+                                        _this.state.deletedOptList.push(numOptNo);
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    // 현재 타입 저장
+                    const oldType = block.getAttribute("data-current-type");
+                    const newType = this.value;
+
+                    // 타입이 실제로 변경되었을 때만 리셋
+                    const shouldReset = oldType !== newType;
+
+                    // UI 토글 (타입 변경 시에만 skipReset=false)
+                    _this.fnToggleQuestionTypeUI(block, newType, !shouldReset);
+
+                    // 현재 타입 저장
+                    block.setAttribute("data-current-type", newType);
+                };
+            });
+        },
+
+        /**
+         * 공통 항목 초기화 (리커트 제외)
+         */
+        fnResetAllQuestionItems: function (block) {
+
+            // 객관식 옵션 초기화 (항목1 값 초기화 후 나머지 제거)
+            const multiRows = block.querySelectorAll(".qst-type-multi");
+
+            // 첫 번째 항목의 입력값 초기화
+            if (multiRows.length > 0) {
+                const firstInput = multiRows[0].querySelector("input[type='text']");
+                if (firstInput) {
+                    firstInput.value = "";
+                }
+            }
+
+            // 나머지 항목 제거 (항목1 제외)
+            multiRows.forEach((row, idx) => {
+                if (idx > 0) row.remove();
+            });
+
+            // 기타 숨기기
+            const etc = block.querySelector(".qst-type-multi-etc");
+            if (etc) etc.style.display = "none";
+
+            // short / long / img 계열 모두 첫 항목만 유지
+            [
+                ".qst-type-short",
+                ".qst-type-long",
+                ".qst-type-img-sel",
+                ".qst-type-img-resp"
+            ].forEach(sel => {
+                const rows = block.querySelectorAll(sel);
+                rows.forEach((row, idx) => {
+                    // 단답/서술/이미지선택 항목의 입력값도 초기화
+                    if (idx === 0) {
+                        const input = row.querySelector("input[type='text']");
+                        if (input) input.value = "";
+                    }
+                    if (idx > 0) row.remove();
+                });
+            });
+        },
+
+        /**
+         * 객관식 기본 항목 세팅
+         */
+        fnInitMultiItems: function (block) {
+            const first = block.querySelector(".qst-type-multi");
+            if (first) {
+                const label = first.querySelector(".list_first");
+                if (label) label.textContent = "항목1";
+            }
+        },
+
+        /**
+         * 설문유형에 따른 UI 표시
+         */
+        fnToggleQuestionTypeUI: function (block, type, skipReset) {
+
+            const allSelectors = [
+                '.qst-type-multi',
+                '.qst-type-multi-setting',
+                '.qst-type-multi-etc',
+                '.qst-type-short',
+                '.qst-type-short-setting',
+                '.qst-type-long',
+                '.qst-type-long-setting',
+                '.qst-type-likert-setting',
+                '.qst-type-img-sel',
+                '.qst-type-img-resp',
+                '.qst-type-ratio-setting'
+            ];
+
+            // 모든 영역 숨김
+            allSelectors.forEach(sel => {
+                block.querySelectorAll(sel).forEach(el => el.style.display = "none");
+            });
+
+            // 리커트 초기화
+            const likertItems = block.querySelector(".qst-type-likert-items");
+            if (likertItems && !skipReset) {
+                likertItems.style.display = "none";
+                // 템플릿 제외 제거
+                likertItems.querySelectorAll(".list_row:not(.likert-template)").forEach(e => e.remove());
+            }
+
+            // skipReset이 false일 때만 항목 및 설정 초기화 (타입이 실제로 변경되었을 때)
+            if (!skipReset) {
+                this.fnResetAllQuestionItems(block);
+
+                // 설정값 초기화
+
+                const qInner = block.closest(".question_inner");
+		        if (qInner) {
+		            const reqSel = qInner.querySelector(".required-type");
+		            if (reqSel) reqSel.value = "N";
+		        }
+                // MULTI 설정 초기화 (복수선택 체크박스, 제한 옵션)
+                const multiChk = block.querySelector("#chec_07");
+                const limitTypeSel = block.querySelector(".multi-limit-type");
+                const limitCountSel = block.querySelector(".multi-limit-count");
+                if (multiChk) multiChk.checked = false;
+                if (limitTypeSel) {
+                    limitTypeSel.value = "NONE";
+                    limitTypeSel.style.display = "none";
+                }
+                if (limitCountSel) {
+                    limitCountSel.value = "1";
+                    limitCountSel.style.display = "none";
+                }
+
+                // SHORT 설정 초기화 (답변 최대 글자수, 숫자만 입력)
+                const shortLimit = block.querySelector(".qst-type-short-setting input");
+                const numChk = block.querySelector("#chec_08");
+                if (shortLimit) shortLimit.value = "";
+                if (numChk) numChk.checked = false;
+
+                // LONG 설정 초기화 (답변 최대 글자수)
+                const longLimit = block.querySelector(".qst-type-long-setting input");
+                if (longLimit) longLimit.value = "";
+
+                // LIKERT 설정 초기화 (척도 수)
+                const likertCountSel = block.querySelector("#likertCount");
+                if (likertCountSel) likertCountSel.value = "2";
+
+                // RATIO 설정 초기화 (점수 단계)
+                const ratioStepSel = block.querySelector(".ratio-step");
+                if (ratioStepSel) ratioStepSel.value = "1";
+
+                // IMG_RESP 설정 초기화 (라디오 버튼, 답변 최대 글자수)
+                const imgRespRadios = block.querySelectorAll(".qst-type-img-resp input[type='radio']");
+                if (imgRespRadios[0]) imgRespRadios[0].checked = true; // '파일만 업로드' 기본 선택
+                const imgRespLimit = block.querySelector(".qst-type-img-resp input.wp100");
+                if (imgRespLimit) imgRespLimit.value = "";
+
+                // 모든 파일첨부 정보 초기화 (파일명 스팬 포함)
+                block.querySelectorAll(".fileInput").forEach(f => {
+                    f.value = "";
+                    const fileNameSpan = f.closest(".file_wrap")?.querySelector(".fileName");
+                    if (fileNameSpan) {
+                        fileNameSpan.textContent = "첨부 파일 선택";
+                        fileNameSpan.style.display = ""; // 안내 문구 노출 상태로 초기화
+                    }
+                    const fileListBox = f.closest(".file_wrap")?.querySelector(".file_list");
+                    if (fileListBox) fileListBox.innerHTML = ""; // 파일 표시 영역 초기화
+                });
+            }
+
+            // MULTI
+            if (type === "MULTI") {
+                block.querySelectorAll(".qst-type-multi").forEach(el => el.style.display = "");
+                block.querySelectorAll(".qst-type-multi-setting").forEach(el => el.style.display = "");
+
+                // skipReset이 아닐 때만 기본 항목 생성
+                if (!skipReset) {
+                    this.fnInitMultiItems(block);
+                }
+            }
+
+            // SHORT
+            if (type === "SHORT") {
+                block.querySelectorAll(".qst-type-short").forEach(el => el.style.display = "");
+                block.querySelectorAll(".qst-type-short-setting").forEach(el => el.style.display = "");
+
+                // SHORT 항목이 없으면 하나 생성
+                if (!skipReset && block.querySelectorAll(".qst-type-short").length === 0) {
+                    const commonRow = block.querySelector(".qst-common-row");
+                    const row = document.createElement("div");
+                    row.classList.add("list_row", "qst-type-short");
+                    row.innerHTML = `
+       	                <label class="list_first">항목</label>
+       	                <input type="text" class="w100" placeholder="100자 이내로 작성해 주세요." disabled>
+       	                <div class="list_last">
+       	                    <span class="radio-box"><input type="checkbox" id="chec_08"><label for="chec_08">숫자만 입력</label></span>
+       	                </div>
+       	            `;
+                    commonRow.after(row);
+                }
+            }
+
+            // LONG
+            if (type === "LONG") {
+                block.querySelectorAll(".qst-type-long").forEach(el => el.style.display = "");
+                block.querySelectorAll(".qst-type-long-setting").forEach(el => el.style.display = "");
+
+                // LONG 항목이 없으면 하나 생성
+                if (!skipReset && block.querySelectorAll(".qst-type-long").length === 0) {
+                    const commonRow = block.querySelector(".qst-common-row");
+                    const row = document.createElement("div");
+                    row.classList.add("list_row", "qst-type-long");
+                    row.innerHTML = `
+       	                <label class="list_first">항목</label>
+       	                <input type="text" class="w100" placeholder="2,000자 이내로 작성해 주세요." disabled>
+       	            `;
+                    commonRow.after(row);
+                }
+            }
+
+            // LIKERT
+            if (type === "LIKERT") {
+                block.querySelectorAll(".qst-type-likert-setting").forEach(el => el.style.display = "");
+
+                if (!skipReset) {
+                    const likertSelect = block.querySelector("#likertCount");
+                    if (likertSelect) {
+                        const cnt = Number(likertSelect.value);
+                        this.fnRenderLikertItems(block, cnt);
+                    }
+                } else {
+                    // skipReset일 때는 likertItems 보이기만
+                    if (likertItems) likertItems.style.display = "block";
+                }
+            }
+
+            if (type === "RANK") {
+                block.querySelectorAll(".qst-type-multi").forEach(el => el.style.display = "");
+
+                // 항목이 없으면 하나 생성
+                if (!skipReset && block.querySelectorAll(".qst-type-multi").length === 0) {
+                    this.fnInitMultiItems(block);
+                }
+            }
+
+            if (type === "RATIO") {
+                block.querySelectorAll(".qst-type-multi").forEach(el => el.style.display = "");
+                block.querySelectorAll(".qst-type-ratio-setting").forEach(el => el.style.display = "");
+
+                // [수정] 항목이 없으면 하나 생성 (단답형 등에서 넘어올 때)
+                if (!skipReset && block.querySelectorAll(".qst-type-multi").length === 0) {
+                    const commonRow = block.querySelector(".qst-common-row");
+                    const row = document.createElement("div");
+                    row.classList.add("list_row", "qst-type-multi");
+                    row.innerHTML = `
+       	                <label class="list_first">항목1</label>
+       	                <input type="text" class="w100" placeholder="">
+       	                <div class="list_last"><button type="button" class="del">삭제</button></div>
+       	            `;
+                    commonRow.after(row);
+                } else if (!skipReset) {
+                    // 항목이 이미 있으면 기존 로직 태움
+                    this.fnInitMultiItems(block);
+                }
+            }
+
+            if (type === "IMG_SEL") {
+                block.querySelectorAll(".qst-type-img-sel").forEach(el => el.style.display = "");
+
+                // 항목이 없으면 하나 생성
+                if (!skipReset && block.querySelectorAll(".qst-type-img-sel").length === 0) {
+                    const commonRow = block.querySelector(".qst-common-row");
+                    const row = document.createElement("div");
+                    row.classList.add("list_row", "qst-type-img-sel");
+                    row.innerHTML = `
+       	                <label class="list_first">항목1</label>
+       	                <input type="text" class="w100" placeholder="">
+       	                <div class="list_last">
+       	                    <div class="file_wrap">
+       	                        <label class="file_label">파일 선택</label>
+       	                        <span class="fileName">첨부 파일 선택</span>
+       	                        <input type="file" class="fileInput" style="display:none;">
+        	                        <div class="file_list"></div>
+       	                        <button type="button" class="del">삭제</button>
+       	                    </div>
+       	                </div>
+       	            `;
+                    commonRow.after(row);
+                }
+            }
+
+            if (type === "IMG_RESP") {
+                block.querySelectorAll(".qst-type-img-resp").forEach(el => el.style.display = "");
+
+                // 항목이 없으면 하나 생성
+                if (!skipReset && block.querySelectorAll(".qst-type-img-resp").length === 0) {
+                    const commonRow = block.querySelector(".qst-common-row");
+                    const qInner = block.closest(".question_inner");
+                    const srvyQitemOid = qInner?.getAttribute("data-qst-no") || Date.now();
+
+                    const row = document.createElement("div");
+                    row.classList.add("list_row", "qst-type-img-resp");
+                    row.innerHTML = `
+       	                <label class="list_first">항목</label>
+       	                <span class="radio-box"><input type="radio" name="radio_02_${srvyQitemOid}"><label> 파일만 업로드</label></span>
+       	                <span class="radio-box">
+       	                    <input type="radio" name="radio_02_${srvyQitemOid}">
+       	                    <label> 파일 업로드 + 글 입력 (답변 최대 글자수
+       	                        <input type="text" class="wp100 tar" placeholder="2,000"> (2,000자 이하))
+       	                    </label>
+       	                </span>
+       	            `;
+                    commonRow.after(row);
+                }
+            }
+
+            const etcBtn = block.querySelector(".btn-add-etc");
+            if (etcBtn) {
+                etcBtn.style.display = (type === "MULTI") ? "" : "none";
+            }
+
+            // 항목 추가 버튼 제어
+            const addOptionBtn = block.querySelector(".btn-add-option");
+            if (addOptionBtn) {
+                const allowed = ["MULTI", "RANK", "IMG_SEL", "RATIO"];
+                addOptionBtn.style.display = allowed.includes(type) ? "" : "none";
+            }
+            const qInner = block.closest(".question_inner");
+            this.fnRefreshFileInputs(qInner);
+        },
+
+        /**
+         * 리커트 항목 동적 생성
+         */
+        fnRenderLikertItems: function (block, count) {
+            const container = block.querySelector(".qst-type-likert-items");
+            if (!container) return;
+
+            container.innerHTML = "";
+            for (let i = 1; i <= count; i++) {
+                const row = document.createElement("div");
+                row.classList.add("list_row");
+                row.innerHTML = `
+                     <label class="list_first">응답 ${i}</label>
+                     <input type="text" class="w100" placeholder="응답 ${i}">
+                 `;
+                container.appendChild(row);
+            }
+            container.style.display = "";
+        },
+
+        /**
+         * 문항 추가
+         */
+        fnAddQuestion: function (newNo, insertTarget) {
+
+            const wrap = document.querySelector(".question_wrap");
+
+            // question_inner 전체를 템플릿으로 가져옴
+            const template = wrap.querySelector(".question_inner");
+
+            if (!template) {
+                console.error("문항 템플릿(.question_inner)을 찾을 수 없습니다.");
+                return;
+            }
+
+            const clone = template.cloneNode(true);
+
+            // 템플릿이 display:none 상태일 수 있으므로 보이게 처리
+            clone.style.display = "flex";
+
+            // 하위 문항 스타일 제거 (복사로 인한 잠재적 오류 방지)
+            clone.classList.remove("sub-question");
+
+            // 텍스트 입력값 초기화 및 data 속성 제거
+            clone.querySelectorAll("input[type='text']").forEach(inp => inp.value = "");
+            clone.querySelectorAll("textarea").forEach(ta => ta.value = "");
+            clone.removeAttribute("data-qst-no"); // 신규 문항으로 처리
+            clone.removeAttribute("data-parent-qst-no");
+
+            // 기본 설문유형 MULTI로 세팅
+            const typeSelect = clone.querySelector(".qst_type_select");
+            if (typeSelect) typeSelect.value = "MULTI";
+
+            // 챕터 select 초기화
+            const chSelect = clone.querySelector(".chapter-select");
+            if (chSelect) chSelect.value = "";
+
+            // 문항 번호 적용
+            const qNoInput = clone.querySelector(".qst-common-row .list_first");
+            if (qNoInput) {
+                qNoInput.value = String(newNo || (document.querySelectorAll(".question_inner[style*='flex']:not(.sub-question)").length + 1));
+            }
+
+            // UI 초기화(항목1만 보이도록) 및 모든 설정값 초기화
+            // fnToggleQuestionTypeUI 내부에서 항목 목록과 설정값이 모두 초기화됩니다.
+            this.fnToggleQuestionTypeUI(clone.querySelector(".question_con"), "MULTI", false);
+            this.fnRefreshFileInputs(clone);
+
+            // 삽입 위치 설정
+            if (insertTarget && insertTarget.parentNode === wrap) {
+                // 마지막 문항 뒤에 삽입
+                insertTarget.after(clone);
+            } else {
+                // 기준점이 없거나 부적절하면, 문항추가 버튼 위에 삽입
+                const btnRow = wrap.querySelector(".question_btn");
+                wrap.insertBefore(clone, btnRow);
+            }
+
+            // 새로 추가된 문항 select 이벤트 다시 바인딩 (리커트 척도 포함)
+            this.fnBindQuestionTypeEvents();
+            // 챕터 셀렉트 다시 렌더링
+            this.fnRenderChapterSelectForAllQuestions();
+        },
+
+        /**
+         * 문항의 모든 옵션 데이터를 추출
+         */
+        fnGetQuestionOptions: function (q, type) {
+            const qCon = q.querySelector(".question_con");
+            const data = {};
+
+         	// 공통 속성인 필수여부 백업
+       	    data.esntlYn = q.querySelector(".required-type")?.value || "N";
+         
+            // MULTI, RANK, RATIO 항목 추출
+            if (["MULTI", "RANK", "RATIO"].includes(type)) {
+                data.items = [];
+                qCon.querySelectorAll(".qst-type-multi").forEach(row => {
+                    if (!row.classList.contains("qst-type-multi-etc")) {
+                        const text = row.querySelector("input")?.value || "";
+                        data.items.push({text: text, isEtc: false});
+                    }
+                });
+                const etcRow = qCon.querySelector(".qst-type-multi-etc");
+                data.hasEtc = (etcRow && etcRow.style.display !== "none");
+                if (data.hasEtc) {
+                    const etcText = etcRow.querySelector("input")?.value || "기타";
+                    data.items.push({text: etcText, isEtc: true});
+                }
+            }
+
+            // LIKERT 항목 추출
+            if (type === "LIKERT") {
+                data.count = Number(qCon.querySelector("#likertCount")?.value || 5);
+                data.labels = [];
+                qCon.querySelectorAll(".qst-type-likert-items .list_row:not(.likert-template) input").forEach(inp => {
+                    data.labels.push(inp.value || "");
+                });
+            }
+
+            // IMG_SEL 항목 추출
+            if (type === "IMG_SEL") {
+                data.items = [];
+                qCon.querySelectorAll(".qst-type-img-sel").forEach(row => {
+                    const text = row.querySelector("input[type='text']")?.value || "";
+                    data.items.push({text: text});
+                });
+            }
+
+            // 기타 설정값 추출
+            if (type === "MULTI") {
+                data.multiChk = qCon.querySelector("#chec_07")?.checked || false;
+                data.limitType = qCon.querySelector(".multi-limit-type")?.value || "NONE";
+                data.limitCnt = qCon.querySelector(".multi-limit-count")?.value || "1";
+            }
+            if (type === "SHORT") {
+                data.limitVal = qCon.querySelector(".qst-type-short-setting input")?.value || "";
+                data.numChk = qCon.querySelector("#chec_08")?.checked || false;
+            }
+            if (type === "LONG") {
+                data.limitVal = qCon.querySelector(".qst-type-long-setting input")?.value || "";
+            }
+            if (type === "RATIO") {
+                data.limitVal = qCon.querySelector(".ratio-step")?.value || "5";
+            }
+            if (type === "IMG_RESP") {
+                data.limitVal = qCon.querySelector(".qst-type-img-resp input.wp100")?.value || "";
+                data.radioIdx = [...qCon.querySelectorAll(".qst-type-img-resp input[type='radio']")].findIndex(r => r.checked);
+            }
+
+            return data;
+        },
+
+        /**
+         * 복사된 문항에 옵션 데이터를 다시 렌더링
+         */
+        fnRenderClonedOptions: function (clone, type, data) {
+            const qCon = clone.querySelector(".question_con");
+            const commonRow = qCon.querySelector(".qst-common-row");
+
+       	    // 필수여부 값 복원
+			const reqSel = clone.querySelector(".required-type");
+			if (reqSel && data.esntlYn) {
+			    reqSel.value = data.esntlYn;
+			}
+			
+            // 복사 시 UI 토글로 인해 생성된 기본 항목들을 제거
+            qCon.querySelectorAll(".qst-type-multi:not(.qst-type-multi-etc)").forEach(e => e.remove());
+            qCon.querySelectorAll(".qst-type-img-sel").forEach(e => e.remove());
+
+            // MULTI, RANK, RATIO 옵션 렌더링
+            if (["MULTI", "RANK", "RATIO"].includes(type) && data.items && data.items.length > 0) {
+                let lastInserted = commonRow;
+
+                data.items.filter(item => !item.isEtc).forEach((item, idx) => {
+                    const newRow = document.createElement("div");
+                    newRow.classList.add("list_row", "qst-type-multi");
+                    newRow.innerHTML = `
+       	                <label class="list_first">항목${idx + 1}</label>
+       	                <input type="text" class="w100" value="${item.text || ''}">
+       	                <div class="list_last"><button type="button" class="del">삭제</button></div>
+       	            `;
+                    lastInserted.after(newRow);
+                    lastInserted = newRow;
+                });
+
+                // 기타 항목 복구
+                const etcRow = qCon.querySelector(".qst-type-multi-etc");
+                const etcBtn = qCon.querySelector(".btn-add-etc");
+                const etcOpt = data.items.find(item => item.isEtc);
+
+                if (etcOpt) {
+                    if (etcRow) {
+                        etcRow.style.display = "";
+                        etcRow.querySelector("input").value = etcOpt.text || '기타';
+                    }
+                    if (etcBtn) etcBtn.style.display = "none";
+                } else {
+                    if (etcRow) etcRow.style.display = "none";
+                    if (etcBtn) etcBtn.style.display = "";
+                }
+
+            }
+
+            // MULTI 설정 복구
+            if (type === "MULTI") {
+                const multiChk = qCon.querySelector("#chec_07");
+                const limitTypeSel = qCon.querySelector(".multi-limit-type");
+                const limitCountSel = qCon.querySelector(".multi-limit-count");
+
+                if (multiChk) multiChk.checked = data.multiChk;
+                if (limitTypeSel) {
+                    limitTypeSel.value = data.limitType || 'NONE';
+                    limitTypeSel.style.display = data.multiChk ? "" : "none";
+                }
+                if (limitCountSel) {
+                    limitCountSel.value = data.limitCnt || '1';
+                    limitCountSel.style.display = (data.multiChk && data.limitType === 'LIMIT') ? "" : "none";
+                }
+            }
+
+            // LIKERT 옵션 렌더링 및 값 채우기
+            if (type === "LIKERT" && data.labels) {
+                const likertSelect = qCon.querySelector("#likertCount");
+                if (likertSelect) likertSelect.value = data.count;
+
+                // fnRenderLikertItems를 호출하여 항목 재생성
+                admin501_1.fnRenderLikertItems(qCon, data.count);
+
+                // 값 채우기
+                const likertInputs = qCon.querySelectorAll(".qst-type-likert-items .list_row:not(.likert-template) input");
+                likertInputs.forEach((inp, idx) => {
+                    inp.value = data.labels[idx] || '';
+                });
+            }
+
+            // IMG_SEL 옵션 렌더링
+            if (type === "IMG_SEL" && data.items && data.items.length > 0) {
+                let lastInserted = commonRow;
+
+                data.items.forEach((item, idx) => {
+                    const newRow = document.createElement("div");
+                    newRow.classList.add("list_row", "qst-type-img-sel");
+                    newRow.innerHTML = `
+       	                <label class="list_first">항목${idx + 1}</label>
+       	                <input type="text" class="w100" value="${item.text || ''}" placeholder="">
+       	                <div class="list_last">
+       	                    <div class="file_wrap">
+       	                        <label class="file_label">파일 선택</label>
+       	                        <span class="fileName">첨부 파일 선택</span>
+       	                        <input type="file" class="fileInput" style="display:none;">
+        	                        <div class="file_list"></div>
+       	                        <button type="button" class="del">삭제</button>
+       	                    </div>
+       	                </div>
+       	            `;
+                    lastInserted.after(newRow);
+                    lastInserted = newRow;
+                });
+
+            }
+
+            // SHORT/LONG/IMG_RESP/RATIO 설정 복구
+            if (type === "SHORT") {
+                const maxInput = qCon.querySelector(".qst-type-short-setting input");
+                if (maxInput) maxInput.value = data.limitVal || '';
+                const numChk = qCon.querySelector("#chec_08");
+                if (numChk) numChk.checked = data.numChk;
+            }
+            if (type === "LONG") {
+                const maxInput = qCon.querySelector(".qst-type-long-setting input");
+                if (maxInput) maxInput.value = data.limitVal || '';
+            }
+            if (type === "RATIO") {
+                const stepSel = qCon.querySelector(".ratio-step");
+                if (stepSel) stepSel.value = data.limitVal || '5';
+            }
+            if (type === "IMG_RESP") {
+                const textInput = qCon.querySelector(".qst-type-img-resp input.wp100");
+                if (textInput) textInput.value = data.limitVal || '';
+                const radios = qCon.querySelectorAll(".qst-type-img-resp input[type='radio']");
+                if (radios[data.radioIdx]) radios[data.radioIdx].checked = true;
+            }
+
+        },
+
+        /**
+         * 모든 문항의 챕터 select 옵션을 다시 렌더링
+         */
+        fnRenderChapterSelectForAllQuestions: function () {
+            const chapterUseChk = document.querySelector("#chapter_01");
+            const selects = document.querySelectorAll(".chapter-select");
+
+            selects.forEach(select => {
+
+                // 챕터 사용 OFF
+                if (!chapterUseChk.checked) {
+                    // disable만 처리하고 기존 value는 유지
+                    return;
+                }
+
+                // 기존 value 저장
+                const prevValue = select.value;
+
+                // 현재 옵션 개수
+                const needCount = this.state.chapters.length;
+
+                // option 개수 비슷하게 맞추기
+                const opts = select.querySelectorAll("option:not([value=''])");
+
+                // 옵션이 부족하면 추가
+                if (opts.length < needCount) {
+                    for (let i = opts.length; i < needCount; i++) {
+                        const ch = this.state.chapters[i];
+                        const opt = document.createElement("option");
+                        opt.value = String(ch.id);
+                        opt.textContent = `챕터 ${ch.id}`;
+                        select.appendChild(opt);
+                    }
+                }
+
+                // 옵션이 많으면 제거
+                if (opts.length > needCount) {
+                    for (let i = opts.length - 1; i >= needCount; i--) {
+                        opts[i].remove();
+                    }
+                }
+
+                // 기존 선택값 복구
+                if ([...select.options].some(o => o.value == prevValue)) {
+                    select.value = prevValue;
+                }
+            });
+        },
+
+        /**
+         * 저장 로직
+         */
+        fnSaveSurvey: async function (surveyStat) {
+
+            // 1. 반환값에 optionFiles 추가됨
+            const {survey, questionFiles, optionFiles} = this.serializeSurvey();
+            
+            // qstLimit 유효성 검사
+            for (const qst of survey.qstList) {
+                if (qst.srvyQitemType === "SHORT" && qst.srvyQitemLmt > 100) {
+                    uiCommon.fnShowAlertModal("주관식 단답의 최대 글자수는 100자를 초과할 수 없습니다.");
+                    return;
+                }
+                if (qst.srvyQitemType === "LONG" && qst.srvyQitemLmt > 2000) {
+                    uiCommon.fnShowAlertModal("주관식 서술의 최대 글자수는 2000자를 초과할 수 없습니다.");
+                    return;
+                }
+            }
+            
+            survey.srvyStts = surveyStat;
+
+            // UPDATE 모드라면 srvy_oid 포함
+            if (this.state.srvyOid) {
+                survey.srvyOid = this.state.srvyOid;
+
+                // DELETE LIST 관리
+                survey.deletedQstList = this.state.deletedQstList;
+                survey.deletedOptList = this.state.deletedOptList;
+                survey.deletedQstAttachList = this.state.deletedQstAttachList;
+            }
+
+            const formData = new FormData();
+            formData.append('survey', new Blob([JSON.stringify(survey)], {type: 'application/json'}));
+
+            // 문항 첨부파일
+            questionFiles.forEach(file => formData.append('questionFiles', file));
+
+            // 옵션 첨부파일 (IMG_SEL용)
+            if (optionFiles && optionFiles.length > 0) {
+                optionFiles.forEach(file => formData.append('optionFiles', file));
+            }
+
+            let result = '';
+            const msg = surveyStat === 'REG' ? '임시 저장하시겠습니까?' : '저장하시겠습니까?';
+            const comMsg = surveyStat === 'REG' ? '임시 저장되었습니다.' : '저장되었습니다.';
+
+            uiCommon.fnShowConfirmModal(msg, async () => {
+                uiCommon.fnHideConfirmModal();
+
+                try {
+                    const isInsert = admin501_1.state.mode === 'insert';
+                    // REST API 경로 및 메소드 설정
+                    const requestUrl = isInsert ? "/api/admin/admin501/survey/insert" : "/api/admin/admin501/survey/upsert";
+                    const method = isInsert ? "PUT" : "POST";
+
+                    result = await API.upload(requestUrl, formData, {method});
+
+                    uiCommon.fnShowAlertModal(comMsg, () => {
+                        if (surveyStat === 'REG') {
+                            location.href = `/admin/page/admin501-1?srvyOid=${result}`;
+                        } else {
+                            location.href = `/admin/page/admin501`;
+                        }
+                    });
+
+                } catch (e) {
+                    uiCommon.fnShowAlertModal("저장 중 오류 발생: " + e);
+                }
+            });
+        },
+
+        /**
+         * param 수집
+         */
+        serializeSurvey: function () {
+            // questionFiles: 문항 자체의 첨부파일
+            // optionFiles: 옵션(선택지)의 첨부파일
+            const questionFiles = [];
+            const optionFiles = [];
+
+            const survey = {
+                srvyTtl: document.querySelector("#lab_01").value.trim(),
+                srvyBgngDt: document.querySelector("#admin5011EduOrgStartDt").value.trim(),
+                srvyEndDt: document.querySelector("#admin5011EduOrgEndDt").value.trim(),
+                srvyTrgt: document.querySelector("input[name='radio_01']:checked").value,
+                srvyCn: CommonCKEditor.getContent("sur_editor"),
+                srvyType: document.querySelector("input[name='survey_type']:checked").value,
+
+                nmClctYn: document.querySelector("#chec_01").checked ? "Y" : "N",
+                gndrClctYn: document.querySelector("#chec_02").checked ? "Y" : "N",
+                instClctYn: document.querySelector("#chec_03").checked ? "Y" : "N",
+                mpnoClctYn: document.querySelector("#chec_04").checked ? "Y" : "N",
+                emlClctYn: document.querySelector("#chec_05")?.checked ? "Y" : "N",
+                addrClctYn: document.querySelector("#chec_06")?.checked ? "Y" : "N",
+
+                qstList: [],
+                editorFiles: this.state.editorFiles
+            };
+
+            // 챕터 수집
+            const useChapter = document.querySelector("#chapter_01")?.checked;
+            if (useChapter) {
+                document.querySelectorAll(".chapter_wrap .option-row")
+                        .forEach((row, idx) => {
+                            const text = row.querySelector("input").value.trim() || `챕터 ${idx + 1}`;
+                            const displayQNo = `CH${idx + 1}`;
+                            const srvyQitemOid = row.getAttribute("data-qst-no");
+
+                            survey.qstList.push({
+                                displayQNo,
+                                parentDisplayQNo: null,
+                                level: 0,
+                                srvyQitemOid: srvyQitemOid ? Number(srvyQitemOid) : null,
+                                srvyQitemSeq: survey.qstList.length + 1,
+                                srvyQitemTtl: text,
+                                srvyQitemType: null,
+                                esntlYn: "N",
+                                plrlChcYn: "N",
+                                lmtYn: "N",
+                                etcAddYn: "N",
+                                likertMin: null,
+                                likertMax: null,
+                                likertMinLbl: null,
+                                likertMaxLbl: null,
+                                srvyQitemLmt: null,
+                                optList: []
+                            });
+                        });
+            }
+
+            // 문항 + 하위문항 수집
+            const questions = document.querySelectorAll(".question_inner:not([style*='none'])");
+
+            questions.forEach(q => {
+                const qstCon = q.querySelector(".question_con");
+
+                // 기본 정보
+                const displayQNo = q.querySelector(".qst-common-row .list_first")?.value.trim() || `Q${survey.qstList.length + 1}`;
+                const type = q.querySelector(".qst_type_select")?.value || null;
+                const title = q.querySelector(".qst-common-row textarea.w100")?.value.trim() || "";
+                const chapterIdx = q.querySelector(".chapter-select")?.value;
+                const isSubQ = displayQNo.includes("-");
+                const isChapter = displayQNo && displayQNo.startsWith("CH");
+
+                // 챕터 display QNo
+                let chapterDisplayQNo = null;
+                if (chapterIdx && this.state.chapters.length > 0) {
+                    const cObj = this.state.chapters.find(c => String(c.id) === String(chapterIdx));
+                    chapterDisplayQNo = cObj ? cObj.val : null;
+                }
+
+                // parentDisplayQNo 설정
+                let parentDisplayQNo = null;
+                if (isChapter) {
+                    parentDisplayQNo = null;
+                } else if (isSubQ) {
+                    parentDisplayQNo = displayQNo.split("-")[0];
+                } else {
+                    parentDisplayQNo = chapterDisplayQNo || null;
+                }
+
+                // level 계산
+                const level = isChapter ? 0 : (isSubQ ? 2 : 1);
+
+                // DB 키 수집
+                const srvyQitemOid = q.getAttribute("data-qst-no");
+
+                // ParentSrvyQitemOid 계산
+                let parentSrvyQitemOid = null;
+                if (level === 2) {
+                    const parentQ = [...questions].find(p =>
+                            p.querySelector(".list_first")?.value.trim() === parentDisplayQNo &&
+                            p.getAttribute("data-qst-no")
+                    );
+                    const pSrvyQitemOid = parentQ?.getAttribute("data-qst-no");
+                    if (pSrvyQitemOid) parentSrvyQitemOid = Number(pSrvyQitemOid);
+                } else if (level === 1) {
+                    if (parentDisplayQNo?.startsWith("CH")) {
+                        const chIndex = Number(parentDisplayQNo.replace("CH", ""));
+                        const chRow = document.querySelector(`.chapter_wrap .option-row:nth-child(${chIndex})`);
+                        const chSrvyQitemOid = chRow?.getAttribute("data-qst-no");
+                        if (chSrvyQitemOid) parentSrvyQitemOid = Number(chSrvyQitemOid);
+                    }
+                }
+
+                const qstRow = {
+                    displayQNo,
+                    parentDisplayQNo,
+                    level,
+                    srvyQitemOid: srvyQitemOid ? Number(srvyQitemOid) : null,
+                    upSrvyQitemOid: parentSrvyQitemOid,
+                    srvyQitemSeq: survey.qstList.length + 1,
+                    srvyQitemTtl: title,
+                    srvyQitemType: type,
+                    esntlYn: q.querySelector(".required-type")?.value || "N",
+                    plrlChcYn: "N",
+                    lmtYn: "N",
+                    etcAddYn: "N",
+                    likertMin: null,
+                    likertMax: null,
+                    likertMinLbl: null,
+                    likertMaxLbl: null,
+                    srvyQitemLmt: null,
+                    optList: []
+                };
+
+                // MULTI (객관식)
+                if (type === "MULTI") {
+                    const multiSelect = q.querySelector("#chec_07")?.checked || false;
+                    const limitType = q.querySelector(".multi-limit-type")?.value || "NONE";
+                    const limitCount = Number(q.querySelector(".multi-limit-count")?.value || 0);
+
+                    qstRow.plrlChcYn = multiSelect ? "Y" : "N";
+                    qstRow.lmtYn = (limitType === "LIMIT") ? "Y" : "N";
+                    qstRow.srvyQitemLmt = (limitType === "LIMIT") ? limitCount : null;
+
+                    const normalOptElements = qstCon.querySelectorAll(".qst-type-multi:not(.qst-type-multi-etc)");
+                    normalOptElements.forEach((optElement, idx) => {
+                        const val = optElement.querySelector("input")?.value.trim();
+                        if (val) {
+                            const optNo = optElement.getAttribute("data-opt-no");
+                            qstRow.optList.push({
+                                srvyQitemOptOid: optNo ? Number(optNo) : null,
+                                srvyQitemOptSeq: qstRow.optList.length + 1,
+                                srvyQitemOptTxt: val,
+                                etcOptYn: "N",
+                                srvyQitemOptImgFileNo: null
+                            });
+                        }
+                    });
+
+                    const etcElement = qstCon.querySelector(".qst-type-multi-etc");
+                    if (etcElement) {
+                        const isVisible = etcElement.style.display !== "none" &&
+                                window.getComputedStyle(etcElement).display !== "none";
+                        const etcOptNo = etcElement.getAttribute("data-opt-no");
+                        const isDeleted = etcOptNo && this.state.deletedOptList.includes(Number(etcOptNo));
+
+                        if (isVisible && !isDeleted) {
+                            const val = etcElement.querySelector("input")?.value.trim();
+                            qstRow.optList.push({
+                                srvyQitemOptOid: etcOptNo ? Number(etcOptNo) : null,
+                                srvyQitemOptSeq: qstRow.optList.length + 1,
+                                srvyQitemOptTxt: val || "기타",
+                                etcOptYn: "Y",
+                                srvyQitemOptImgFileNo: null
+                            });
+                            qstRow.etcAddYn = "Y";
+                        }
+                    }
+                }
+
+                // LIKERT
+                if (type === "LIKERT") {
+                    const count = Number(q.querySelector("#likertCount")?.value || 5);
+                    const likertRows = qstCon.querySelectorAll(".qst-type-likert-items .list_row:not(.likert-template)");
+
+                    qstRow.srvyQitemLmt = count;
+                    qstRow.likertMin = 1;
+                    qstRow.likertMax = count;
+
+                    likertRows.forEach((row, idx) => {
+                        const txt = row.querySelector("input")?.value.trim();
+                        const optNo = row.getAttribute("data-opt-no");
+                        if (idx === 0) qstRow.likertMinLbl = txt || null;
+                        if (idx === count - 1) qstRow.likertMaxLbl = txt || null;
+
+                        qstRow.optList.push({
+                            srvyQitemOptOid: optNo ? Number(optNo) : null,
+                            srvyQitemOptSeq: idx + 1,
+                            srvyQitemOptTxt: txt,
+                            etcOptYn: "N",
+                            srvyQitemOptImgFileNo: null
+                        });
+                    });
+                }
+
+                // RANK / RATIO
+                if (["RANK", "RATIO"].includes(type)) {
+                    if (type === "RATIO") {
+                        const step = Number(q.querySelector(".ratio-step")?.value || 5);
+                        qstRow.srvyQitemLmt = step;
+                    }
+                    const multiRows = qstCon.querySelectorAll(".qst-type-multi");
+                    multiRows.forEach((row, idx) => {
+                        const txt = row.querySelector("input")?.value.trim();
+                        if (txt) {
+                            const optNo = row.getAttribute("data-opt-no");
+                            qstRow.optList.push({
+                                srvyQitemOptOid: optNo ? Number(optNo) : null,
+                                srvyQitemOptSeq: idx + 1,
+                                srvyQitemOptTxt: txt,
+                                etcOptYn: "N",
+                                srvyQitemOptImgFileNo: null
+                            });
+                        }
+                    });
+                }
+
+                // IMG_SEL (이미지 선택형 - 수정됨)
+                if (type === "IMG_SEL") {
+                    const imgSelRows = qstCon.querySelectorAll(".qst-type-img-sel");
+                    imgSelRows.forEach((row, idx) => {
+                        const txt = row.querySelector("input[type='text']")?.value.trim();
+                        const optNo = row.getAttribute("data-opt-no");
+
+                        // [추가] 옵션 파일 처리 로직
+                        // 파일이 있으면 optionFiles 배열에 넣고, 그 인덱스를 attachFileIndex에 저장
+                        let fileIndex = null;
+                        const fileInput = row.querySelector(".fileInput");
+                        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                            fileIndex = optionFiles.length; // 현재 파일 배열의 길이 = 새 파일의 인덱스
+                            optionFiles.push(fileInput.files[0]);
+                        }
+
+                        qstRow.optList.push({
+                            srvyQitemOptOid: optNo ? Number(optNo) : null,
+                            srvyQitemOptSeq: idx + 1,
+                            srvyQitemOptTxt: txt,
+                            etcOptYn: "N",
+                            srvyQitemOptImgFileNo: null,
+                            attachFileIndex: fileIndex // 백엔드가 이 값을 보고 파일을 찾음
+                        });
+                    });
+                }
+
+                // SHORT / LONG / IMG_RESP
+                if (type === "SHORT") {
+                    qstRow.srvyQitemLmt = Number(q.querySelector(".qst-type-short-setting input")?.value || 0);
+                    const numOnlyChk = q.querySelector("#chec_08");
+                    if (numOnlyChk) {
+                        qstRow.lmtYn = numOnlyChk.checked ? "Y" : "N";
+                    } else {
+                        qstRow.lmtYn = "N";
+                    }
+                }
+                if (type === "LONG") {
+                    qstRow.srvyQitemLmt = Number(q.querySelector(".qst-type-long-setting input")?.value || 0);
+                }
+                if (type === "IMG_RESP") {
+                    const maxLength = q.querySelector(".qst-type-img-resp input.wp100")?.value;
+                    qstRow.srvyQitemLmt = maxLength ? Number(maxLength) : null;
+                }
+
+                // 공통 영역 문항 첨부파일 처리
+                const questionFileInput = q.querySelector(".qst-common-row .fileInput");
+                if (questionFileInput && questionFileInput.files && questionFileInput.files.length > 0) {
+                    const fileIndex = questionFiles.length;
+                    questionFiles.push(questionFileInput.files[0]);
+                    qstRow.attachFileIndex = fileIndex;
+                } else {
+                    qstRow.attachFileIndex = null;
+                }
+
+                survey.qstList.push(qstRow);
+            });
+
+            // questionFiles와 함께 optionFiles도 반환
+            return {survey, questionFiles, optionFiles};
+        },
+
+        /**
+         * 페이지 이동 - 설문 목록
+         */
+        fnGoToListPage: function () {
+            window.location.href = contextPath + '/admin/page/admin501';
+            admin501.init();
+        },
+
+        /**
+         * 설문 상세 조회
+         */
+        searchSurveyDetail: async function () {
+            const srvyOid = this.state.srvyOid;
+
+            const data = await API.get(`/api/admin/admin501/survey/detail?srvyOid=${srvyOid}`);
+            this.state.all = data;
+
+            // 설문 기본정보 바인딩
+            this.fnBindSurveyInfo(data);
+
+            // 챕터 바인딩
+            const chapters = data.qstList.filter(q => q.level === 0);
+            this.fnRenderChapters(chapters);
+
+            // 문항 바인딩
+            this.fnRenderQuestions(data.qstList);
+
+            // 삭제 리스트 초기화
+            this.state.deletedQstList = [];
+            this.state.deletedOptList = [];
+            this.state.deletedQstAttachList = []; // 기존 첨부 삭제 리스트도 초기화
+        },
+
+        /**
+         * 설문 기본 정보 채우기
+         */
+        fnBindSurveyInfo: function (data) {
+
+            document.querySelector("#lab_01").value = data.srvyTtl || "";
+
+            document.querySelector("#admin5011EduOrgStartDt").value = data.srvyBgngDt || "";
+            document.querySelector("#admin5011EduOrgEndDt").value = data.srvyEndDt || "";
+
+            const tgtRadio = document.querySelector(`input[name='radio_01'][value='${data.srvyTrgt}']`);
+            if (tgtRadio) {
+                tgtRadio.checked = true;
+            } else {
+                const allRadio = document.querySelector(`input[name='radio_01'][value='ALL']`);
+                if (allRadio) allRadio.checked = true;
+            }
+            const typeRadio = document.querySelector(`input[name='survey_type'][value='${data.srvyType}']`);
+            if (typeRadio) {
+                typeRadio.checked = true;
+            } else {
+                const commonRadio = document.querySelector(`input[name='survey_type'][value='COMMON']`);
+                if (commonRadio) commonRadio.checked = true;
+            }
+
+            // CKEditor
+            if (window.CommonCKEditor) {
+                CommonCKEditor.setContent("sur_editor", data.srvyCn || "");
+            }
+
+            // 개인정보 수집 항목
+            document.querySelector("#chec_01").checked = data.nmClctYn === "Y";
+            document.querySelector("#chec_02").checked = data.gndrClctYn === "Y";
+            document.querySelector("#chec_03").checked = data.instClctYn === "Y";
+            document.querySelector("#chec_04").checked = data.mpnoClctYn === "Y";
+            document.querySelector("#chec_05").checked = data.emlClctYn === "Y";
+            document.querySelector("#chec_06").checked = data.addrClctYn === "Y";
+        },
+
+        /**
+         * 챕터 행 렌더링
+         */
+        fnRenderChapters: function (chapters) {
+
+            const chapterWrap = document.querySelector(".chapter_wrap");
+            chapterWrap.innerHTML = "";
+
+            if (!chapters || chapters.length === 0) {
+                document.querySelector("#chapter_01").checked = false;
+                chapterWrap.style.display = "none";
+                return;
+            }
+
+            document.querySelector("#chapter_01").checked = true;
+            chapterWrap.style.display = "block";
+
+            chapters.forEach((ch, idx) => {
+                const row = document.createElement("div");
+                row.classList.add("option-row");
+
+                // 챕터의 srvyQitemOid, level 보관 (update / delete 판단 필요)
+                row.setAttribute("data-qst-no", ch.srvyQitemOid);
+                row.setAttribute("data-level", "0");
+
+                row.innerHTML = `
+                    <label>챕터 ${idx + 1}</label>
+                    <input type="text" class="chapter-title" value="${ch.srvyQitemTtl}">
+                    <p>
+                        <button type="button" class="chapter add">추가</button>
+                        <button type="button" class="chapter del">삭제</button>
+                    </p>
+                `;
+                chapterWrap.appendChild(row);
+            });
+
+            // 이벤트 재부착 + state.chapters 갱신 + 문항의 챕터 select 갱신
+            this.fnRebindChapterRowEvents();
+            this.fnRefreshChapterState();
+            this.fnRenderChapterSelectForAllQuestions();
+        },
+
+        /**
+         * 문항 + 하위문항 + 옵션 렌더링
+         */
+        fnRenderQuestions: function (qList) {
+
+            const isInsertMode = !qList || qList.length === 0 ? true : false;
+
+            const container = document.querySelector(".question_wrap");
+            if (!container) return;
+
+            const template = container.querySelector(".question_inner");
+            if (!template) return;
+
+            // Insert 모드 → 템플릿 보여줌
+            // Update 모드 → 템플릿만 숨긴다 (절대 삭제 X)
+            template.style.display = isInsertMode ? "flex" : "none";
+
+            // 기존 문항 모두 제거 (템플릿만 남김)
+            container.querySelectorAll(".question_inner").forEach((el, idx) => {
+                if (idx > 0) el.remove();
+            });
+
+            container.querySelectorAll(".sub-question-container").forEach(el => el.remove());
+
+            // Insert 모드는 템플릿만 보여주면 끝
+            if (isInsertMode) return;
+
+            // 상위 문항만 필터링 (level = 1)
+            const parents = qList.filter(q => q.level === 1);
+
+            // 하위 문항을 parentSrvyQitemOid로 빠르게 조회할 수 있도록 미리 분류
+            const childrenByParent = {};
+            qList.filter(q => q.level === 2).forEach(child => {
+                if (!childrenByParent[child.upSrvyQitemOid]) {
+                    childrenByParent[child.upSrvyQitemOid] = [];
+                }
+                childrenByParent[child.upSrvyQitemOid].push(child);
+            });
+
+            // 삽입 기준점 (문항추가 버튼)
+            const questionBtn = container.querySelector(".question_btn");
+
+            parents.forEach(parent => {
+                // 렌더링 전 옵션 목록 정규화 및 정렬
+                if (parent.optList && parent.optList.length > 0) {
+                    const uniqueOptions = new Map();
+
+                    parent.optList.forEach(opt => {
+                        if (!uniqueOptions.has(opt.srvyQitemOptTxt) || uniqueOptions.get(opt.srvyQitemOptTxt).srvyQitemOptOid < opt.srvyQitemOptOid) {
+                            uniqueOptions.set(opt.srvyQitemOptTxt, opt);
+                        }
+                    });
+
+                    parent.optList = Array.from(uniqueOptions.values()).sort((a, b) => a.srvyQitemOptSeq - b.srvyQitemOptSeq);
+                }
+
+                // 상위 문항 렌더링 (문항추가 버튼 바로 위에)
+                const pDOM = this.fnCreateQuestionDOM(parent, false, template);
+                questionBtn.parentNode.insertBefore(pDOM, questionBtn);
+
+                // 해당 상위 문항의 하위 문항들 렌더링
+                const children = childrenByParent[parent.srvyQitemOid] || [];
+
+                if (children.length > 0) {
+                    const wrap = document.createElement("div");
+                    wrap.classList.add("sub-question-container");
+
+                    children.forEach(ch => {
+                        // 하위 문항 옵션도 정규화
+                        if (ch.optList && ch.optList.length > 0) {
+                            const uniqueOptions = new Map();
+                            ch.optList.forEach(opt => {
+                                if (!uniqueOptions.has(opt.srvyQitemOptTxt) || uniqueOptions.get(opt.srvyQitemOptTxt).srvyQitemOptOid < opt.srvyQitemOptOid) {
+                                    uniqueOptions.set(opt.srvyQitemOptTxt, opt);
+                                }
+                            });
+                            ch.optList = Array.from(uniqueOptions.values()).sort((a, b) => a.srvyQitemOptSeq - b.srvyQitemOptSeq);
+                        }
+
+                        const cDOM = this.fnCreateQuestionDOM(ch, true, template);
+                        wrap.appendChild(cDOM);
+                    });
+
+                    // 하위문항 컨테이너를 문항추가 버튼 바로 위에 삽입 (상위 문항 바로 다음)
+                    questionBtn.parentNode.insertBefore(wrap, questionBtn);
+                }
+            });
+
+            this.fnRenderChapterSelectForAllQuestions();
+            this.fnBindQuestionTypeEvents();
+
+            document.querySelectorAll(".question_con").forEach(con => {
+                const typeSelect = con.querySelector(".qst_type_select");
+                if (typeSelect) {
+                    con.setAttribute("data-current-type", typeSelect.value);
+                }
+            });
+        },
+
+        /**
+         * 문항 DOM 템플릿 구성
+         */
+        fnCreateQuestionDOM: function (q, isSub, templateRef) {
+            const template = templateRef || document.querySelector(".question_inner");
+            if (!template) return null;
+
+            const el = template.cloneNode(true);
+            el.style.display = "flex";
+
+            // 공통 속성
+            if (q.srvyQitemOid) el.setAttribute("data-qst-no", q.srvyQitemOid);
+            el.dataset.upSrvyQitemOid = q.upSrvyQitemOid;
+            el.dataset.level = q.level;
+
+            // 문항 번호 + 제목
+            el.querySelector(".list_first").value = q.displayQNo ?? "";
+            el.querySelector(".qst-common-row textarea.w100").value = q.srvyQitemTtl ?? "";
+
+            // 설문 유형 설정
+            const typeSel = el.querySelector(".qst_type_select");
+            const qstType = q.srvyQitemType ?? "MULTI";
+            typeSel.value = qstType;
+            
+       	    // 필수 여부 설정
+			const reqSel = el.querySelector(".required-type");
+			if (reqSel) {
+			    reqSel.value = q.esntlYn || "N";
+			}
+
+            // cloneNode 문제 방지를 위해 속성에도 selected 명시
+            Array.from(typeSel.options).forEach(opt => {
+                if (opt.value === qstType) opt.setAttribute("selected", "selected");
+                else opt.removeAttribute("selected");
+            });
+
+            // 챕터 SELECT
+            const chSelect = el.querySelector(".chapter-select");
+            if (chSelect) {
+                let chapterVal = "";
+                if (isSub && q.upSrvyQitemOid) {
+                    const parentQ = this.state.all?.qstList?.find(item => item.srvyQitemOid === q.upSrvyQitemOid);
+                    if (parentQ && parentQ.parentDisplayQNo && parentQ.parentDisplayQNo.startsWith("CH")) {
+                        chapterVal = parentQ.parentDisplayQNo.replace("CH", "");
+                    }
+                } else if (!isSub && q.parentDisplayQNo && q.parentDisplayQNo.startsWith("CH")) {
+                    chapterVal = q.parentDisplayQNo.replace("CH", "");
+                }
+                chSelect.value = chapterVal;
+            }
+
+            const qCon = el.querySelector(".question_con");
+            const commonRow = qCon.querySelector(".qst-common-row");
+
+            // UI 영역 초기화 (모두 숨김)
+            qCon.querySelectorAll(".qst-type-multi, .qst-type-multi-setting, .qst-type-multi-etc, .qst-type-short, .qst-type-short-setting, .qst-type-long, .qst-type-long-setting, .qst-type-likert-setting, .qst-type-img-sel, .qst-type-img-resp, .qst-type-ratio-setting, .qst-type-likert-items").forEach(el => {
+                el.style.display = "none";
+            });
+
+            // 기존 템플릿의 잔여 항목(기본 항목) 제거
+            //    DB 데이터를 바인딩할 것이므로 템플릿에 있던 껍데기 항목들은 모두 삭제
+            qCon.querySelectorAll(".list_row.qst-type-multi, .list_row.qst-type-short, .list_row.qst-type-long, .list_row.qst-type-img-sel, .list_row.qst-type-img-resp").forEach(row => {
+                // 설정영역(.setting)이나 기타(.etc)가 아닌 순수 항목 로우만 제거
+                if (!row.className.includes("-setting") && !row.className.includes("-etc")) {
+                    row.remove();
+                }
+            });
+
+            // LIKERT 내부 항목 초기화
+            const likertBox = qCon.querySelector(".qst-type-likert-items");
+            if (likertBox) {
+                likertBox.querySelectorAll(".list_row:not(.likert-template)").forEach(e => e.remove());
+            }
+
+            // 해당 유형의 UI 설정값 영역(Setting Box)만 표시
+            this.fnToggleQuestionTypeUI(qCon, qstType, true);
+
+            //유형별 데이터 바인딩 및 항목 생성
+
+            // [MULTI / RANK / RATIO] - 공통적으로 qst-type-multi 클래스 사용
+            if (["MULTI", "RANK", "RATIO"].includes(qstType)) {
+
+                // MULTI 설정값
+                if (qstType === "MULTI") {
+                    const multiChk = qCon.querySelector("#chec_07");
+                    const limitTypeSel = qCon.querySelector(".multi-limit-type");
+                    const limitCountSel = qCon.querySelector(".multi-limit-count");
+
+                    if (q.plrlChcYn === "Y" || q.lmtYn === "Y") {
+                        if (multiChk) multiChk.checked = true;
+                        if (limitTypeSel) {
+                            limitTypeSel.style.display = "";
+                            if (q.lmtYn === "Y") {
+                                limitTypeSel.value = "LIMIT";
+                                if (limitCountSel) {
+                                    limitCountSel.style.display = "";
+                                    limitCountSel.value = q.srvyQitemLmt || "1";
+                                }
+                            } else {
+                                limitTypeSel.value = "NONE";
+                            }
+                        }
+                    }
+                }
+                // RATIO 설정값
+                else if (qstType === "RATIO") {
+                    const ratioStep = qCon.querySelector(".ratio-step");
+                    if (ratioStep) ratioStep.value = q.srvyQitemLmt || "5";
+                }
+
+                // 항목 생성
+                if (q.optList && q.optList.length > 0) {
+                    const normalOpts = q.optList.filter(opt => opt.etcOptYn === "N");
+                    let lastInserted = commonRow;
+
+                    normalOpts.forEach((opt, idx) => {
+                        const row = document.createElement("div");
+                        row.classList.add("list_row", "qst-type-multi", "dynamic-opt");
+                        row.setAttribute("data-opt-no", opt.srvyQitemOptOid || "");
+                        row.style.display = "";
+
+                        const labelTxt = `항목${idx + 1}`;
+
+                        row.innerHTML = `
+       	                    <label class="list_first">${labelTxt}</label>
+       	                    <input type="text" class="w100" value="${opt.srvyQitemOptTxt}">
+       	                    <div class="list_last"><button type="button" class="del">삭제</button></div>
+       	                `;
+                        lastInserted.after(row);
+                        lastInserted = row;
+                    });
+
+                    // 기타 옵션 (MULTI만 해당)
+                    if (qstType === "MULTI") {
+                        const etcOpt = q.optList.find(o => o.etcOptYn === "Y");
+                        const etcTemplate = qCon.querySelector(".qst-type-multi-etc");
+                        const etcBtn = el.querySelector(".btn-add-etc");
+
+                        if (etcTemplate) {
+                            if (etcOpt) {
+                                etcTemplate.setAttribute("data-opt-no", etcOpt.srvyQitemOptOid || "");
+                                etcTemplate.style.display = "";
+                                etcTemplate.querySelector("input").value = etcOpt.srvyQitemOptTxt;
+                                if (etcBtn) etcBtn.style.display = "none";
+                            } else {
+                                etcTemplate.style.display = "none";
+                                etcTemplate.querySelector("input").value = "기타";
+                                if (etcBtn) etcBtn.style.display = "";
+                            }
+                        }
+                    }
+                }
+            }
+
+            // [SHORT]
+            else if (qstType === "SHORT") {
+                const maxInput = qCon.querySelector(".qst-type-short-setting input");
+                if (maxInput) maxInput.value = q.srvyQitemLmt !== null && q.srvyQitemLmt !== undefined ? q.srvyQitemLmt : "";
+
+                const numChk = qCon.querySelector("#chec_08");
+                if (numChk && q.lmtYn === "Y") numChk.checked = true;
+
+                // 단답형은 항목이 1개 고정
+                const row = document.createElement("div");
+                row.classList.add("list_row", "qst-type-short", "dynamic-opt");
+                row.style.display = "";
+                row.innerHTML = `
+       	            <label class="list_first">항목</label>
+       	            <input type="text" class="w100" placeholder="100자 이내로 작성해 주세요." disabled>
+       	            <div class="list_last">
+       	                <span class="radio-box"><input type="checkbox" id="chec_08" ${q.lmtYn === 'Y' ? 'checked' : ''}><label for="chec_08">숫자만 입력</label></span>
+       	            </div>
+       	        `;
+                commonRow.after(row);
+            }
+
+            // [LONG]
+            else if (qstType === "LONG") {
+                const maxInput = qCon.querySelector(".qst-type-long-setting input");
+                if (maxInput) maxInput.value = q.srvyQitemLmt !== null && q.srvyQitemLmt !== undefined ? q.srvyQitemLmt : "";
+
+                const row = document.createElement("div");
+                row.classList.add("list_row", "qst-type-long", "dynamic-opt");
+                row.style.display = "";
+                row.innerHTML = `
+       	            <label class="list_first">항목</label>
+       	            <input type="text" class="w100" placeholder="2,000자 이내로 작성해 주세요." disabled>
+       	        `;
+                commonRow.after(row);
+            }
+
+            // [LIKERT]
+            else if (qstType === "LIKERT") {
+                const likertCountSel = qCon.querySelector("#likertCount");
+                if (likertCountSel) likertCountSel.value = q.likertMax || "5";
+
+                if (likertBox) {
+                    const itemCount = q.likertMax || (q.optList ? q.optList.length : 5);
+                    likertBox.style.display = "block";
+
+                    for (let i = 0; i < itemCount; i++) {
+                        const opt = q.optList && q.optList[i];
+                        const row = document.createElement("div");
+                        row.classList.add("list_row"); // dynamic-opt 불필요 (리커트는 고정)
+                        if (opt) row.setAttribute("data-opt-no", opt.srvyQitemOptOid || "");
+
+                        row.innerHTML = `
+       	                     <label class="list_first">응답 ${i + 1}</label>
+       	                     <input type="text" class="w100" placeholder="응답 ${i + 1}" value="${opt ? opt.srvyQitemOptTxt : ''}">
+       	                `;
+                        likertBox.appendChild(row);
+                    }
+                }
+            }
+
+            // [IMG_SEL]
+            else if (qstType === "IMG_SEL") {
+                if (q.optList && q.optList.length > 0) {
+                    let lastInserted = commonRow;
+
+                    q.optList.forEach((opt, idx) => {
+                        const row = document.createElement("div");
+                        row.classList.add("list_row", "qst-type-img-sel", "dynamic-opt");
+                        row.setAttribute("data-opt-no", opt.srvyQitemOptOid || "");
+                        row.style.display = "";
+
+                        // [추가] 기존 파일이 있는지 확인 (백엔드에서 optionAttach로 내려줌)
+                        let fileHtml = "";
+                        let fileNameStyle = "";
+
+                        // 옵션에 첨부파일이 존재하면 칩 생성
+                        if (opt.optionAttach && opt.optionAttach.length > 0) {
+                            const file = opt.optionAttach[0]; // 옵션당 파일 1개라고 가정
+                            fileHtml = `
+                                <p data-file-type="existing" data-attach-no="${file.fileOid}">
+                                    ${file.originFileName}
+                                    <a class="icon_del" href="javascript:;">파일삭제</a>
+                                </p>
+                            `;
+                            fileNameStyle = "display:none;"; // 파일이 있으니 '첨부 파일 선택' 문구 숨김
+                        }
+
+                        row.innerHTML = `
+       	                    <label class="list_first">항목${idx + 1}</label>
+       	                    <input type="text" class="w100" value="${opt.srvyQitemOptTxt}">
+       	                    <div class="list_last">
+       	                        <div class="file_wrap">
+       	                            <label class="file_label">파일 선택</label>
+       	                            <span class="fileName" style="${fileNameStyle}">첨부 파일 선택</span>
+       	                            <input type="file" class="fileInput" style="display:none;">
+        	                            <div class="file_list">${fileHtml}</div>
+       	                            <button type="button" class="del">삭제</button>
+       	                        </div>
+       	                    </div>
+       	                `;
+                        lastInserted.after(row);
+                        lastInserted = row;
+                    });
+                }
+            }
+
+            // [IMG_RESP]
+            else if (qstType === "IMG_RESP") {
+                const row = document.createElement("div");
+                row.classList.add("list_row", "qst-type-img-resp", "dynamic-opt");
+                row.style.display = "";
+
+                const uniqueId = q.srvyQitemOid || Math.random().toString(36).substr(2, 9);
+                const isWithText = !!q.srvyQitemLmt;
+
+                row.innerHTML = `
+       	            <label class="list_first">항목</label>
+       	            <span class="radio-box">
+       	                <input type="radio" name="radio_02_${uniqueId}" ${!isWithText ? 'checked' : ''}>
+       	                <label> 파일만 업로드</label>
+       	            </span>
+       	            <span class="radio-box">
+       	                <input type="radio" name="radio_02_${uniqueId}" ${isWithText ? 'checked' : ''}>
+       	                <label> 파일 업로드 + 글 입력 (답변 최대 글자수 
+       	                    <input type="text" class="wp100 tar" placeholder="2,000" value="${q.srvyQitemLmt || ''}"> (2,000자 이하))
+       	                </label>
+       	            </span>
+       	        `;
+                commonRow.after(row);
+            }
+
+            // ------------------------------------------------------------
+            // 기존 첨부파일 표시 (surveyQstAttach) - 조회 시에도 칩 UI로 보여준다.
+            // ------------------------------------------------------------
+            const fileWrap = el.querySelector(".qst-common-row .file_wrap");
+            const fileListBox = fileWrap?.querySelector(".file_list");
+            const nameSpan = fileWrap?.querySelector(".fileName");
+            const fileInput = fileWrap?.querySelector(".fileInput");
+
+            // 문항 당 파일 한 개 기준. 다건으로 확장할 때는 배열 순회로 렌더링한다.
+            const attach = q.surveyQstAttach[0];
+            if (attach && fileListBox) {
+                // 기존 첨부칩 렌더링 (data-file-type/existing, data-attach-no로 삭제 대상 식별)
+                fileListBox.innerHTML = `
+                    <p data-file-type="existing" data-attach-no="${attach.fileOid}">
+                        ${attach.originFileName}
+                        <a class="icon_del" href="javascript:;">파일삭제</a>
+                    </p>
+                `;
+                // 안내 문구 감추고 파일 입력값은 비워둔다 (새 선택 시 교체)
+                if (nameSpan) {
+                    nameSpan.textContent = "";
+                    nameSpan.style.display = "none";
+                }
+                if (fileInput) {
+                    fileInput.value = "";
+                }
+            }
+
+            // 버튼 표시 설정 (항목추가, 기타추가)
+            const etcBtn = el.querySelector(".btn-add-etc");
+            if (etcBtn) {
+                const etcOptVisible = q.optList?.some(o => o.etcOptYn === "Y");
+                etcBtn.style.display = (qstType === "MULTI" && !etcOptVisible) ? "" : "none";
+            }
+
+            const addOptionBtn = el.querySelector(".btn-add-option");
+            if (addOptionBtn) {
+                const allowed = ["MULTI", "RANK", "IMG_SEL", "RATIO"];
+                addOptionBtn.style.display = allowed.includes(qstType) ? "" : "none";
+            }
+
+            // 하위문항 표시
+            if (isSub) {
+                el.classList.add("sub-question");
+                if (q.upSrvyQitemOid) el.setAttribute("data-parent-qst-no", q.upSrvyQitemOid);
+                const subBtn = el.querySelector(".btn-sub-question");
+                if (subBtn) subBtn.remove();
+            }
+
+            this.fnRefreshFileInputs(el);
+            return el;
+        },
+
+        /**
+         * 문항의 옵션들 채우기
+         */
+        fnFillOptions: function (el, q) {
+
+            // MULTI
+            if (q.srvyQitemType === "MULTI") {
+                q.optList.forEach((opt, idx) => {
+                    if (idx === 0) {
+                        el.querySelector(".qst-type-multi input").value = opt.srvyQitemOptTxt;
+                    } else {
+                        const row = document.createElement("div");
+                        row.classList.add("list_row", "qst-type-multi");
+                        row.innerHTML = `
+                            <label class="list_first">항목${idx + 1}</label>
+                            <input type="text" class="w100" value="${opt.srvyQitemOptTxt}">
+                            <div class="list_last"><button type="button" class="del">삭제</button></div>
+                        `;
+                        el.querySelector(".question_con").appendChild(row);
+                    }
+                });
+            }
+            // SHORT
+            if (q.srvyQitemType === "SHORT") {
+                el.querySelector(".qst-type-short-setting input").value = q.srvyQitemLmt;
+            }
+
+            // LONG
+            if (q.srvyQitemType === "LONG") {
+                el.querySelector(".qst-type-long-setting input").value = q.srvyQitemLmt;
+            }
+
+            // LIKERT
+            if (q.srvyQitemType === "LIKERT") {
+                el.querySelector("#likertCount").value = q.likertMax;
+                this.fnRenderLikertItems(el.querySelector(".question_con"), q.likertMax);
+
+                const likertInputs = el.querySelectorAll(".qst-type-likert-items input");
+                likertInputs.forEach((inp, idx) => {
+                    inp.value = q.optList[idx]?.srvyQitemOptTxt || "";
+                });
+            }
+
+            if (q.srvyQitemType === "RANK") {
+                q.optList.forEach((opt, idx) => {
+                    if (idx === 0) {
+                        el.querySelector(".qst-type-multi input").value = opt.srvyQitemOptTxt;
+                    } else {
+                        const row = document.createElement("div");
+                        row.classList.add("list_row", "qst-type-multi");
+                        row.innerHTML = `
+                            <label class="list_first">항목${idx + 1}</label>
+                            <input type="text" class="w100" value="${opt.srvyQitemOptTxt}">
+                            <div class="list_last"><button type="button" class="del">삭제</button></div>
+                        `;
+                        el.querySelector(".question_con").appendChild(row);
+                    }
+                });
+            }
+            if (q.srvyQitemType === "RATIO") {
+                el.querySelector(".ratio-step").value = q.srvyQitemLmt;
+
+                // 항목 채우기
+                q.optList.forEach((opt, idx) => {
+                    if (idx === 0) {
+                        el.querySelector(".qst-type-multi input").value = opt.srvyQitemOptTxt;
+                    } else {
+                        const row = document.createElement("div");
+                        row.classList.add("list_row", "qst-type-multi");
+                        row.innerHTML = `
+                            <label class="list_first">항목${idx + 1}</label>
+                            <input type="text" class="w100" value="${opt.srvyQitemOptTxt}">
+                            <div class="list_last"><button type="button" class="del">삭제</button></div>
+                        `;
+                        el.querySelector(".question_con").appendChild(row);
+                    }
+                });
+            }
+            if (q.srvyQitemType === "IMG_SEL") {
+                q.optList.forEach((opt, idx) => {
+                    if (idx === 0) {
+                        el.querySelector(".qst-type-img-sel input[type='text']").value = opt.srvyQitemOptTxt;
+                    } else {
+                        const row = document.createElement("div");
+                        row.classList.add("list_row", "qst-type-img-sel");
+                        row.innerHTML = `
+                            <label class="list_first">항목${idx + 1}</label>
+                            <input type="text" class="w100" value="${opt.srvyQitemOptTxt}">
+                            <div class="list_last">
+                                <div class="file_wrap">
+                                    <label class="file_label">파일 선택</label>
+                                    <span class="fileName">첨부 파일 선택</span>
+                                    <input type="file" class="fileInput" style="display:none;">
+                                    <div class="file_list"></div>
+                                    <button type="button" class="del">삭제</button>
+                                </div>
+                            </div>
+                        `;
+                        el.querySelector(".question_con").appendChild(row);
+                    }
+                });
+            }
+            if (q.srvyQitemType === "IMG_RESP") {
+                const textInput = el.querySelector(".qst-type-img-resp input.wp100");
+                if (textInput) textInput.value = q.srvyQitemLmt || "";
+            }
+
+        },
+        // 에디터 이미지 (Chunk Upload & Sync)
+        handleEditorUploadComplete: function (payload) {
+            if (!payload || !payload.filePath) return;
+            const meta = {
+                originalStrgFileNm: payload.originalStrgFileNm || payload.strgFileNm,
+                storedStrgFileNm: payload.strgFileNm,
+                strgFilePath: payload.strgFilePath,
+                strgFileCpct: payload.strgFileCpct || null,
+                fileTypeNm: payload.fileTypeNm || ''
+            };
+            // 중복 방지
+            const key = `${meta.filePath}__${meta.storedStrgFileNm}`;
+            const idx = this.state.editorFiles.findIndex(item => `${item.filePath}__${item.storedStrgFileNm}` === key);
+            if (idx > -1) this.state.editorFiles[idx] = meta;
+            else this.state.editorFiles.push(meta);
+        },
+    };
+
+    $(document).ready(function () {
+        admin501_1.init();
+    });
+</script>
+</body>
+</html>

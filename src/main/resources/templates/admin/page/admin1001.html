@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 조직도 관리 > 부서 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style layout:fragment="main_style">
+        .dept_manage_wrap {display: flex;gap: 16px;}
+        .dept_left {width: 360px;flex: 0 0 360px;}
+        .dept_right {flex: 1 1 auto;min-width: 600px;}
+        .panel {background: #fff;border: 1px solid #e5e5e5;border-radius: 8px;}
+        .panel_hd {padding: 12px 14px;border-bottom: 1px solid #eee;display: flex;align-items: center;gap: 8px;}
+        .panel_bd {padding: 12px 14px;}
+        .tree {list-style: none;margin: 0;padding: 0;}
+        .tree li {margin: 2px 0;}
+        .tree_row {display: flex;align-items: center;gap: 6px;padding: 6px 8px;border-radius: 6px;cursor: pointer;}
+        .tree_row:hover {background: #f6f8fb;}
+        .tree_row.active {background: #eef5ff;outline: 1px solid #cfe3ff;}
+        .tree_btn {width: 20px;height: 20px;display: inline-flex;align-items: center;justify-content: center;border: 1px solid #ddd;border-radius: 4px;background: #fff;cursor: pointer;}
+        .tree_spacer {width: 20px;height: 20px;display: inline-block;}
+        .tree_badge {margin-left: auto;font-size: 12px;color: #666;}
+        .toolbar {display: flex;gap: 8px;flex-wrap: wrap;}
+        .split_hint {font-size: 12px;color: #666;}
+        .btn_grp {display: flex;gap: 8px;justify-content: flex-end;flex-wrap: wrap;}
+    </style>
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="search_wrap">
+        <div class="split_hint">※ 좌측 트리에서 부서를 선택하면 우측에서 수정할 수 있습니다. 검색은 우측 하단 “검색 결과”를 갱신합니다.</div>
+    </div>
+
+    <div class="sub_cont_wrap dept_manage_wrap pt0">
+
+        <!-- 좌측: 트리 + 간단 검색/필터 -->
+        <div class="dept_left">
+            <div class="panel">
+                <div class="panel_hd">
+                    <strong>부서 트리</strong>
+                    <span style="margin-left:auto;"></span>
+                    <button type="button" class="s_btn_basic line_type01" id="admin1001_btn_preview">조직도 미리보기</button>
+                    <button type="button" class="s_btn_basic line_type01" id="admin1001_btn_new_root">+ 최상위</button>
+                </div>
+
+                <div class="panel_bd">
+                    <div class="toolbar" style="margin-bottom:10px; display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="admin1001_keyword" placeholder="부서명 검색" title="부서명 입력"
+                               style="flex:1; min-width:120px;">
+                        <select id="admin1001_use_filter" title="사용여부" style="min-width:100px;">
+                            <option value="">전체</option>
+                            <option value="Y">사용</option>
+                            <option value="N">미사용</option>
+                        </select>
+                        <button type="button"
+                                id="admin1001_btn_search"
+                                class="s_btn_basic bg_type01">
+                            검색
+                        </button>
+                    </div>
+
+                    <div id="admin1001_tree_container">
+                        <ul class="tree" id="admin1001_tree"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 우측: 상세 편집 + 검색 결과 테이블 -->
+        <div class="dept_right">
+
+            <!-- 상세 편집 패널 -->
+            <div class="panel">
+                <div class="panel_hd">
+                    <strong id="admin1001_detail_title">부서 상세</strong>
+                    <span style="margin-left:auto;"></span>
+                    <button type="button" class="s_btn_basic add" id="admin1001_btn_new_child" disabled>+ 하위부서</button>
+                    <button type="button" class="s_btn_basic del" id="admin1001_btn_delete_one" disabled>삭제</button>
+                </div>
+
+                <div class="panel_bd">
+                    <div class="table_layout02">
+                        <table style="min-width: initial !important;">
+                            <colgroup>
+                                <col style="width: 150px;">
+                                <col style="width: auto;">
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <th><label for="dept_nm">부서명 <span class="chk_txt">*</span></label></th>
+                                <td><input type="text" id="dept_nm" class="w100" placeholder="부서명을 입력하세요"></td>
+                            </tr>
+                            <tr>
+                                <th><label for="parent_dept">상위부서</label></th>
+                                <td>
+                                    <select id="parent_dept" class="w100">
+                                        <option value="">없음 (최상위 부서)</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label for="sort_seq">정렬순서</label></th>
+                                <td><input type="number" id="sort_seq" value="0" min="0"></td>
+                            </tr>
+                            <tr>
+                                <th>사용여부</th>
+                                <td>
+                                    <span class="radio-box"><input type="radio" id="use_yn_y" name="use_yn" value="Y" checked><label for="use_yn_y">사용</label></span>
+                                    <span class="radio-box"><input type="radio" id="use_yn_n" name="use_yn" value="N"><label for="use_yn_n">미사용</label></span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="btn_grp" style="margin-top:12px;">
+                        <button type="button" class="s_btn_basic line_type01" id="admin1001_btn_cancel">초기화</button>
+                        <button type="button" class="s_btn_basic bg_type01" id="admin1001_btn_save">저장</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 검색 결과(기존 목록 테이블 유지) -->
+            <div class="panel" style="margin-top:12px;">
+                <div class="panel_hd">
+                    <strong>검색 결과</strong>
+                    <span style="margin-left:auto;"></span>
+                    <span>총 <strong id="admin1001_total_count"></strong>건</span>
+                    <div style="margin-left:12px;" class="table_top_btn">
+                        <a id="admin1001_btn_delete" href="javascript:;" class="s_btn_basic bg_type02">선택미사용</a>
+                    </div>
+                </div>
+
+                <div class="panel_bd">
+                    <div class="table_layout02 table_layout03 list_type mb20">
+                        <table>
+                            <caption>부서 목록</caption>
+                            <colgroup>
+                                <col style="width: 60px;">
+                                <col style="width: 60px;">
+                                <col style="width: auto;">
+                                <col style="width: 200px;">
+                                <col style="width: 100px;">
+                                <col style="width: 100px;">
+                                <col style="width: 100px;">
+                                <col style="width: 120px;">
+                            </colgroup>
+                            <thead>
+                            <tr>
+                                <th scope="col">번호</th>
+                                <th scope="col"><input type="checkbox" id="all_check"></th>
+                                <th scope="col">부서명</th>
+                                <th scope="col">상위부서</th>
+                                <th scope="col">정렬순서</th>
+                                <th scope="col">구성원수</th>
+                                <th scope="col">하위부서</th>
+                                <th scope="col">사용여부</th>
+                            </tr>
+                            </thead>
+                            <tbody id="dept_list_container"></tbody>
+                        </table>
+                        <span class="scroll_img">스크롤</span>
+                    </div>
+
+                    <div id="paging_wrap" class="paging_wrap">
+                        <a href="javascript:" class="first page_first">첫 페이지</a>
+                        <a href="javascript:" class="previous page_prev">전 페이지</a>
+                        <div class="namber pagination_container"></div>
+                        <a href="javascript:" class="next page_next">다음 페이지</a>
+                        <a href="javascript:" class="last page_last">끝 페이지</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin1001 = {
+        state: {
+            all: null,
+            pageIndex: 1,
+            pageCnt: 10,
+
+            // 상세 편집 상태
+            isEdit: false,
+            currentDeptOid: null,
+
+            // 트리
+            deptFlat: [],       // /tree 응답 원본
+            deptTree: [],       // children 붙인 트리
+            collapsed: new Set(), // 접힘 상태 deptOid
+            selectedId: null,
+        },
+
+        init: function () {
+            this.initEvent();
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin1001', '.search_wrap');
+            if (saved) {
+                this.state.pageIndex = saved._extra.pageIndex || 1;
+            }
+
+            this.loadDeptTree();    // 트리 렌더
+            this.getListData();     // 검색 결과 초기 로드
+            this.resetDetailForm(); // 우측 폼 초기화
+        },
+
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼: 검색 결과 갱신 + 트리 하이라이트(선택)
+            document.getElementById("admin1001_btn_search").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.state.pageIndex = 1;
+                _this.getListData();
+                _this.highlightTreeByKeyword();
+            });
+
+            // 키워드 엔터키 검색
+            document.getElementById("admin1001_keyword").addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    _this.state.pageIndex = 1;
+                    _this.getListData();
+                    _this.highlightTreeByKeyword();
+                }
+            });
+
+            // 사용여부 필터 변경 시 검색
+            document.getElementById("admin1001_use_filter").addEventListener("change", function () {
+                _this.state.pageIndex = 1;
+                _this.getListData();
+            });
+
+            document.getElementById("admin1001_btn_preview").addEventListener("click", function () {
+                _this.showOrgChartPreview();
+            });
+
+            document.getElementById("admin1001_btn_new_root").addEventListener("click", function () {
+                _this.openNewDept(null);
+            });
+
+            document.getElementById("admin1001_btn_new_child").addEventListener("click", function () {
+                if (!_this.state.selectedId) return;
+                _this.openNewDept(_this.state.selectedId);
+            });
+
+            document.getElementById("admin1001_btn_delete_one").addEventListener("click", function () {
+                if (!_this.state.selectedId) return;
+                _this.deleteOne(_this.state.selectedId);
+            });
+
+            document.getElementById("admin1001_btn_save").addEventListener("click", function () {
+                _this.fnSave();
+            });
+
+            document.getElementById("admin1001_btn_cancel").addEventListener("click", function () {
+                // 선택된 부서가 있으면 다시 로드, 없으면 초기화
+                if (_this.state.selectedId) _this.loadDetail(_this.state.selectedId);
+                else _this.resetDetailForm();
+            });
+
+
+            // 기존 선택삭제
+            document.getElementById("admin1001_btn_delete").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnDeleteBulk();
+            });
+
+            // 전체 선택 체크박스
+            document.getElementById("all_check").addEventListener("change", function () {
+                const isChecked = this.checked;
+                document.querySelectorAll(".row_check").forEach(function (checkbox) {
+                    checkbox.checked = isChecked;
+                });
+            });
+
+            // 개별 체크박스
+            document.addEventListener("change", function (e) {
+                if (e.target.classList.contains("row_check")) {
+                    const totalCheckboxes = document.querySelectorAll(".row_check").length;
+                    const checkedCheckboxes = document.querySelectorAll(".row_check:checked").length;
+                    document.getElementById("all_check").checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
+                }
+            });
+
+            // 검색 결과에서 부서명 클릭 => 트리 선택 + 상세 로드
+            document.querySelector("#dept_list_container").addEventListener("click", function (e) {
+                const link = e.target.closest(".dept_link");
+                if (!link) return;
+                e.preventDefault();
+                const id = Number(link.dataset.id);
+                _this.selectDept(id);
+            });
+        },
+
+        // =========================
+        // 트리 로드/렌더
+        // =========================
+        loadDeptTree: async function () {
+            try {
+                const response = await API.get('/api/admin/admin1001/tree');
+                // 기대 형태: [{deptOid, upDeptOid, deptNm, useYn, memberCount, childCount ...}]
+                this.state.deptFlat = Array.isArray(response) ? response : (response || []);
+
+                this.state.deptTree = this.buildTree(this.state.deptFlat);
+                this.renderTree();
+
+                // 상위부서 셀렉트도 함께 갱신(최상위 포함 전체)
+                this.renderDeptSelectFromFlat();
+
+                // 사용자용 조직도 미리보기 렌더링 자리
+                this.renderPreviewOrgChart(this.state.deptTree);
+
+            } catch (error) {
+                console.error('부서 트리 조회 실패:', error);
+            }
+        },
+
+        buildTree: function (list) {
+            const map = new Map();
+            const roots = [];
+
+            list.forEach(item => {
+                map.set(item.deptOid, {...item, children: []});
+            });
+
+            list.forEach(item => {
+                const node = map.get(item.deptOid);
+                if (item.upDeptOid && map.has(item.upDeptOid)) {
+                    map.get(item.upDeptOid).children.push(node);
+                } else {
+                    roots.push(node);
+                }
+            });
+
+            // sortSeq 기준 정렬(없으면 0)
+            const sortRec = (arr) => {
+                arr.sort((a, b) => (a.sortSeq || 0) - (b.sortSeq || 0));
+                arr.forEach(n => sortRec(n.children));
+            };
+            sortRec(roots);
+
+            return roots;
+        },
+
+        renderTree: function () {
+            const container = document.getElementById('admin1001_tree');
+            container.innerHTML = '';
+
+            const renderNodes = (nodes, depth) => {
+                const ul = document.createElement('ul');
+                ul.className = 'tree';
+                nodes.forEach(node => {
+                    const li = document.createElement('li');
+
+                    const row = document.createElement('div');
+                    row.className = 'tree_row' + (this.state.selectedId === node.deptOid ? ' active' : '');
+                    row.style.paddingLeft = (8 + depth * 16) + 'px';
+
+                    // toggle 버튼(자식 있을 때만)
+                    if (node.children && node.children.length > 0) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'tree_btn';
+                        btn.textContent = this.state.collapsed.has(node.deptOid) ? '+' : '−';
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.toggleCollapse(node.deptOid);
+                        });
+                        row.appendChild(btn);
+                    } else {
+                        const spacer = document.createElement('span');
+                        spacer.className = 'tree_spacer';
+                        row.appendChild(spacer);
+                    }
+
+                    const name = document.createElement('span');
+                    name.textContent = node.deptNm || '';
+                    row.appendChild(name);
+
+                    const badge = document.createElement('span');
+                    badge.className = 'tree_badge';
+                    const mc = (node.memberCount ?? 0);
+                    const cc = (node.childCount ?? (node.children ? node.children.length : 0));
+                    badge.textContent = `구성원 ${mc} · 하위 ${cc}`;
+                    row.appendChild(badge);
+
+                    row.addEventListener('click', () => this.selectDept(node.deptOid));
+
+                    li.appendChild(row);
+
+                    if (!this.state.collapsed.has(node.deptOid) && node.children && node.children.length > 0) {
+                        li.appendChild(renderNodes(node.children, depth + 1));
+                    }
+
+                    ul.appendChild(li);
+                });
+
+                return ul;
+            };
+
+            container.appendChild(renderNodes(this.state.deptTree, 0));
+            this.updateDetailButtons();
+        },
+
+        toggleCollapse: function (deptOid) {
+            if (this.state.collapsed.has(deptOid)) this.state.collapsed.delete(deptOid);
+            else this.state.collapsed.add(deptOid);
+            this.renderTree();
+        },
+
+        renderDeptSelectFromFlat: function () {
+            const select = document.getElementById('parent_dept');
+            const firstOption = '<option value="">없음 (최상위 부서)</option>';
+
+            // depth 표시용 prefix
+            const depthMap = this.makeDepthMap(this.state.deptTree);
+
+            const optionsHtml = (this.state.deptFlat || [])
+                .slice()
+                .sort((a, b) => (depthMap.get(a.deptOid) || 0) - (depthMap.get(b.deptOid) || 0))
+                .map(d => {
+                    const depth = depthMap.get(d.deptOid) || 0;
+                    const indent = depth > 0 ? ('&nbsp;'.repeat(depth * 4) + '└ ') : '';
+                    return `<option value="${d.deptOid}">${indent}${d.deptNm}</option>`;
+                })
+                .join('');
+
+            select.innerHTML = firstOption + optionsHtml;
+        },
+
+        makeDepthMap: function (tree) {
+            const map = new Map();
+            const dfs = (node, depth) => {
+                map.set(node.deptOid, depth);
+                (node.children || []).forEach(ch => dfs(ch, depth + 1));
+            };
+            (tree || []).forEach(r => dfs(r, 0));
+            return map;
+        },
+
+        highlightTreeByKeyword: function () {
+            // 검색어 기반 “트리 자동 펼침/하이라이트” 같은 고급 기능은 추후 확장 가능
+            // 지금은 트리 자체는 그대로 두고, 검색 결과 목록에서 클릭하면 트리 선택으로 유도
+        },
+
+        // =========================
+        // 상세 선택/로드
+        // =========================
+        selectDept: function (deptOid) {
+            this.state.selectedId = deptOid;
+
+            // 선택된 노드가 트리에서 보이도록 상위 경로를 자동 펼침(간단 구현)
+            this.expandParents(deptOid);
+
+            this.renderTree();
+            this.loadDetail(deptOid);
+        },
+
+        expandParents: function (deptOid) {
+            const parentMap = new Map();
+            (this.state.deptFlat || []).forEach(d => parentMap.set(d.deptOid, d.upDeptOid));
+
+            let cur = deptOid;
+            while (parentMap.get(cur)) {
+                const p = parentMap.get(cur);
+                this.state.collapsed.delete(p);
+                cur = p;
+            }
+        },
+
+        loadDetail: async function (deptOid) {
+            try {
+                const data = await API.get('/api/admin/admin1001/select?deptOid=' + deptOid);
+                this.state.isEdit = true;
+                this.state.currentDeptOid = deptOid;
+
+                document.getElementById('admin1001_detail_title').textContent = '부서 수정';
+                document.getElementById('dept_nm').value = data.deptNm || '';
+                document.getElementById('parent_dept').value = data.upDeptOid ? String(data.upDeptOid) : '';
+                document.getElementById('sort_seq').value = data.sortSeq || 0;
+
+                if (data.useYn === 'Y') document.getElementById('use_yn_y').checked = true;
+                else document.getElementById('use_yn_n').checked = true;
+
+                this.updateDetailButtons();
+            } catch (error) {
+                console.error('부서 조회 실패:', error);
+            }
+        },
+
+        openNewDept: function (upDeptOid) {
+            // upDeptOid가 1 또는 2면 하위부서 추가 막기
+            if (upDeptOid === 1) {
+                uiCommon.fnShowAlertModal('해당 부서에는 하위부서를 추가할수없습니다.');
+                return;
+            }
+
+            this.state.isEdit = false;
+            this.state.currentDeptOid = null;
+
+            document.getElementById('admin1001_detail_title').textContent = '부서 등록';
+            document.getElementById('dept_nm').value = '';
+            document.getElementById('parent_dept').value = upDeptOid ? String(upDeptOid) : '';
+            document.getElementById('sort_seq').value = 0;
+            document.getElementById('use_yn_y').checked = true;
+
+            // 신규 등록 상태에선 “선택된 부서”를 유지하되, 삭제 버튼은 비활성
+            this.updateDetailButtons();
+        },
+
+        resetDetailForm: function () {
+            this.state.isEdit = false;
+            this.state.currentDeptOid = null;
+            this.state.selectedId = null;
+
+            document.getElementById('admin1001_detail_title').textContent = '부서 상세';
+            document.getElementById('dept_nm').value = '';
+            document.getElementById('parent_dept').value = '';
+            document.getElementById('sort_seq').value = 0;
+            document.getElementById('use_yn_y').checked = true;
+
+            this.renderTree();
+            this.updateDetailButtons();
+        },
+
+        updateDetailButtons: function () {
+            const hasSelected = !!this.state.selectedId;
+            document.getElementById('admin1001_btn_new_child').disabled = !hasSelected;
+            document.getElementById('admin1001_btn_delete_one').disabled = !hasSelected || !this.state.isEdit;
+        },
+
+        // =========================
+        // 검색 결과 리스트(기존 로직 유지)
+        // =========================
+        getListData: async function () {
+            SearchState.saveForm('admin1001', '.search_wrap', { pageIndex: this.state.pageIndex });
+
+            const param = {
+                page: this.state.pageIndex,
+                size: this.state.pageCnt,
+                deptNm: document.getElementById('admin1001_keyword').value.trim() || '',
+                useYn: document.getElementById('admin1001_use_filter').value || ''
+            };
+
+            try {
+                const response = await API.post('/api/admin/admin1001/list/filter', param);
+                this.state.all = response;
+                this.renderTable();
+                this.renderPagination();
+            } catch (error) {
+                console.error('목록 조회 실패:', error);
+            }
+        },
+
+        renderTable: function () {
+            const tbody = document.getElementById("dept_list_container");
+            tbody.innerHTML = '';
+
+            if (!this.state.all || !this.state.all.list || this.state.all.list.length === 0) {
+                tbody.innerHTML = '<tr><td class="tac" colspan="8">조회된 결과가 없습니다.</td></tr>';
+                document.getElementById('admin1001_total_count').textContent = '0';
+                return;
+            }
+
+            const list = this.state.all.list;
+            let html = '';
+            list.forEach(function (item, index) {
+                html += `
+          <tr>
+            <td class="tac">${index + 1}</td>
+            <td class="tac"><input type="checkbox" class="row_check" value="${item.deptOid || ''}"></td>
+            <td class="tal"><a href="javascript:" class="a_link dept_link" data-id="${item.deptOid}">${item.deptNm || ''}</a></td>
+            <td class="tac">${item.parentName || '-'}</td>
+            <td class="tac">${item.sortSeq || 0}</td>
+            <td class="tac">${item.memberCount || 0}</td>
+            <td class="tac">${item.childCount || 0}</td>
+            <td class="tac">${item.useYn === 'Y' ? '사용' : '미사용'}</td>
+          </tr>
+        `;
+            });
+            tbody.innerHTML = html;
+
+            document.getElementById('admin1001_total_count').textContent = this.state.all.total;
+        },
+
+        renderPagination: function () {
+            const _this = this;
+            if (!_this.state.all) return;
+
+            uiCommon.pagination.render({
+                currentPage: _this.state.pageIndex,
+                totalPages: _this.state.all.pages,
+                onPageChange: function (page) {
+                    _this.state.pageIndex = page;
+                    _this.getListData();
+                }
+            });
+        },
+
+        // =========================
+        // 저장/삭제
+        // =========================
+        fnSave: async function () {
+            const deptNm = document.getElementById('dept_nm').value.trim();
+            if (!deptNm) {
+                uiCommon.fnShowAlertModal('부서명을 입력해주세요.');
+                return;
+            }
+
+            const parentValue = document.getElementById('parent_dept').value;
+            const param = {
+                deptNm: deptNm,
+                upDeptOid: parentValue && parentValue !== '' ? parseInt(parentValue) : null,
+                sortSeq: parseInt(document.getElementById('sort_seq').value) || 0,
+                useYn: document.querySelector('input[name="use_yn"]:checked').value
+            };
+
+            if (this.state.isEdit) {
+                param.deptOid = this.state.currentDeptOid;
+            }
+
+            try {
+                if (this.state.isEdit) {
+                    await API.patch('/api/admin/admin1001/update', param);
+                } else {
+                    await API.put('/api/admin/admin1001/insert', param);
+                }
+
+                uiCommon.fnShowAlertModal(this.state.isEdit ? '수정되었습니다.' : '등록되었습니다.', async () => {
+                    await this.loadDeptTree();
+                    await this.getListData();
+
+                    if (this.state.isEdit) this.selectDept(this.state.currentDeptOid);
+                    else this.resetDetailForm();
+                });
+
+            } catch (error) {
+                console.error('저장 실패:', error);
+                uiCommon.fnShowAlertModal(error.details || error.message || '저장에 실패했습니다.');
+            }
+        },
+
+        deleteOne: function (deptOid) {
+            const _this = this;
+            uiCommon.fnShowConfirmModal(`선택한 부서를 삭제하시겠습니까?`, async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    await API.patch('/api/admin/admin1001/delete', {deptOids: [deptOid]});
+                    uiCommon.fnShowAlertModal('삭제되었습니다.');
+                    await _this.loadDeptTree();
+                    await _this.getListData();
+                    _this.resetDetailForm();
+                } catch (error) {
+                    console.error('삭제 실패:', error);
+                    uiCommon.fnShowAlertModal(error.details || error.message || '삭제에 실패했습니다.');
+                }
+            });
+        },
+
+        fnDeleteBulk: function () {
+            const checkedItems = document.querySelectorAll(".row_check:checked");
+            if (checkedItems.length === 0) {
+                uiCommon.fnShowAlertModal('삭제할 부서를 선택해주세요.');
+                return;
+            }
+
+            const ids = [];
+            checkedItems.forEach(function (item) {
+                ids.push(parseInt(item.value));
+            });
+
+            const _this = this;
+            uiCommon.fnShowConfirmModal(`선택한 ${ids.length}개의 부서를 삭제하시겠습니까?`, async function () {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    await API.patch('/api/admin/admin1001/delete', {deptOids: ids});
+                    uiCommon.fnShowAlertModal('삭제되었습니다.');
+                    await _this.loadDeptTree();
+                    await _this.getListData();
+                    _this.resetDetailForm();
+                } catch (error) {
+                    console.error('삭제 실패:', error);
+                    uiCommon.fnShowAlertModal(error.details || error.message || '삭제에 실패했습니다.');
+                }
+            });
+        },
+
+        // =========================
+        // 조직도 미리보기
+        // =========================
+        showOrgChartPreview: function () {
+            const container = document.getElementById('org_preview_container');
+            if (!container) {
+                console.error('조직도 미리보기 컨테이너를 찾을 수 없습니다.');
+                return;
+            }
+
+            // 조직도 렌더링
+            this.renderPreviewOrgChart(this.state.deptTree, container);
+
+            // 모달 열기
+            uiCommon.fnShowModal('org_chart_preview');
+        },
+
+        renderPreviewOrgChart: function (orgData) {
+            const container = document.getElementById('org_preview_container');
+            if (!orgData || orgData.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding:50px;">조직도 데이터가 없습니다.</p>';
+                return;
+            }
+
+            let html = '<div class="organization_wrap">';
+
+            // 최상위 부서들 렌더링
+            orgData.forEach((topDept) => {
+                // Level 1 (최상위) - 클릭 불가
+                html += `<div class="level01"><strong>${topDept.deptNm}</strong></div>`;
+
+                // Level 2 이하 렌더링
+                if (topDept.children && topDept.children.length > 0) {
+                    const level2Depts = topDept.children;
+
+                    // Level 2가 여러 개인 경우 가로 배치
+                    if (level2Depts.length > 1) {
+                        html += '<div class="level02_container">';
+                    }
+
+                    level2Depts.forEach((level2Dept) => {
+                        // Level 2 컨테이너 시작
+                        if (level2Depts.length > 1) {
+                            html += `<div class="level02_wrapper">`;
+                        }
+
+                        // Level 2 (원장급)
+                        html += `<div class="level02"><strong><a href="javascript:;">${level2Dept.deptNm}</a></strong></div>`;
+
+                        if (level2Dept.children && level2Dept.children.length > 0) {
+                            // Level 3과 Level 4 분리
+                            const level3Depts = level2Dept.children.filter(dept => !this.hasChildrenInTree(dept));
+                            const level4Depts = level2Dept.children.filter(dept => this.hasChildrenInTree(dept));
+
+                            // Level 3 (감사실 등 - 하위부서 없음)
+                            if (level3Depts.length > 0) {
+                                level3Depts.forEach(dept => {
+                                    html += `<div class="level03"><strong><a href="javascript:;">${dept.deptNm}</a></strong></div>`;
+                                });
+                            }
+
+                            // Level 4 (본부급 - 하위부서 있음)
+                            if (level4Depts.length > 0) {
+                                html += '<div class="department_wrap"><ul>';
+
+                                level4Depts.forEach(dept => {
+                                    html += `
+                                        <li>
+                                            <div class="department_inner">
+                                                <strong><a href="javascript:;">${dept.deptNm}</a></strong>
+                                    `;
+
+                                    // Level 5 (팀급)
+                                    if (dept.children && dept.children.length > 0) {
+                                        html += '<ul>';
+                                        dept.children.forEach(team => {
+                                            html += `<li><a href="javascript:;">${team.deptNm}</a></li>`;
+                                        });
+                                        html += '</ul>';
+                                    }
+
+                                    html += `
+                                            </div>
+                                        </li>
+                                    `;
+                                });
+
+                                html += '</ul></div>';
+                            }
+                        }
+
+                        // Level 2 컨테이너 종료
+                        if (level2Depts.length > 1) {
+                            html += '</div>';
+                        }
+                    });
+
+                    // level02_container 종료
+                    if (level2Depts.length > 1) {
+                        html += '</div>';
+                    }
+                }
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        },
+
+        hasChildrenInTree: function (dept) {
+            return dept.children && dept.children.length > 0;
+        }
+    };
+
+    $(document).ready(function () {
+        admin1001.init();
+    });
+</script>
+
+<th:block layout:fragment="admin_modal">
+    <th:block th:replace="~{admin/modal/org_chart_preview :: org_chart_preview}"></th:block>
+</th:block>
+</body>
+</html>

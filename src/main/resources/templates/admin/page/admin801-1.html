@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 관리자 관리 > 관리자 등록/수정</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <h3 class="stit">관리자 등록/수정</h3>
+        <!-- hidden: 수정시 사용할 userOid -->
+        <input type="hidden" id="admin801_1_user_no" th:value="${userOid}">
+        <div class="table_layout02">
+            <table>
+                <caption>관리자 등록</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row" class="point"><label for="admin801_1_user_nm_kr">성명(한글)</label></th>
+                    <td><input type="text" id="admin801_1_user_nm_kr" maxlength="50" title="성명(한글)" class="w100"></td>
+                    <th scope="row" class="bl"><label for="admin801_1_user_nm_en">성명(영문)</label></th>
+                    <td><input type="text" id="admin801_1_user_nm_en" maxlength="50" title="성명(영문)" class="w100"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="admin801_1_brdt">생년월일</label></th>
+                    <td><input type="text" id="admin801_1_brdt" title="생년월일" class="w100" placeholder="생년월일 8자리를 입력해주세요." maxlength="8"></td>
+                    <th scope="row" class="point bl"><label for="admin801_1_user_id">아이디</label></th>
+                    <td>
+                        <div class="flex_col">
+                            <input type="text" id="admin801_1_user_id" maxlength="20" title="아이디">
+                            <a href="javascript:;" id="admin801_1_btn_check" class="s_btn_basic bg_type02">중복확인</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr id="admin801_1_pw_row">
+                    <th scope="row" class="point"><label for="admin801_1_user_pw">비밀번호</label></th>
+                    <td>
+                        <input type="password" id="admin801_1_user_pw" maxlength="50" title="비밀번호" class="w100">
+                    </td>
+                    <th scope="row" class="point bl"><label for="admin801_1_user_pw_confirm">비밀번호 확인</label></th>
+                    <td>
+                        <input type="password" id="admin801_1_user_pw_confirm" maxlength="50" title="비밀번호 확인" class="w100">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="admin801_1_eml_local">이메일</label></th>
+                    <td colspan="3">
+                        <div class="flex_col">
+                            <input type="text" id="admin801_1_eml_local"> @ <input type="text" id="admin801_1_eml_dmn">
+                            <select id="admin801_1_email_domain_sel">
+                                <option value="">직접입력</option>
+                                <option value="naver.com">naver.com</option>
+                                <option value="gmail.com">gmail.com</option>
+                                <option value="daum.net">daum.net</option>
+                                <option value="nate.com">nate.com</option>
+                                <option value="nibp.kr">nibp.kr</option>
+                            </select>
+                            <a href="javascript:;" id="admin801_1_btn_check_email" class="s_btn_basic bg_type02">중복확인</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="admin801_1_mpno">휴대폰</label></th>
+                    <td colspan="3">
+                        <div class="flex_col">
+                            <input type="text" id="admin801_1_mpno" placeholder="숫자만 입력해주세요.">
+                            <a href="javascript:;" id="admin801_1_btn_check_phone" class="s_btn_basic bg_type02">중복확인</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="admin801_1_dept_nm">부서</label></th>
+                    <td><input type="text" id="admin801_1_dept_nm" class="w100"></td>
+                    <th scope="row" class="bl"><label for="admin801_1_pstn_nm">직위</label></th>
+                    <td><input type="text" id="admin801_1_pstn_nm" class="w100"></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="point">상태</th>
+                    <td>
+                        <span class="radio-box"><input type="radio" id="admin801_1_use_y" name="admin801_1_use_yn" value="Y" checked><label
+                                for="admin801_1_use_y">활성</label></span>
+                        <span class="radio-box ml10"><input type="radio" id="admin801_1_use_n" name="admin801_1_use_yn" value="N"><label
+                                for="admin801_1_use_n">비활성</label></span>
+                    </td>
+                    <th scope="row" class="bl">개인정보취급권한</th>
+                    <td>
+                        <span class="radio-box"><input type="radio" id="admin801_1_pri_y" name="admin801_1_privacy_yn" value="Y"><label
+                                for="admin801_1_pri_y">활성</label></span>
+                        <span class="radio-box ml10"><input type="radio" id="admin801_1_pri_n" name="admin801_1_privacy_yn" value="N"
+                                                            checked><label for="admin801_1_pri_n">비활성</label></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_wrap">
+            <a href="javascript:;" id="admin801_1_btn_save" class="btn_basic bg_type01">저장</a>
+            <a href="javascript:;" id="admin801_1_btn_close" class="btn_basic bg_type02">취소</a>
+        </div>
+    </div>
+</div>
+
+<!-- 스크립트 -->
+<script layout:fragment="scripts" th:inline="javascript">
+    let admin801Edit = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: null,  // 조회한 데이터
+            idChecked: false,
+            emailChecked: false,
+            phoneChecked: false,
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            this.initEvent();
+            this.initFromParam();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            const emlDmn = document.getElementById("admin801_1_eml_dmn");
+            const emlSel = document.getElementById("admin801_1_email_domain_sel");
+
+            // 도메인 셀렉트 변경 시
+            emlSel.addEventListener("change", function () {
+                const selected = this.value;
+
+                if (selected) {
+                    // 선택형: 셀렉트 값으로 도메인 고정
+                    emlDmn.value = selected;
+                    emlDmn.readOnly = true;   // 직접 수정 못 하게
+                } else {
+                    // 직접입력: 텍스트 박스 활성화
+                    emlDmn.readOnly = false;
+                    // 원하면 기존 값 유지 or 비우기
+                    // emlDmn.value = "";
+                }
+            });
+
+            // 생년월일, 휴대폰 숫자만 입력
+            common.bindNumericOnly('admin801_1_brdt', 'admin801_1_mpno');
+
+            // 저장
+            document.getElementById("admin801_1_btn_save").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnSave();
+            });
+
+            // 닫기
+            document.getElementById("admin801_1_btn_close").addEventListener("click", function (e) {
+                e.preventDefault();
+                window.history.back();
+            });
+
+            // 아이디 중복확인
+            document.getElementById("admin801_1_btn_check").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnCheckId();
+            });
+
+            // 아이디 변경 시 중복체크 다시 요구
+            document.getElementById("admin801_1_user_id").addEventListener("input", function () {
+                _this.state.idChecked = false;
+            });
+
+            // 이메일 중복확인
+            document.getElementById("admin801_1_btn_check_email").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnCheckEmail();
+            });
+
+            // 이메일 변경 시 중복체크 다시 요구
+            document.getElementById("admin801_1_eml_local")
+                    .addEventListener("input", () => _this.state.emailChecked = false);
+
+            document.getElementById("admin801_1_eml_dmn")
+                    .addEventListener("input", () => _this.state.emailChecked = false);
+
+            document.getElementById("admin801_1_email_domain_sel")
+                    .addEventListener("change", () => _this.state.emailChecked = false);
+
+            // 휴대폰 중복확인
+            document.getElementById("admin801_1_btn_check_phone").addEventListener("click", function (e) {
+                e.preventDefault();
+                _this.fnCheckPhone();
+            });
+
+            // 휴대폰 변경 시 중복체크 다시 요구
+            document.getElementById("admin801_1_mpno")
+                    .addEventListener("input", () => _this.state.phoneChecked = false);
+
+            // 생년월일 숫자만 입력
+            document.getElementById("admin801_1_brdt").addEventListener("input", function (e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        },
+
+        /**
+         * URL 파라미터로부터 사용자 정보 초기화
+         * userNo가 존재하면 수정 모드로, 없으면 신규 등록 모드로 동작
+         */
+        async initFromParam() {
+            const params = new URLSearchParams(window.location.search);
+            const userOid = params.get("userOid");
+
+            if (!userOid) return; // 신규 등록
+
+            try {
+                this.state.all = await API.get('/api/admin/admin801/users/detail?userOid=' + userOid);
+                this.bindFormData();
+            } catch (error) {
+                console.error('사용자 정보 조회 실패:', error);
+            }
+        },
+
+        /**
+         * 폼 데이터 바인딩
+         */
+        bindFormData: function () {
+            const data = this.state.all;
+
+            document.getElementById("admin801_1_user_no").value = data.userOid || "";
+
+            document.getElementById("admin801_1_user_nm_kr").value = data.userNmKorn || ""; // 한글 이름
+            document.getElementById("admin801_1_user_nm_en").value = data.userNmEng || ""; // 영어 이름
+            document.getElementById("admin801_1_brdt").value = data.brdt || ""; // 생년월일
+            document.getElementById("admin801_1_user_id").value = data.userId || ""; // 사용자 ID
+
+            // 패스워드는 보안상 빈칸 유지(수정시 새 비번 입력하도록)
+            document.getElementById("admin801_1_user_pw").value = "";
+            document.getElementById("admin801_1_user_pw_confirm").value = "";
+
+            // 이메일
+            if (data.emlLcal) document.getElementById("admin801_1_eml_local").value = data.emlLcal;
+            if (data.emlDmn) document.getElementById("admin801_1_eml_dmn").value = data.emlDmn;
+            const sel = document.getElementById("admin801_1_email_domain_sel");
+            const savedDmn = data.emlDmn || "";
+            // 셀렉트 옵션 중 저장된 도메인이 있는지 확인
+            if (sel.querySelector(`option[value="${savedDmn}"]`)) {
+                // 선택 입력 방식
+                sel.value = savedDmn;
+                document.getElementById("admin801_1_eml_dmn").readOnly = true;
+            } else {
+                // 직접 입력 방식
+                sel.value = "";
+                document.getElementById("admin801_1_eml_dmn").readOnly = false;
+            }
+
+            document.getElementById("admin801_1_mpno").value = common.joinPhoneNumber(data.mpnoPfx, data.mpnoMid, data.mpnoSfx); // 휴대폰
+            document.getElementById("admin801_1_dept_nm").value = data.deptNm || ""; // 부서명
+            document.getElementById("admin801_1_pstn_nm").value = data.jbpsNm || ""; // 직급
+
+            // 상태
+            if (data.useYn === "Y") {
+                document.getElementById("admin801_1_use_y").checked = true;
+            } else {
+                document.getElementById("admin801_1_use_n").checked = true;
+            }
+
+            // 	개인정보취급권한
+            if (data.prvcUseYn === "Y") {
+                document.getElementById("admin801_1_pri_y").checked = true;
+            } else {
+                document.getElementById("admin801_1_pri_n").checked = true;
+            }
+
+            // 수정 모드: 비밀번호 행 숨기기, 아이디 비활성화 및 중복확인 버튼 숨기기
+            document.getElementById("admin801_1_pw_row").style.display = "none";
+            document.getElementById("admin801_1_user_id").disabled = true;
+            document.getElementById("admin801_1_btn_check").style.display = "none";
+
+            // 수정 모드에서는 이메일, 휴대폰 변경하면 중복체크 다시 요구
+            this.state.idChecked = true;
+            this.state.emailChecked = true;
+            this.state.phoneChecked = true;
+        },
+
+        /**
+         * 아이디 중복 체크
+         */
+        fnCheckId: async function () {
+            const userId = document.getElementById("admin801_1_user_id").value.trim();
+            if (!userId) {
+                uiCommon.fnShowAlertModal("아이디를 입력하세요.");
+                document.getElementById("admin801_1_user_id").focus();
+                return;
+            }
+
+            const data = {
+                userId : userId
+            };
+
+            const params = new URLSearchParams(window.location.search);
+            const userOid = params.get("userOid");
+            if (userOid) {
+                data.userOid = userOid;
+            }
+
+            try {
+                const response = await API.post('/auth/admin/checkId', data);
+
+                if (response && response.duplicated === false) {
+                    uiCommon.fnShowAlertModal("사용 가능한 아이디입니다.");
+                    this.state.idChecked = true;
+                } else {
+                    uiCommon.fnShowAlertModal("이미 사용 중인 아이디입니다.");
+                    this.state.idChecked = false;
+                }
+            } catch (error) {
+                console.error('중복확인 중 오류 발생:', error);
+                uiCommon.fnShowAlertModal("중복확인 중 오류가 발생했습니다.");
+            }
+        },
+
+        /**
+         * 이메일 중복 체크
+         */
+        fnCheckEmail: async function () {
+            const _this = this;
+            const emlLocal = document.getElementById("admin801_1_eml_local").value.trim();
+            const emlDmn = document.getElementById("admin801_1_eml_dmn").value.trim();
+            if (!emlLocal) {
+                uiCommon.fnShowAlertModal("이메일을 입력하세요.");
+                document.getElementById("admin801_1_eml_local").focus();
+                return;
+            }
+            if (!emlDmn) {
+                uiCommon.fnShowAlertModal("이메일을 입력하세요.");
+                document.getElementById("admin801_1_eml_dmn").focus();
+                return;
+            }
+
+            const data = {
+                emlLcal : emlLocal,
+                emlDmn : emlDmn
+            };
+
+            const params = new URLSearchParams(window.location.search);
+            const userOid = params.get("userOid");
+            if (userOid) {
+                data.userOid = userOid;
+            }
+
+            try {
+                const response = await API.post('/auth/admin/checkEmail', data);
+
+                const message = response ? "이미 사용 중인 이메일입니다."
+                                         : "사용 가능한 이메일입니다.";
+
+                const callback = async () => {
+                    _this.state.emailChecked = !response;
+                };
+
+                uiCommon.fnShowAlertModal(message, callback);
+
+            } catch (error) {
+                console.error('중복확인 중 오류 발생:', error);
+            }
+        },
+
+        /**
+         * 휴대폰 중복 체크
+         */
+        fnCheckPhone: async function () {
+            const _this = this;
+            const mpno = document.getElementById("admin801_1_mpno").value.trim();
+            if (!mpno) {
+                uiCommon.fnShowAlertModal("휴대폰 번호를 입력하세요.");
+                document.getElementById("admin801_1_mpno").focus();
+                return;
+            }
+
+            const mpnoArr = common.splitPhoneNumber(mpno);
+            const data = {
+                mpnoPfx : mpnoArr[0],
+                mpnoMid : mpnoArr[1],
+                mpnoSfx : mpnoArr[2]
+            };
+
+            const params = new URLSearchParams(window.location.search);
+            const userOid = params.get("userOid");
+            if (userOid) {
+                data.userOid = userOid;
+            }
+
+            try {
+                const response = await API.post('/auth/admin/checkPhone', data);
+
+                const message = response ? "이미 사용 중인 휴대폰 번호입니다."
+                                         : "사용 가능한 휴대폰 번호입니다.";
+
+                const callback = async () => {
+                    _this.state.phoneChecked = !response;
+                };
+
+                uiCommon.fnShowAlertModal(message, callback);
+
+            } catch (error) {
+                console.error('중복확인 중 오류 발생:', error);
+            }
+        },
+
+        /**
+         * 유효성검사
+         * @returns {boolean} 유효성 검사 통과 여부
+         */
+        fnValidateForm: function () {
+            const userOid = document.getElementById("admin801_1_user_no").value;
+
+            // 신규 등록시에만 비밀번호 검증
+            if (!userOid) {
+                const pw = document.getElementById("admin801_1_user_pw").value;
+                const pw2 = document.getElementById("admin801_1_user_pw_confirm").value;
+
+                if (!pw) {
+                    uiCommon.fnShowAlertModal("비밀번호를 입력하세요.");
+                    return false;
+                }
+                if (pw !== pw2) {
+                    uiCommon.fnShowAlertModal("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+                    return false;
+                }
+
+                // 신규 등록시에만 아이디 중복확인 강제
+                if (!this.state.idChecked) {
+                    uiCommon.fnShowAlertModal("아이디 중복확인을 먼저 수행하세요.");
+                    return false;
+                }
+            }
+
+            // 이메일 중복확인 강제
+            if (!this.state.emailChecked) {
+                uiCommon.fnShowAlertModal("이메일 중복확인을 먼저 수행하세요.");
+                return false;
+            }
+
+            // 휴대폰 중복확인 강제
+            if (!this.state.phoneChecked) {
+                uiCommon.fnShowAlertModal("휴대폰 번호 중복확인을 먼저 수행하세요.");
+                return false;
+            }
+
+            return true;
+        },
+
+        /**
+         * 파라미터 구성
+         * @returns {Object} 서버로 전송할 관리자 정보 객체
+         */
+        fnBuildParam: function () {
+            const userOid = document.getElementById("admin801_1_user_no").value || null;
+            const userNmKorn = document.getElementById("admin801_1_user_nm_kr").value.trim();
+            const userNmEng = document.getElementById("admin801_1_user_nm_en").value.trim();
+            const brdt = document.getElementById("admin801_1_brdt").value.trim() || null;
+            const userId = document.getElementById("admin801_1_user_id").value.trim();
+            const pswd = document.getElementById("admin801_1_user_pw").value;
+
+            const emlLocal = document.getElementById("admin801_1_eml_local").value.trim();
+            const emlDmn = document.getElementById("admin801_1_eml_dmn").value.trim();
+            const selectedDmn = document.getElementById("admin801_1_email_domain_sel").value;
+            const emlInpTyp = selectedDmn ? "선택" : "직접입력";
+
+            const mpnoArr = common.splitPhoneNumber(document.getElementById("admin801_1_mpno").value.trim());
+            const mpnoPfx = mpnoArr[0];
+            const mpnoMid = mpnoArr[1];
+            const mpnoSfx = mpnoArr[2];
+
+            const deptNm = document.getElementById("admin801_1_dept_nm").value.trim();
+            const pstnNm = document.getElementById("admin801_1_pstn_nm").value.trim();
+
+            const useYn = document.querySelector("input[name='admin801_1_use_yn']:checked").value;
+            const privacyYn = document.querySelector("input[name='admin801_1_privacy_yn']:checked").value;
+            return {
+                userOid: userOid,
+                userNmKorn: userNmKorn,
+                userNmEng: userNmEng,
+                brdt: brdt,
+                userId: userId,
+                pswd: pswd,
+                emlLcal: emlLocal,
+                emlDmn: emlDmn,
+                emlInpTyp: emlInpTyp,
+                mpnoPfx: mpnoPfx,
+                mpnoMid: mpnoMid,
+                mpnoSfx: mpnoSfx,
+                deptNm: deptNm,
+                jbpsNm: pstnNm,
+                useYn: useYn,
+                prvcUseYn: privacyYn
+            };
+        },
+
+        /**
+         * 저장 클릭
+         */
+        fnSave: async function () {
+            if (!this.fnValidateForm()) return;
+
+            const payload = this.fnBuildParam();
+
+            try {
+                await API.post('/api/admin/admin801/users/upsert', payload);
+                uiCommon.fnShowAlertModal("저장되었습니다.", function () {
+                    window.location.href = contextPath + "/admin/page/admin801";
+                });
+            } catch (error) {
+                console.error('저장 실패:', error);
+
+                // APIError 객체에서 메시지 추출
+                let errorMessage = '저장에 실패했습니다.';
+                // 빈 값
+                if (error instanceof APIError && error.isValidationError()) {
+                    errorMessage = error.getUserMessage();
+                }
+
+                uiCommon.fnShowAlertModal(errorMessage);
+            }
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+        admin801Edit.init();
+    });
+</script>
+
+</body>
+</html>

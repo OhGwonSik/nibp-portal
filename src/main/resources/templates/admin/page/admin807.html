@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>시스템관리 > 게시판 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div id="admin807SearchWrap" class="search_wrap col30">
+        <ul>
+            <li>
+                <select id="lab_01" title="분류 선택" class="wp100">
+                    <option value="">전체</option>
+                    <option value="POSTNM">게시판명</option>
+                </select>
+                <input type="text" name="" id="lab_02" placeholder="검색어를 입력하세요" value="" title="검색어 입력">
+            </li>
+            <li>
+                <label for="boardType">유형</label>
+                <select id="boardType" title="분류 선택">
+                    <option>전체</option>
+                    <option value="COMMON">일반게시판</option>
+                    <option value="USER">사용자게시판</option>
+                    <option value="FAQ">FAQ</option>
+                    <option value="QNA">질문과답변</option>
+                    <option value="PHOTO">포토갤러리게시판</option>
+                    <option value="THUMBNAIL">썸네일게시판</option>
+                </select>
+                <label for="useYn">상태</label>
+                <select id="useYn" title="분류 선택">
+                    <option>전체</option>
+                    <option value="Y">사용</option>
+                    <option value="N">미사용</option>
+                </select>
+            </li>
+            <li>
+                <label for="datepicker1">등록일</label>
+                <div class="flex_col">
+                    <span class="datepicker">
+                        <input type="text" value="시작일" id="datepicker1" class="datepick">
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                    </span> ~
+                    <span class="datepicker">
+                        <input type="text" value="종료일" id="datepicker2" class="datepick">
+                        <img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택">
+                    </span>
+                </div>
+            </li>
+        </ul>
+        <div class="s_wrap"><a id="admin807SearchBtn" class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_top_btn mb10">
+            <a href="javascript:;" id="admin807RegisterBoardBtn" class="btn_basic bg_type01">등록</a>
+            <a href="javascript:;" id="admin807UpdateBoardBtn" class="btn_basic bg_type01">수정</a>
+            <a href="javascript:;" id="admin807DeleteBoardBtn" class="btn_basic bg_type02">삭제</a>
+            <a href="javascript:;" id="admin807ExlDownBtn" class="s_btn_basic download"><span>엑셀 다운로드</span></a>
+        </div>
+        <div class="table_layout02 list_type mb20">
+            <table>
+                <caption>게시판목록</caption>
+                <colgroup>
+                    <col style="width: 60px;">
+                    <col style="width: 60px;">
+                    <col style="width: 10%;">
+                    <col style="width: auto;">
+                    <col style="width: 11%;">
+                    <col style="width: 150px;">
+                    <col style="width: 70px;">
+                    <col style="width: 324px">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">번호</th>
+                    <th scope="col">선택</th>
+                    <th scope="col">유형</th>
+                    <th scope="col">게시판명</th>
+                    <th scope="col">위치</th>
+                    <th scope="col">등록일</th>
+                    <th scope="col">상태</th>
+                    <th scope="col">관리</th>
+                </tr>
+                </thead>
+                <tbody id="board_list_container"></tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="admin_modal">
+    <th:block th:replace="~{admin/modal/board_config_copy :: board_config_copy}"></th:block>
+    <th:block th:replace="~{admin/modal/board_position_setting :: board_position_setting}"></th:block>
+</th:block>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin807 = {
+        /**
+         * 상태
+         */
+        state: {
+            all: [],        // 페이징하여 가져온 리스트 목록
+            menuCd: '', // 각 동적게시판의 menuCd
+            //pageInfo(페이징)
+            page: 1,  // 현재 페이지 번호
+            size: 10, // 한 페이지당 표시할 데이터 개수
+            total: 0, // 전체 데이터 총 개수
+            pages: 0 // 전체 페이지 수 (total / size)
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: function () {
+            // 이벤트 바인딩
+            this.initEvent();
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin807', '.search_wrap');
+            if (saved) {
+                this.state.page = saved._extra.page || 1;
+            }
+
+            this.searchBoardList();
+
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼 클릭
+            document.querySelector("#admin807SearchBtn").addEventListener("click", async (e) => {
+                e.preventDefault();
+                _this.state.page = 1;
+                await _this.searchBoardList();
+            });
+
+            // 등록 버튼
+            document.querySelector("#admin807RegisterBoardBtn").addEventListener("click", (e) => {
+                e.preventDefault();
+                SearchState.clear('admin807');
+                window.location.href = contextPath + '/admin/page/admin807-1';
+            });
+
+            // 수정 버튼
+            document.querySelector("#admin807UpdateBoardBtn").addEventListener("click", (e) => {
+                e.preventDefault();
+
+                const checkedRow = document.querySelectorAll("#board_list_container .row_check:checked");
+
+                if (!checkedRow.length) {
+                    uiCommon.fnShowAlertModal("수정할 게시판을 선택해주세요.");
+                    return;
+                }
+
+                if (checkedRow.length > 1) {
+                    uiCommon.fnShowAlertModal("하나의 항목만 선택해주세요.");
+                    return;
+                }
+
+                const selectBbsOid = checkedRow[0].value;
+
+                window.location.href = `${contextPath}/admin/page/admin807-1?bbsOid=${selectBbsOid}`;
+            });
+
+            // 삭제 버튼
+            document.querySelector("#admin807DeleteBoardBtn").addEventListener("click", (e) => {
+                e.preventDefault();
+                _this.fnDelete();
+            });
+
+            // 엑셀 다운로드
+            document.querySelector("#admin807ExlDownBtn").addEventListener("click", async (e) => {
+                e.preventDefault();
+
+                const reason = await uiCommon.fnShowPromptModal('엑셀 다운로드 받으시겠습니까?', {
+                    title: '엑셀 다운로드 요청',
+                    defaultValue: '',
+                    placeholder: '사유 입력',
+                });
+
+                
+                // 취소 시 조용히 종료
+                if (reason === null) {
+                    return;
+                }
+
+                // 빈 값 체크
+                if (reason.trim() === '') {
+                    uiCommon.fnShowAlertModal('사유는 필수 입니다.');
+                    return;
+                }
+
+                // 2자 미만 체크
+                if (reason.trim().length < 2) {
+                    uiCommon.fnShowAlertModal('사유는 2자 이상 입력해주세요.');
+                    return;
+                }
+
+                const params = {
+                    pageId: 'admin807',
+                    bbsSeCd: document.querySelector("#boardType").value,
+                    useYn: document.querySelector("#useYn").value,
+                    regStartDt: document.querySelector("#datepicker1").value,
+                    regEndDt: document.querySelector("#datepicker2").value,
+
+                    searchCondition: document.querySelector("#lab_01").value,
+                    srchKywd: document.querySelector("#lab_02").value,
+                    reason: reason.trim()
+                };
+
+                const filteredParams = Object.fromEntries(
+                        Object.entries(params).filter(([_, v]) => v && v !== "전체" && v !== "시작일" && v !== "종료일")
+                );
+
+                try {
+                    await API.excelDownload('/api/admin/admin807/board/excel/export', filteredParams);
+                } catch (err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal("[error] : " + err, () => uiCommon.fnHideAlertModal());
+                }
+            });
+
+            // 시작일 datepicker 초기화
+            uiCommon.datepicker.init('#datepicker1', {
+                onSelect: function (selectedDate) {
+                    // 시작일 선택 시 종료일의 최소 날짜를 시작일로 설정
+                    $('#datepicker2').datepicker('option', 'minDate', selectedDate);
+
+                    // 종료일이 이미 선택되어 있고 시작일보다 빠른 경우 경고
+                    const endDate = $('#datepicker2').val();
+                    if (endDate && selectedDate > endDate) {
+                        uiCommon.fnShowAlertModal('시작일은 종료일보다 빨라야 합니다.', function () {
+                            $('#datepicker1').val('');
+                        });
+                    }
+                    _this.state.page = 1;
+                    _this.searchBoardList();
+                }
+            });
+
+            // 종료일 datepicker 초기화
+            uiCommon.datepicker.init('#datepicker2', {
+                onSelect: function (selectedDate) {
+                    // 종료일 선택 시 시작일의 최대 날짜를 종료일로 설정
+                    $('#datepicker1').datepicker('option', 'maxDate', selectedDate);
+
+                    // 시작일이 이미 선택되어 있고 종료일보다 늦은 경우 경고
+                    const startDate = $('#datepicker1').val();
+                    if (startDate && startDate > selectedDate) {
+                        uiCommon.fnShowAlertModal('종료일은 시작일보다 늦어야 합니다.', function () {
+                            $('#datepicker2').val('');
+                        });
+                    }
+                    _this.state.page = 1;
+                    _this.searchBoardList();
+                }
+            });
+
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("admin807SearchWrap").addEventListener('keydown', e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    _this.state.page = 1;
+                    _this.searchBoardList();
+                }
+            });
+            // 검색영역 변경 이벤트
+            document.getElementById("admin807SearchWrap").addEventListener('change', e => {
+                if (e.target.matches('select, input[type="radio"]')) {
+                    e.preventDefault();
+                    _this.state.page = 1;
+                    _this.searchBoardList();
+                }
+            });
+
+            const today = new Date();
+            const weekAgo = new Date();
+            weekAgo.setDate(today.getDate() - 30);
+
+            $('#datepicker1').datepicker('setDate', weekAgo);
+            $('#datepicker2').datepicker('setDate', today);
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.page,
+                totalPages: _this.state.pages,
+                onPageChange: function (page) {
+                    _this.state.page = page;
+                    _this.searchBoardList();
+                }
+            });
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+            const _this = this;
+            const tbody = document.querySelector("#board_list_container");
+            tbody.innerHTML = "";
+
+            if (_this.state.all.length === 0) {
+                tbody.innerHTML = `<tr><td class="tac" colspan="8">조회된 결과가 없습니다.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            _this.state.all.forEach(item => {
+                // 동적으로 생성한 고정게시판 여부 확인 (sub_board_type이 null이 아닐 경우)
+                const isDynamicBoard = item.bbsSubSeCd != null;
+
+                // 위치설정 버튼 HTML 생성
+                const positionButtons = isDynamicBoard
+                    ? `<a href="javascript:;" class="s_btn_basic bg_type01 user_position_setting" data-bbs-oid="${item.bbsOid}">사용자 위치설정</a>
+                       <a href="javascript:;" class="s_btn_basic bg_type01 admin_position_setting" data-bbs-oid="${item.bbsOid}">관리자 위치설정</a>`
+                    : `<a href="javascript:;" class="s_btn_basic bg_type01 position_setting" data-bbs-oid="${item.bbsOid}">위치설정</a>
+                       ${item.positionMenuOid ? `<a href="javascript:;" class="s_btn_basic bg_type01 post_manage" data-bbs-oid="${item.bbsOid}" data-menu-cd="${item.menuCd}" data-menu-oid="${item.positionMenuOid}">게시글 관리</a>` : ''}`;
+
+                html += `
+                    <tr>
+                        <td class="tac">${item.bbsOid}</td>
+                        <td class="tac"><input type="checkbox" class="row_check" value="${item.bbsOid}"></td>
+                        <td class="tac">${item.bbsSeCd}</td>
+                        <td class="tac">${item.bbsNm}</td>
+                        <td class="tac">${item.menuUseYn === 'Y' ? item.parentMenuNm : ""}</td>
+                        <td class="tac">${common.formatDateTime(item.regDt)}</td>
+                        <td class="tac">${item.useYn === 'Y' ? '사용' : '미사용'}</td>
+                        <td class="tac">
+                            <a href="javascript:;" class="s_btn_basic bg_type01 config_copy" data-bbs-oid="${item.bbsOid}">설정복사</a>
+                            ${positionButtons}
+                        </td>
+                    </tr>
+                    `;
+            });
+            tbody.innerHTML = html;
+
+            // 동적 생성되는 테이블 리스트 내 체크박스 컨트롤 (단일만 선택되게)
+            tbody.addEventListener('change', function (e) {
+                if (!e.target.classList.contains('row_check')) return;
+
+                const allChecks = tbody.querySelectorAll('.row_check');
+                allChecks.forEach(chk => {
+                    if (chk !== e.target) chk.checked = false;
+                });
+            });
+
+
+            tbody.addEventListener('click', function (e) {
+                // 설정 복사 버튼 클릭
+                if (e.target.classList.contains('config_copy')) {
+                    const bbsOid = e.target.dataset.bbsOid;
+                    if (!bbsOid) return;
+
+                    const boardInfoFilter = _this.state.all.filter(e => {
+                        return e.bbsOid === Number(bbsOid);
+                    });
+
+                    board_config_copy.initModal(boardInfoFilter);
+                }
+
+                // 일반 게시판 위치 설정 버튼 클릭
+                if (e.target.classList.contains('position_setting')) {
+                    const bbsOid = e.target.dataset.bbsOid;
+                    if (!bbsOid) return;
+
+                    const boardRow = _this.state.all.find(item => item.bbsOid === Number(bbsOid));
+                    if (!boardRow) {
+                        uiCommon.fnShowAlertModal("데이터를 찾을 수 없습니다.");
+                        return;
+                    }
+
+                    board_position_setting.initModal(boardRow);
+                }
+
+                // 동적게시판 - 사용자 위치 설정 버튼 클릭
+                if (e.target.classList.contains('user_position_setting')) {
+                    const bbsOid = e.target.dataset.bbsOid;
+                    if (!bbsOid) return;
+
+                    const boardRow = _this.state.all.find(item => item.bbsOid === Number(bbsOid));
+                    if (!boardRow) {
+                        uiCommon.fnShowAlertModal("데이터를 찾을 수 없습니다.");
+                        return;
+                    }
+
+                    board_position_setting.initModal(boardRow, 'COMMON');
+                }
+
+                // 동적게시판 - 관리자 위치 설정 버튼 클릭
+                if (e.target.classList.contains('admin_position_setting')) {
+                    const bbsOid = e.target.dataset.bbsOid;
+                    if (!bbsOid) return;
+
+                    const boardRow = _this.state.all.find(item => item.bbsOid === Number(bbsOid));
+                    if (!boardRow) {
+                        uiCommon.fnShowAlertModal("데이터를 찾을 수 없습니다.");
+                        return;
+                    }
+
+                    board_position_setting.initModal(boardRow, 'ADMIN');
+                }
+
+                // 게시글 관리 버튼 클릭
+                if (e.target.classList.contains('post_manage')) {
+                    const bbsOid = e.target.dataset.bbsOid;
+                    const menuNo = e.target.dataset.menuOid;
+                    const menuCd = e.target.dataset.menuCd;
+                    if (!bbsOid || !menuNo) return;
+
+                    window.location.href = `${contextPath}/admin/board/admin807-list1?menuCd=${menuCd}&bbsOid=${bbsOid}`;
+                }
+            });
+
+
+        },
+
+        /**
+         * 목록 데이터 조회
+         */
+        searchBoardList: async function () {
+            SearchState.saveForm('admin807', '.search_wrap', { page: this.state.page });
+
+            const params = {
+                page: this.state.page,
+                size: this.state.size,
+                bbsSeCd: document.querySelector("#boardType").value,
+                useYn: document.querySelector("#useYn").value,
+                regStartDt: document.querySelector("#datepicker1").value,
+                regEndDt: document.querySelector("#datepicker2").value,
+                menuAuthLv: 'ADMIN',
+
+                searchCondition: document.querySelector("#lab_01").value,
+                srchKywd: document.querySelector("#lab_02").value
+            };
+
+            const queryString = new URLSearchParams(
+                    Object.entries(params).filter(([_, v]) => v && v !== "전체")
+            ).toString();
+
+            const responseData = await API.get(`/api/admin/admin807/board/list?${queryString}`);
+
+            this.state.all = responseData.list;
+            this.state.total = responseData.total;
+            this.state.pages = responseData.pages;
+
+            this.renderTable();
+            this.renderPagination();
+        },
+
+        /**
+         * 게시판 삭제
+         */
+        fnDelete: async function () {
+
+            const checked = document.querySelectorAll("#board_list_container .row_check:checked");
+
+            if (checked.length === 0) {
+                uiCommon.fnShowAlertModal("삭제할 항목을 선택해주세요.");
+                return;
+            }
+
+            if (checked.length > 1) {
+                uiCommon.fnShowAlertModal("하나의 항목만 선택해주세요.");
+                return;
+            }
+
+            const bbsOid = checked[0].value;
+
+            const findBoardMenuNo = this.state.all.find((el) => {
+                return el.bbsOid === Number(bbsOid)
+            });
+            
+            uiCommon.fnShowConfirmModal('삭제하시겠습니까?', async () => {
+                uiCommon.fnHideConfirmModal();
+
+                const params = {
+                    bbsOid: bbsOid,
+                    useYn: 'N',
+                    menuOid: findBoardMenuNo.positionMenuOid
+                }
+
+                try {
+                    await API.patch("/api/admin/admin807/board/delete", params);
+
+                    uiCommon.fnShowAlertModal("정상적으로 삭제되었습니다.", () => {
+                        uiCommon.fnHideAlertModal();
+                        this.searchBoardList();
+                    });
+                } catch (error) {
+                    uiCommon.fnShowAlertModal(`[error] : ${error}`, () => {
+                        uiCommon.fnHideAlertModal();
+                    });
+                }
+
+            });
+        }
+
+    };
+
+    $(document).ready(function () {
+        admin807.init();
+    });
+</script>
+</body>
+</html>

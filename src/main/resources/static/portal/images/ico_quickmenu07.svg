@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 24 48">
+  <defs>
+    <style>
+      .cls-1 {
+        stroke: #21204c;
+      }
+
+      .cls-1, .cls-2, .cls-3, .cls-4, .cls-5 {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2px;
+      }
+
+      .cls-2 {
+        stroke: #3282b8;
+      }
+
+      .cls-3 {
+        stroke: #fff;
+      }
+
+      .cls-4 {
+        stroke: #006072;
+      }
+
+      .cls-5 {
+        stroke: #ff8300;
+      }
+    </style>
+  </defs>
+  <!-- Generator: Adobe Illustrator 28.7.1, SVG Export Plug-In . SVG Version: 1.2.0 Build 142)  -->
+  <g>
+    <g id="_레이어_1" data-name="레이어_1">
+      <line class="cls-2" x1="1006" y1="508" x2="1009" y2="508"/>
+      <line class="cls-2" x1="1006" y1="512" x2="1013" y2="512"/>
+      <line class="cls-2" x1="1006" y1="516" x2="1013" y2="516"/>
+      <path class="cls-1" d="M1020,523h-14.4c-2,0-3.6-1.6-3.6-3.6v-12.4c0-3.3,2.7-6,6-6h8c1.1,0,2,.9,2,2v17c0,1.7,1.3,3,3,3s3-1.3,3-3v-10c0-1.1-.9-2-2-2h-4"/>
+      <line class="cls-5" x1="4.4" y1="37.3" x2="16.4" y2="37.3"/>
+      <path class="cls-4" d="M3.3,46.8l2.1-2.1c1.1.3,3.6.6,4.8-.6l9.2-9.2"/>
+      <path class="cls-4" d="M13.1,28.5l-9.2,9.2c-1.2,1.2-1.6,3-.6,4.8l-2.1,2.1"/>
+      <line class="cls-5" x1="12.3" y1="26.3" x2="21.3" y2="35.3"/>
+      <path class="cls-5" d="M13.8,27.8l1.4-1.4c1.7-1.7,4.6-1.6,6.2.1h0c1.7,1.7,1.8,4.6.1,6.2l-1.4,1.4"/>
+      <g>
+        <line class="cls-3" x1="4.4" y1="13.3" x2="16.4" y2="13.3"/>
+        <path class="cls-3" d="M3.3,22.8l2.1-2.1c1.1.3,3.6.6,4.8-.6l9.2-9.2"/>
+        <path class="cls-3" d="M13.1,4.5L3.9,13.8c-1.2,1.2-1.6,3-.6,4.8l-2.1,2.1"/>
+        <line class="cls-3" x1="12.3" y1="2.3" x2="21.3" y2="11.3"/>
+        <path class="cls-3" d="M13.8,3.8l1.4-1.4c1.7-1.7,4.6-1.6,6.2.1h0c1.7,1.7,1.8,4.6.1,6.2l-1.4,1.4"/>
+      </g>
+    </g>
+  </g>
+</svg>

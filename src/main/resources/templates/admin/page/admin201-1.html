@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>정보공개 > 공공데이터 의견수렴 관리 > 상세정보</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <div class="table_layout02 has_editor">
+            <table>
+                <caption>공공데이터 의견수렴 상세</caption>
+                <colgroup>
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                    <col style="width: 150px;">
+                    <col style="width: auto;">
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <th scope="row">제목</th>
+                        <td id="view_title"></td>
+                        <th scope="row" class="bl">등록일시</th>
+                        <td id="view_reg_dt"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">내용</th>
+                        <td colspan="3" class="editor_view post-content" id="view_content" style="min-height: 300px; vertical-align: top;"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="btn_wrap">
+            <a href="javascript:;" id="btn_list" class="btn_basic bg_type01">목록</a>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    const admin201_1 = {
+
+        /**
+         * 초기화
+         */
+        init: function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pblDataOpnnOid = urlParams.get('pblDataOpnnOid');
+
+            if (pblDataOpnnOid) {
+                this.fnLoadData(pblDataOpnnOid);
+            } else {
+                uiCommon.fnShowAlertModal('잘못된 접근입니다.', () => this.fnGoToListPage());
+            }
+
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 목록 버튼
+            const btnList = document.getElementById("btn_list");
+            if (btnList) {
+                btnList.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    _this.fnGoToListPage();
+                });
+            }
+        },
+
+        /**
+         * 상세 데이터 로드
+         */
+        fnLoadData: async function (pblDataOpnnOid) {
+            const _this = this;
+            
+            try {
+                const data = await API.get(`/api/admin/admin201/detail?pblDataOpnnOid=${pblDataOpnnOid}`);
+                
+                if (data) {
+                    _this.fnBindData(data);
+                } else {
+                    throw new Error("데이터가 존재하지 않습니다.");
+                }
+
+            } catch (error) {
+                console.error("상세 조회 실패", error);
+                uiCommon.fnShowAlertModal('데이터를 불러오는데 실패했습니다.', () => _this.fnGoToListPage());
+            }
+        },
+
+        /**
+         * 데이터 바인딩
+         */
+        fnBindData: function (data) {
+            // 제목
+            document.getElementById('view_title').textContent = data.pblDataOpnnTtl || '';
+            
+            // 등록일시
+            const regDt = data.regDt ? common.formatDateTime(data.regDt) : '';
+            document.getElementById('view_reg_dt').textContent = regDt;
+
+            // 내용
+            const contentEl = document.getElementById('view_content');
+            if (contentEl) {
+                contentEl.innerHTML = data.pblDataOpnnCn || '';
+            }
+        },
+
+        /**
+         * 목록 페이지 이동
+         */
+        fnGoToListPage: function () {
+            window.location.href = contextPath + '/admin/page/admin201';
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+        admin201_1.init();
+    });
+</script>
+</body>
+</html>

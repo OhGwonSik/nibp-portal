@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>만족도 조사 > 조사결과</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div id="admin502SearchWrap" class="search_wrap">
+        <ul>
+            <li>
+                <label for="datepicker1">조사기간</label>
+                <div class="flex_col"><span class="datepicker"><input type="text" value="시작일" id="datepicker1" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span> ~ <span class="datepicker"><input type="text" value="종료일" id="datepicker2" class="datepick"><img class="ui-datepicker-trigger" th:src="@{/admin/images/ico_date.png}" alt="선택" title="선택"></span></div>
+            </li>
+            <li>
+                <label>진행상태</label>
+                <span class="radio-box"><input type="radio" id="option1" name="radio_01" checked><label for="option1">전체</label></span>
+                <span class="radio-box"><input type="radio" id="option2" name="radio_01"><label for="option2">조사중</label></span>
+                <span class="radio-box"><input type="radio" id="option3" name="radio_01"><label for="option3">조사종료</label></span>
+            </li>
+            <li>
+                <label for="lab_01">설문명</label>
+                <input type="text" name="" id="lab_01" placeholder="" value="" title="설문자명">
+            </li>
+        </ul>
+        <div class="s_wrap"><a class="btn_search" href="javascript:;"><span>검색</span></a></div>
+    </div>
+    <hr class="h_bg_type">
+    <div class="sub_cont_wrap">
+        <div class="table_desc">
+            <p>총 <strong id="total_count"></strong>건</p>
+        </div>
+        <div class="table_layout02 list_type mb20">
+            <table>
+                <caption>만족도 조사 리스트</caption>
+                <colgroup>
+                    <col style="width: 80px;">
+                    <col style="width: auto;">
+                    <col style="width: 120px;">
+                    <col style="width: 120px;">
+                    <col style="width: 100px;">
+                    <col style="width: 100px;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">번호</th>
+                    <th scope="col">설문명</th>
+                    <th scope="col">조사시작일</th>
+                    <th scope="col">조사종료일</th>
+                    <th scope="col">조사참여</th>
+                    <th scope="col">진행상태</th>
+                </tr>
+                </thead>
+                <tbody id="survey_list_container"></tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <div id="paging_wrap" class="paging_wrap">
+            <a href="javascript:" class="first page_first">첫 페이지</a>
+            <a href="javascript:" class="previous page_prev">전 페이지</a>
+            <div class="namber pagination_container"></div>
+            <a href="javascript:" class="next page_next">다음 페이지</a>
+            <a href="javascript:" class="last page_last">끝 페이지</a>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts" th:inline="javascript" type="text/javascript">
+    let admin502 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            all: [],        // 전체 목록
+            //pageInfo(페이징)
+            page: 1,  // 현재 페이지 번호
+            size: 10, // 한 페이지당 표시할 데이터 개수
+            total: 0, // 전체 데이터 총 개수
+            pages: 0 // 전체 페이지 수 (total / size)
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            const _this = this;
+            uiCommon.datepicker.init('#datepicker1', {
+                onSelect: async function(selectedDate) {
+                    // 시작일 선택 시 종료일의 최소 날짜를 시작일로 설정
+                    $('#datepicker2').datepicker('option', 'minDate', selectedDate);
+
+                    // 종료일이 이미 선택되어 있고 시작일보다 빠른 경우 경고
+                    const endDate = $('#datepicker2').val();
+                    if (endDate && selectedDate > endDate) {
+                        uiCommon.fnShowAlertModal('시작일은 종료일보다 빨라야 합니다.', function() {
+                            $('#datepicker1').val('');
+                        });
+                    }
+                    _this.state.page = 1;
+                    await _this.searchSurveyResult();
+                }
+            });
+
+            // 종료일 datepicker 초기화
+            uiCommon.datepicker.init('#datepicker2', {
+                onSelect: async function(selectedDate) {
+                    // 종료일 선택 시 시작일의 최대 날짜를 종료일로 설정
+                    $('#datepicker1').datepicker('option', 'maxDate', selectedDate);
+
+                    // 시작일이 이미 선택되어 있고 종료일보다 늦은 경우 경고
+                    const startDate = $('#datepicker1').val();
+                    if (startDate && startDate > selectedDate) {
+                        uiCommon.fnShowAlertModal('종료일은 시작일보다 늦어야 합니다.', function() {
+                            $('#datepicker2').val('');
+                        });
+                    }
+                    _this.state.page = 1;
+                    await _this.searchSurveyResult();
+                }
+            });
+
+            const today = new Date();
+            const weekAgo = new Date();
+            weekAgo.setDate(today.getDate() - 7);
+
+            $('#datepicker1').datepicker('setDate', weekAgo);
+            $('#datepicker2').datepicker('setDate', today);
+
+            // 저장된 검색조건 복원
+            const saved = SearchState.restoreForm('admin502', '.search_wrap');
+            if (saved) {
+                this.state.page = saved._extra.page || 1;
+            }
+
+            await this.searchSurveyResult()
+
+            // 이벤트 바인딩
+            this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 검색 버튼 클릭
+            $(".btn_search").on("click", function (e) {
+                e.preventDefault();
+                _this.state.page = 1;
+                _this.searchSurveyResult();
+            });
+
+            // 교육명 클릭
+            $("#survey_list_container").on("click", ".survey_link", function (e) {
+                e.preventDefault();
+                const srvyOid = $(this).data("srvyOid");
+                // 상세 페이지로 이동
+                _this.fnGoToDetail(srvyOid);
+            });
+
+            // 검색영역 전체 엔터 이벤트
+            document.getElementById("admin502SearchWrap").addEventListener('keydown', async e => {
+                if(e.key !== 'Enter') {
+                    return;
+                }
+                if (e.target.matches('input[type="text"], select')) {
+                    e.preventDefault();
+                    _this.state.page = 1;
+                    await _this.searchSurveyResult();
+                }
+            });
+            // 검색영역 변경 이벤트
+            document.getElementById("admin502SearchWrap").addEventListener('change', async e => {
+                if (e.target.matches('select, input[type="radio"]')) {
+                    e.preventDefault();
+                    _this.state.page = 1;
+                    await _this.searchSurveyResult();
+                }
+            });
+        },
+
+        /**
+         * 페이지네이션 렌더링
+         */
+        renderPagination: function () {
+            const _this = this;
+
+            // 공통 페이지네이션 함수 호출
+            uiCommon.pagination.render({
+                currentPage: _this.state.page,
+                totalPages: _this.state.pages,
+                onPageChange: function(page) {
+                    _this.state.page = page;
+                    _this.searchSurveyResult();
+                }
+            });
+        },
+
+        /**
+         * 메인 테이블 렌더링
+         */
+        renderTable: function () {
+        	const _this = this;
+            const $tbody = $("#survey_list_container");
+            $tbody.empty();
+
+            const list = _this.state.all;
+
+            if (list.length === 0) {
+                $tbody.append(
+                    '<tr><td colspan="6" class="tac">조회된 결과가 없습니다.</td></tr>'
+                );
+                return;
+            }
+
+            $.each(list, function (_, item) {
+                const rowHtml = `
+                    <tr>
+                        <td class="tac">${item.srvyOid}</td>
+                        <td class="tac">
+	                        <a href="#" class="a_link survey_link"
+	                           data-srvy-oid="${item.srvyOid}"
+	                        </a>
+                            ${item.srvyTtl}
+	                    </td>
+                        <td class="tac">${item.srvyBgngDt}</td>
+                        <td class="tac">${item.srvyEndDt}</td>
+                        <td class="tac">${item.surveyCmplCnt}명</td>
+                        <td class="tac">
+                            <span class="status">${item.surveyStatus}</span>
+                        </td>
+                    </tr>
+                `;
+                $tbody.append(rowHtml);
+
+                $('#total_count').text(_this.state.total);
+            });
+        },
+
+        /**
+         * 페이지 이동 - 만족도조사 결과
+         */
+        fnGoToDetail: function (srvyOid) {
+            const target = this.state.all.find(u => {
+                return u.srvyOid === srvyOid
+            });
+            if (!target) {
+                uiCommon.fnShowAlertModal("상세 정보를 찾을 수 없습니다.");
+                return;
+            }
+            // 상세 페이지로 이동
+            window.location.href = `${contextPath}/admin/page/admin502-1?srvyOid=${target.srvyOid}`;
+        },
+
+        searchSurveyResult: async function(){
+            SearchState.saveForm('admin502', '.search_wrap', { page: this.state.page });
+
+            const surveyStartDt = document.querySelector("#datepicker1").value.trim();
+            const surveyEndDt   = document.querySelector("#datepicker2").value.trim();
+
+            const statusInput = document.querySelector("input[name='radio_01']:checked");
+            const surveyStatus = statusInput
+                    ? statusInput.nextElementSibling.innerText.trim()
+                    : "전체";
+
+            const surveyTitle = document.querySelector("#lab_01").value.trim();
+
+            // const courseNm = document.querySelector("#lab_02").value.trim();
+
+            const params = {
+                page: this.state.page,
+                size: this.state.size,
+                surveyStartDt,
+                surveyEndDt,
+                surveyStatus,
+                surveyTitle,
+                // courseNm
+            };
+
+
+            const queryString = new URLSearchParams(
+                    Object.entries(params).filter(([_, v]) => v && v !== "전체")
+            ).toString();
+
+            const data = await API.get(`/api/admin/admin502/survey/list?${queryString}`);
+
+            this.state.all = data.list;
+            this.state.total = data.total;
+            this.state.pages = data.pages;
+
+            this.renderTable();
+            this.renderPagination();
+        }
+    };
+
+    $(document).ready(function () {
+        admin502.init();
+    });
+</script>
+</body>
+</html>

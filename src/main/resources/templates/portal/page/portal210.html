@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>생명윤리 정책 지원 및 관리</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">생명윤리 정책 지원 및 관리</h3>
+    <div class="sub_tab_menu">
+        <ul id="portal210_tab"></ul>
+    </div>
+    <div class="tab_cnt" id="OPT" style="display: block;">
+        <div class="human_intro_wrap">
+            <strong> 「생명윤리 및 안전에 관한 법률」 제8조제6항에 따라 국가생명윤리심의위원회 활동을 지원합니다.</strong>
+            <p>국가생명윤리심의위원회 업무지원기관으로서 국가위원회 회의 등 활동을 지원하며 생명윤리 관련 정책발굴 및 지원, 국내·외 네트워크 활성화, 생명윤리 인식 개선 및 역량 강화 지원 등 다양한 정책연구 활동을 통하여 국가의 생명윤리정책 방향을 제시하고 지원하는 역할을 수행합니다.</p>
+        </div>
+        <div class="organization_wrap committee">
+            <div class="level01"><strong>국가생명윤리심의위원회</strong></div>
+            <div class="level03"><strong>국가생명윤리정책원<br>(업무지원기관)</strong></div>
+            <div class="department_wrap">
+                <ul>
+                    <li>
+                        <div class="department_inner">
+                            <strong>생명윤리ㆍ안전정책<br class="brnone">전문위원회</strong>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="department_inner">
+                            <strong>배아<br class="brnone">전문위원회</strong>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="department_inner">
+                            <strong>인체유래물<br class="brnone">전문위원회</strong>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="department_inner">
+                            <strong>유전자<br class="brnone">전문위원회</strong>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="department_inner">
+                            <strong>연구대상자보호<br class="brnone">전문위원회</strong>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <p class="tac mt15">&lt;국가생명윤리심의위원회 조직도&gt;</p>
+        </div>
+        <div class="bg_box mt30 flex_wrap">
+            <p>※ 필요 시 ‘특별전문위원회’ 구성</p>
+        </div>
+        <h4 class="sstit">관련 업무</h4>
+        <div class="business_wrap">
+            <ul>
+                <li>
+                    <span class="img"><img th:src="@{/portal/images/img_business01.png}" alt="제6기 국가생명윤리심의위원회 제5차 정기회의 사진"></span>
+                    <div class="business_text">
+                        <ul class="text_list">
+                            <li>대통령 소속 국가생명윤리심의위원회 및 산하 분야별 전문위원회 활동 지원</li>
+                            <li>국가의 생명윤리 관련 기본 정책 등 각종 심의 지원을 위한 자료 생성 및 지원</li>
+                            <li>정책간담회, 국가생명윤리포럼 등 생명윤리정책 어젠다 논의 및 소통 지원</li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="bg_box mt30 flex_wrap">
+            <p>
+                ※ 국가생명윤리심의위원회에 관한 자세한 정보는 위원회 홈페이지(<b class="color_01">https://bioethics.go.kr</b>)를 이용해 주시기 바랍니다.</p>
+            <a href="https://bioethics.go.kr/" class="btn_basic btn_bg_type01 flex_shrink" target="_blank" title="새 창으로 열림">홈페이지 바로가기</a>
+        </div>
+    </div>
+    <div class="tab_cnt" id="MNG" style="display: none;">
+        <div class="capability_wrap">
+            <ul>
+                <li>
+                    <strong>조사·연구</strong>
+                    <div class="capability_text">
+                        <span><img th:src="@{/portal/images/img_capability01.png}" alt="조사·연구"></span>
+                        <ul class="text_list">
+                            <li>생명윤리 관련 각종 동향 조사 및 분석을 통한 보고서 작성(불법 생식세포 모니터링 및 현황 조사 등)</li>
+                            <li>생명윤리 이슈에 대한 언론 동향 모니터링과 분기별 분석을 통한 브리프 발행 등 기초 자료 정리</li>
+                            <li>국내외 법령 및 지침 등의 제, 개정 현황 조사 및 분석 보고서</li>
+                        </ul>
+                        <p class="mt20"><a th:href="@{/board?bbsOid=30&amp;menuCd=BOARD30}" class="btn_basic btn_bg_type01 flex_shrink"><i class="d_icon"></i>결과 보고서 바로가기</a></p>
+                    </div>
+                </li>
+                <li>
+                    <strong>소통 활성화 지원</strong>
+                    <div class="capability_text">
+                        <span><img th:src="@{/portal/images/img_capability02.png}" alt="소통 활성화 지원"></span>
+                        <ul class="text_list">
+                            <li>국제 협력을 통한 생명윤리 관련 소통 지원(UNESCO, WHO 등)</li>
+                            <li>국내 생명윤리 관련 논의 및 소통 지원(학술대회 지원 사업 등)</li>
+                            <li>생명윤리 이슈에 대한 소통 활성화(정기적 콜로키움 개최 등)</li>
+                            <li>유관 학회와의 생명윤리 관련 논의 증진을 위한 학술대회 공동 개최 등</li>
+                        </ul>
+                    </div>
+                </li>
+                <li>
+                    <strong>연구 인프라 강화</strong>
+                    <div class="capability_text">
+                        <span><img th:src="@{/portal/images/img_capability03.png}" alt="연구 인프라 강화"></span>
+                        <ul class="text_list">
+                            <li>생명윤리 관련 국내·외 논의 현황 정리, 보고서 등 기초 자료 및 번역물 등 자료 관리</li>
+                            <li>신진 연구자 발굴 및 지원(자유공모 지원사업 등)</li>
+                            <li>전문 학술지 「생명, 윤리와 정책」 발간(연 2회)</li>
+                        </ul>
+                        <p class="mt20"><a th:href="@{/page/portal501}" class="btn_basic btn_bg_type01 flex_shrink"><i class="d_icon"></i>학술지 바로가기</a></p>
+                    </div>
+                </li>
+                <li>
+                    <strong>생명윤리 인식 개선 및 이해도 증진</strong>
+                    <div class="capability_text">
+                        <span><img th:src="@{/portal/images/img_capability04.png}" alt="생명윤리 인식 개선 및 이해도 증진"></span>
+                        <ul class="text_list">
+                            <li>생명윤리 관련 인식 개선 콘텐츠 기획 및 개선 활동 지원</li>
+                            <li>관련 정책 및 제도의 이해도 증진을 위한 콘텐츠 기회 및 개발</li>
+                            <li>대국민 생명윤리 관련 인식 개선 콘텐츠 개발 및 관리</li>
+                        </ul>
+                        <p class="mt20">
+                            <a href="https://www.youtube.com/@%EA%B5%AD%EA%B0%80%EC%83%9D%EB%AA%85%EC%9C%A4%EB%A6%AC%EC%A0%95%EC%B1%85%EC%9B%90kr" title="국가생명윤리정책원 유튜브 새창열림" target="_blank" class="btn_basic btn_bg_type01 flex_shrink"><i class="d_icon"></i>유튜브 바로가기</a>
+                            <a href="https://www.instagram.com/nibp.kr/" title="국가생명윤리정책원 instagram 새창열림" target="_blank" class="btn_basic btn_bg_type01 flex_shrink"><i class="d_icon"></i>인스타 바로가기</a>
+                        </p>
+                    </div>
+                </li>
+                <li>
+                    <strong>생명윤리법 지원 및 관리</strong>
+                    <div class="capability_text">
+                        <span><img th:src="@{/portal/images/img_capability05.png}" alt="생명윤리법 지원 및 관리"></span>
+                        <ul class="text_list">
+                            <li>생명윤리법 및 제도 관련 각종 가이드라인 제·개정</li>
+                            <li>생명윤리법 및 관련 민원 질의 대응 지원 및 관리</li>
+                            <li>생명윤리법 관련 Q&A 관리</li>
+                        </ul>
+                        <p class="mt20"><a th:href="@{/board?bbsOid=20&amp;menuCd=BOARD20}" class="btn_basic btn_bg_type01 flex_shrink"><i class="d_icon"></i>생명윤리법 Q&A</a></p>
+                    </div>
+                </li>
+                <li>
+                    <strong>모니터링</strong>
+                    <div class="capability_text">
+                        <ul class="text_list">
+                            <li>불법 생식세포 모니터링, 배아 보관 및 제공 현황 조사 등</li>
+                        </ul>
+                    </div>
+                </li>
+                <li>
+                    <strong>안내</strong>
+                    <div class="capability_text">
+                        <ul class="text_list">
+                            <li>생명윤리법 제도 내 이해도 증진 활동(간담회, 설명회, 가이드라인 제, 개정 지원 등)</li>
+                            <li>관련 민원 및 질의응답 등 관리</li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div> 
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal210 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            tab: []
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            const _this = this;
+            await _this.fnGetTabData();
+            await _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 탭 메뉴 클릭 이벤트
+            const tabLinks = document.querySelectorAll('#portal210_tab li a');
+            tabLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // URL 변경하여 페이지 리로드
+                    const tabValue = this.getAttribute('data-tab');
+                    if (tabValue) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('tab', tabValue);
+                        window.location.href = url.toString();
+                    }
+                });
+            });
+        },
+
+        /**
+         * 탭 렌더링
+         */
+        renderTab: function () {
+            const _this = this;
+            const tabContainer = document.querySelector('#portal210_tab');
+
+            if (!tabContainer || !_this.state.tab) return;
+
+            // URL에서 tab 파라미터 가져오기
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTabValue = urlParams.get('tab');
+
+            let html = '';
+            let firstTabValue = null;
+
+            _this.state.tab.forEach((tab, idx) => {
+                if (idx === 0) firstTabValue = tab.cdVal;
+
+                // URL 파라미터와 일치하면 활성화, 없으면 첫 번째 탭 활성화
+                const isActive = activeTabValue ? (tab.cdVal === activeTabValue) : (idx === 0);
+                const activeClass = isActive ? ' class="on"' : '';
+                html += `<li${activeClass}><a href="javascript:;" data-tab="${tab.cdVal}">${tab.cdNm}</a></li>`;
+            });
+
+            tabContainer.innerHTML = html;
+
+            // 활성화된 탭에 해당하는 섹션 표시
+            const targetTabValue = activeTabValue || firstTabValue;
+            if (targetTabValue) {
+                // 모든 섹션 숨김
+                document.querySelectorAll('.tab_cnt').forEach(function (tab) {
+                    tab.style.display = 'none';
+                });
+
+                // 해당 섹션만 표시
+                const targetSection = document.getElementById(targetTabValue);
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                }
+            }
+
+            // 탭 접근성 속성 업데이트
+            uiCommon.updateTabAccessibility('#portal210_tab');
+        },
+
+        /**
+         * 탭 데이터 조회
+         */
+        fnGetTabData: async function () {
+            const _this = this;
+
+            const param = new URLSearchParams({
+                grpCd : 'MENU_PORTAL210'
+            });
+
+            try {
+                const response = await API.get('/api/common/code/groupCd/list?' + param);
+
+                if (response && response.length > 0) {
+                    _this.state.tab = response;
+                    _this.renderTab()
+                }
+            } catch (error) {
+                console.error('탭 조회 실패:', error);
+            }
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal210.init();
+    });
+</script>
+</body>
+</html>

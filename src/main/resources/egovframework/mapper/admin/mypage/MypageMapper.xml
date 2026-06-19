@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.mypage.mapper.MypageMapper">
+
+	<!-- 관리자 ID로 사용자 정보 조회 -->
+	<select id="selectAdminUserByUserId" parameterType="String" resultType="egovframework.common.auth.domain.BaseUser">
+		SELECT
+			user_oid,
+			user_nm_korn,
+			user_nm_eng,
+			brdt,
+			user_id,
+			pswd,
+			user_authrt,
+			user_type,
+			user_stts,
+			${schema}.fn_decrypt_aes(eml_lcal, #{secretKey}) AS eml_lcal,
+			eml_dmn,
+			mpno_pfx,
+			${schema}.fn_decrypt_aes(mpno_mid, #{secretKey}) AS mpno_mid,
+			mpno_sfx,
+			inst_oid,
+			inst_nm,
+			dept_cd,
+			dept_nm,
+			jbps_cd,
+			jbps_nm,
+			last_login_dt,
+			lgn_fail_cnt,
+			prvc_use_yn,
+			prvc_pvsn_agre_yn,
+			trms_agre_yn,
+			eml_rcptn_agre_yn,
+			use_yn,
+			reg_id,
+			reg_dt,
+			mdfcn_id,
+			mdfcn_dt
+		FROM
+			${schema}.user
+		WHERE
+			user_id = #{userId}
+		  AND use_yn = 'Y'
+		  AND user_authrt = 'ADMIN'
+	</select>
+
+	<update id="updateAdminMe" parameterType="egovframework.admin.mypage.domain.MypageUpdateDto">
+		<!-- updateAdminMe -->
+		UPDATE
+		${schema}.user
+		SET
+		<if test="request.userNmKorn != null and request.userNmKorn != ''">
+			user_nm_korn = #{request.userNmKorn},
+		</if>
+		<if test="request.userNmEng != null and request.userNmEng != ''">
+			user_nm_eng = #{request.userNmEng},
+		</if>
+		<if test="request.brdt != null and request.brdt != ''">
+			brdt = #{request.brdt},
+		</if>
+		<if test="request.emlLocal != null and request.emlLocal != ''">
+			eml_lcal = #{request.emlLocal},
+		</if>
+		<if test="request.emlDmn != null and request.emlDmn != ''">
+			eml_dmn = #{request.emlDmn},
+		</if>
+		<if test="request.mpnoPfx != null and request.mpnoPfx != ''">
+			mpno_pfx = #{request.mpnoPfx},
+		</if>
+		<if test="request.mpnoMid != null and request.mpnoMid != ''">
+			mpno_mid = #{request.mpnoMid},
+		</if>
+		<if test="request.mpnoSfx != null and request.mpnoSfx != ''">
+			mpno_sfx = #{request.mpnoSfx},
+		</if>
+		<if test="request.deptNm != null and request.deptNm != ''">
+			dept_nm = #{request.deptNm},
+		</if>
+		<if test="request.pstnNm != null and request.pstnNm != ''">
+			jbps_nm = #{request.pstnNm},
+		</if>
+		mdfcn_id = #{principal.userId},
+		mdfcn_dt = IFNULL(#{request.updDt}, now())
+		WHERE
+		user_oid = #{principal.userOid}
+		AND user_id = #{principal.userId}
+	</update>
+
+	<update id="updateAdminMePwd" parameterType="egovframework.admin.mypage.domain.MypageUpdatePwdDto">
+		<!-- updateAdminMePwd -->
+		UPDATE
+		${schema}.user
+		SET
+		pswd = #{request.newPswd},
+		mdfcn_id = #{principal.userId},
+		mdfcn_dt = IFNULL(#{request.updDt}, now())
+		WHERE
+		user_oid = #{principal.userOid}
+		AND user_id = #{principal.userId}
+	</update>
+</mapper>

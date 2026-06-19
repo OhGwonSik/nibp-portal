@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>참여 > 설문 > 미리보기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style layout:fragment="main_style">
+        .survey_content dt {white-space: pre-line;}
+    </style>        
+</head>
+<body>
+<div layout:fragment="admin_content" class="right_wrap">
+    <div class="sub_cont_wrap">
+        <h3 class="stit">설문조사</h3>
+        <div class="board_wrap">
+            <div class="board_view">
+                <div class="board_view_header" id="surveyHeader">
+                </div>
+
+                <div class="board_content post-content" id="surveyDesc"></div>
+
+                <div class="survey_content" id="surveyContent"></div>
+
+                <div class="btn_wrap mt20">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script th:src="@{/common/js/survey-renderer.js}"></script>
+    <script th:inline="javascript" type="text/javascript">
+    const admin501Preview = {
+
+        state: {
+            all: null,
+            srvyOid: null,
+            chkHistory: {}
+        },
+
+        init: async function () {
+            const queryParams = new URLSearchParams(location.search);
+            this.state.srvyOid = queryParams.get('srvyOid');
+        	
+        	this.initEvent();
+
+            // SurveyRenderer 설정
+            SurveyRenderer.config({
+                basePath: /*[[${basicFilePath}]]*/ '',
+                allowedExtensions: /*[[${allowedExtensions}]]*/ '',
+                maxFileSize: /*[[${maxFileSize}]]*/ 10,
+                contextPath: contextPath
+            });
+
+            if (this.state.srvyOid) {
+                await this.searchSurveyDetail();
+            } else {
+                uiCommon.fnShowAlertModal("잘못된 접근입니다.", function(){
+                    history.back();
+                });
+            }
+        },
+        
+        initEvent: async function(){
+        	const _this = this;
+        },
+        
+        fnGoBack: function() {
+        	
+    		const msg = "설문의 답변을 제출하지 않고\n이동할 경우, 이제껏 작성된 설문은\n저장(제출)되지 않습니다.\n\n페이지를 나가시겠습니까?";
+    		
+            uiCommon.fnShowConfirmModal(msg, async function(){
+                uiCommon.fnHideConfirmModal();
+                location.href = `${contextPath}/page/edu501`;
+            });
+        },
+
+        searchSurveyDetail: async function(){
+            const srvyOid = this.state.srvyOid;
+            try {
+                const data = await API.get(`/api/admin/admin501/survey/preview?srvyOid=${srvyOid}`);
+                this.state.all = data;
+
+                const targets = {
+                    header: document.getElementById('surveyHeader'),
+                    description: document.getElementById('surveyDesc'),
+                    content: document.getElementById('surveyContent')
+                };
+                
+                SurveyRenderer.render(targets, data);
+
+            } catch (error) {
+                console.error(error);
+            }
+        },
+
+        fnValidate: function() {
+        	
+            // 응답자 기본 정보 유효성 검사
+            
+            // 성명
+            const elUserNm = document.getElementById('userNm');
+            if (elUserNm && !elUserNm.value.trim()) {
+                uiCommon.fnShowAlertModal("성명을 입력해주세요.");
+                return false;
+            }
+            
+            // 성별 (라디오 버튼)
+            if (document.querySelector('input[name="userInfoGender"]')) {
+                const elGender = document.querySelector('input[name="userInfoGender"]:checked');
+                if (!elGender) {
+                    uiCommon.fnShowAlertModal("성별을 선택해주세요.");
+                    return false;
+                }
+            }
+
+            // 소속
+            const elUserOrg = document.getElementById('userOrg');
+            if (elUserOrg && !elUserOrg.value.trim()) {
+                uiCommon.fnShowAlertModal("소속을 입력해주세요.");
+                return false;
+            }
+
+            // 휴대전화
+            const elUserMpno = document.getElementById('userMpno');
+            if (elUserMpno && !elUserMpno.value.trim()) {
+                uiCommon.fnShowAlertModal("휴대전화 번호를 입력해주세요.");
+                return false;
+            }
+
+            // 이메일
+            const elUserEml = document.getElementById('userEml');
+            if (elUserEml && !elUserEml.value.trim()) {
+                uiCommon.fnShowAlertModal("이메일을 입력해주세요.");
+                return false;
+            }
+            
+            // 주소
+            const elUserAddr = document.getElementById('userAddr');
+            if (elUserAddr && !elUserAddr.value.trim()) {
+                uiCommon.fnShowAlertModal("주소를 입력해주세요.");
+                return false;
+            }
+
+            // 2. 문항별 유효성 검사 (data-required="Y" 인 것만)
+			const questions = document.querySelectorAll('.survey_content dl');
+            
+            for (let dl of questions) {
+                const required = dl.getAttribute('data-required'); 
+                const type = dl.getAttribute('data-type');        
+                
+                const qNo = dl.getAttribute('data-q-no');       // 예: "1", "2", "6"
+                const originTitle = dl.getAttribute('data-title'); // 예: "순위"
+                
+                const limit = dl.getAttribute('data-limit');
+                
+                const title = qNo ? `${qNo}. ${originTitle}` : originTitle;
+
+                // 필수값이 아니면 건너뜀
+                if (required !== 'Y') {
+                    continue; 
+                }
+
+                // === A. 주관식 ===
+                if (type === 'LONG' || type === 'SHORT') {
+                    const textarea = dl.querySelector('textarea');
+                    if (limit !== '0' && !textarea.value.trim()) {
+                        uiCommon.fnShowAlertModal(`[${title}] 문항에 답변을 입력해주세요.`);
+                        return false;
+                    }
+                }
+
+                // === B. 객관식 ===
+                else if (type === 'MULTI' || type === 'IMG_SEL') {
+                    const checked = dl.querySelector('input:checked');
+                    if (!checked) {
+                        uiCommon.fnShowAlertModal(`[${title}] 문항의 보기를 선택해주세요.`);
+                        return false;
+                    }
+                }
+
+                // === C. 리커트 ===
+                else if (type === 'LIKERT') {
+                    const select = dl.querySelector('select');
+                    if (!select.value) {
+                        uiCommon.fnShowAlertModal(`[${title}] 문항의 점수를 선택해주세요.`);
+                        return false;
+                    }
+                }
+
+                // === F. 비율 ===
+                else if (type === 'RATIO') {
+                    const selects = dl.querySelectorAll('select');
+                    for (let sel of selects) {
+                        if (!sel.value) {
+                            const label = sel.closest('.select_box').previousElementSibling.innerText; 
+                            uiCommon.fnShowAlertModal(`[${title}] 문항의 '${label}' 항목에 대한 점수를 선택해주세요.`);
+                            return false;
+                        }
+                    }
+                }
+
+                // === D. 순위형 ===
+                else if (type === 'RANK') {
+                    const rankInputs = dl.querySelectorAll('.rank-input');
+                    for (let input of rankInputs) {
+                        if (!input.value) {
+                            uiCommon.fnShowAlertModal(`[${title}] 문항의 순위를 모두 지정해주세요.`);
+                            return false;
+                        }
+                    }
+                }
+                
+                // === E. 이미지 응답 ===
+                else if (type === 'IMG_RESP') {
+                     const fileInput = dl.querySelector('input[type="file"]');
+                     if (!fileInput.value) {
+                         uiCommon.fnShowAlertModal(`[${title}] 문항의 이미지를 첨부해주세요.`);
+                         return false;
+                     }
+                }
+            }
+
+            return true;
+        },
+        
+        
+        fnSubmitSurvey: async function() {
+            const state = this.state;
+            const srvyOid = state.srvyOid;
+            const courseNo = state.courseNo;
+            
+            // 1. 유효성 검사
+            const validate = this.fnValidate();
+            if(!validate){
+                return;
+            }
+
+            // 2. 응답자 기본 정보 수집
+            const userInfo = {};
+            
+            const elUserNm = document.getElementById('userNm');
+            if (elUserNm) userInfo.srvyRspdntNm = elUserNm.value;
+
+            const elUserOrg = document.getElementById('userOrg');
+            if (elUserOrg) userInfo.srvyRspdntInst = elUserOrg.value;
+
+            const elUserMpno = document.getElementById('userMpno');
+            if (elUserMpno) userInfo.srvyRspdntMpno = elUserMpno.value;
+
+            const elUserEml = document.getElementById('userEml');
+            if (elUserEml) userInfo.srvyRspdntEml = elUserEml.value;
+            
+            const elUserAddr = document.getElementById('userAddr');
+            if (elUserAddr) userInfo.srvyRspdntAddr = elUserAddr.value;
+            
+            const elGender = document.querySelector('input[name="userInfoGender"]:checked');
+            if (elGender) userInfo.srvyRspdntGndr = elGender.value;
+
+            // 3. 답변 리스트 수집
+            const answers = [];
+            const questions = document.querySelectorAll('.survey_content dl');
+
+            questions.forEach(dl => {
+                const qstNo = dl.getAttribute('data-qst-no');
+                const type = dl.getAttribute('data-type');
+                
+                const limit = dl.getAttribute('data-limit');
+                
+                // === A. 주관식 (LONG / SHORT) ===
+                if (type === 'LONG' || type === 'SHORT') {
+                    const textarea = dl.querySelector('textarea');
+                    if (textarea && (textarea.value.trim() !== "" || limit === '0')) {
+                        answers.push({ 
+                            srvyQitemOid: qstNo, 
+                            srvyQitemOptOid: null,
+                            ansVal: textarea.value, 
+                            type: type
+                        });
+                    }
+                }
+                
+                // === B. 객관식 (MULTI / IMG_SEL) ===
+                else if (type === 'MULTI' || type === 'IMG_SEL') {
+				    const checkedInputs = dl.querySelectorAll('input:checked');
+				    
+				    checkedInputs.forEach(input => {
+				        // 숨겨둔 파일 번호 가져오기 (변수명 fileOid)
+						const rawFileNo = input.getAttribute('data-file-no');
+
+					    // 그 다음 변환 로직 수행
+					    const fileOid = (rawFileNo && rawFileNo.trim() !== "") ? Number(rawFileNo) : null;
+				
+				        // 텍스트 값 확인 (기타 의견 등)
+				        let textVal = "";
+				        const isEtc = input.getAttribute('data-is-etc');
+				        if (isEtc === 'Y') {
+				            const etcText = dl.querySelector(`textarea[name="ans_etc_${srvyQitemOid}_${input.value}"]`);
+				            if (etcText) {
+				                textVal = etcText.value.trim(); 
+				            }
+				        }
+				
+				        // 데이터 구성 
+				        let ansData = { 
+				            srvyQitemOid: qstNo, 
+				            srvyQitemOptOid: input.value,
+				            type: type,
+				            fileOid: fileOid,
+				            ansVal: textVal 
+				        };
+				        answers.push(ansData);
+				    });
+				}
+                
+                // === C. 리커트 (LIKERT) ===
+                else if (type === 'LIKERT') {
+                    const select = dl.querySelector('select');
+                    if (select && select.value) {
+                        answers.push({ 
+                            srvyQitemOid: qstNo, 
+                            srvyQitemOptOid: null, 
+                            ansVal: select.value, 
+                            type: type
+                        });
+                    }
+                }
+                
+                // === F. 비율 (RATIO) ===
+                else if (type === 'RATIO') {
+                    const selects = dl.querySelectorAll('select');
+                    selects.forEach(sel => {
+                        if (sel.value) {
+                            const parts = sel.name.split('_'); 
+                            const optNo = parts[parts.length - 1]; 
+                            
+                            answers.push({ 
+                                srvyQitemOid: qstNo, 
+                                srvyQitemOptOid: optNo, 
+                                ansVal: sel.value, 
+                                type: type
+                            });
+                        }
+                    });
+                }
+                
+                // === D. 순위형 (RANK) ===
+                else if (type === 'RANK') {
+                    const rankInputs = dl.querySelectorAll('.rank-input');
+                    rankInputs.forEach(input => {
+                        if (input.dataset.srvyQitemOptOid) {
+                            answers.push({
+                                srvyQitemOid: qstNo,
+                                srvyQitemOptOid: input.dataset.srvyQitemOptOid, 
+                                ansVal: input.dataset.rank,  
+                                type: type
+                            });
+                        }
+                    });
+                }
+
+                // === E. 이미지 응답 (IMG_RESP) ===
+				else if (type === 'IMG_RESP') {
+				     const fileInput = dl.querySelector('input[type="file"]');
+				     
+				     // [추가] 텍스트 입력값 가져오기
+				     const textArea = dl.querySelector(`textarea[name="ans_txt_${srvyQitemOid}"]`);
+				     let textVal = null;
+				     if (textArea) {
+				         textVal = textArea.value; // 입력한 내용 (없으면 빈 문자열)
+				     }
+				
+				     // 파일이 있거나, 텍스트라도 입력했다면 데이터를 보냄 (정책에 따라 조정 가능)
+				     // 보통 이미지 응답형은 파일이 필수이므로 파일 존재 여부를 체크합니다.
+				     if (fileInput.files && fileInput.files.length > 0) {
+				         answers.push({
+				             srvyQitemOid: qstNo,
+				             srvyQitemOptOid: null,
+				             ansVal: textVal,
+				             type: type
+				         });
+				     }
+				}
+            });
+
+            const payload = {
+                srvyOid: srvyOid,
+                courseNo: courseNo,
+                userInfo: userInfo,
+                answerList: answers
+            };
+
+            const formData = new FormData();
+            formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+
+            // 파일 데이터 추가 (Key: file_{qstNo})
+            const fileInputs = document.querySelectorAll('.survey_content input[type="file"]');
+            fileInputs.forEach(input => {
+                if (input.files && input.files.length > 0) {
+                    const srvyQitemOid = input.getAttribute('data-qst-no');
+                    // 예: file_15, file_102
+                    formData.append(`file_${srvyQitemOid}`, input.files[0]);
+                }
+            });
+
+            uiCommon.fnShowConfirmModal('설문을 제출하시겠습니까?', async () => {
+                uiCommon.fnHideConfirmModal();
+                try {
+                    const res = await API.upload('/api/common/survey/insert', formData);
+                     
+                    uiCommon.fnShowAlertModal('정상적으로 저장되었습니다.', () => {
+                        uiCommon.fnHideAlertModal();
+                        location.href = `${contextPath}/page/edu501`
+                    });
+                } catch (err) {
+                    console.error(err);
+                    uiCommon.fnShowAlertModal('저장 중 오류가 발생했습니다.');
+                }
+            });
+        },
+        
+        /**
+         * 파일 유효성 검증 (이미지만 - 이미지 응답형만 사용)
+         */
+        validateFile: function (file) {
+            return SurveyRenderer.validateFile(file);
+       	},
+
+        /**
+         * 특정 문항의 파일 UI 초기화
+         */
+        resetFileUI: function(qstNo) {
+            SurveyRenderer.resetFileUI(qstNo);
+        },        
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+    	admin501Preview.init();
+    });
+    </script>
+</th:block>
+</body>
+</html>

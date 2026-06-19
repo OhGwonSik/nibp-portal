@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>사업 > 생명윤리사업 운영·관리 > 공용기관생명윤리위원회 운영</title>
+    <meta name="" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div layout:fragment="main_content" class="content_wrap">
+    <h3 class="stit">공용기관생명윤리위원회 운영</h3>
+    <div class="sub_tab_menu">
+        <ul id="portal206_tab"></ul>
+    </div>
+    <!--공용기관생명윤리위원회 소개-->
+    <div id="INT" class="tab_cnt" style="display: block;">
+        <div class="human_intro_wrap">
+            <strong>「생명윤리 및 안전에 관한 법률」 제 12조 제1항에 따라 보건복지부 장관이 기관 또는 연구자가 공동으로 이용할 수 있도록 지정한 위원회를 말합니다.</strong>
+            <p>공용위원회는 법률에 따라 기관위원회 설치 및 운영이 효율적이지 않은 기관에 속한 연구자나 기관에 속하지 않은 개인 연구자들에게 윤리적인 연구 수행을 지원하기 위해 인간대상 연구, 인체유래물연구, 배아줄기세포주이용연구에 대한 심의, 조사ㆍ감독, 교육 등을 제공하여 연구자들이 인간과 인체유래물 등을 연구함에 있어 연구대상자의 권리와 안전 및 복지를 보호하고자 합니다.</p>
+        </div>
+        <h4 class="sstit">심의 대상</h4>
+        <div class="subject_wrap">
+            <ul>
+                <li>
+                    <strong>인간대상연구</strong>
+                    <div class="text"><p>사람을 대상으로 물리적으로 개입하거나 의사소통, 대인접촉 등의 상호작용을 통하여 수행하는 연구, 또는 개인을 식별할 수 있는 정보를 이용하는 연구</p></div>
+                </li>
+                <li>
+                    <strong>인체유래물연구</strong>
+                    <div class="text"><p>인체로부터 수집, 채취한 조직세포 등 인체 구성물 또는 이들로부터 분리된 혈청, 혈장, 염색체, DNA, RNA, 단백질 등을 직접 조사·분석하는 연구</p></div>
+                </li>
+                <li>
+                    <strong>배아줄기세포주 이용연구</strong>
+                    <div class="text"><p>등록된 배아줄기세포주를 이용하여 질병의 진단·예방·치료를 위한 연구 또는 줄기세포의 특성 및 분화에 관한 기초연구, 대통령령으로 정한 연구</p></div>
+                </li>
+            </ul>
+        </div>
+        <h4 class="sstit">주요사업</h4>
+        <div class="business_wrap">
+            <ul>
+                <li>
+                    <span class="img"><img th:src="@{/portal/images/img_business04.png}" alt="연구자 대상 교육 사진"></span>
+                    <div class="business_text">
+                        <ul class="text_list">
+                            <li>심의를 위한 심의위원회/특별심의위원회 운영 및 지원</li>
+                            <li>승인 후 연구의 수행과정 및 결과에 대한 조사, 감독 등 관리</li>
+                            <li>연구자 대상 상담, 컨설팅 등 윤리적 연구 수행 지원</li>
+                            <li>연구자 대상 윤리 지침의 제작 및 배포</li>
+                            <li>연구대상자 상담 등 보호체계 구축 및 운영</li>
+                            <li>표준운영지침 제작 및 공유 등 위원회 운영과 심의 표준화 지원</li>
+                            <li>심의위원 교육, 평가 등 관리를 통한 역량 강화 지원</li>
+                            <li>기관위원회 업무 위탁 기관 협약 체결 및 관리 등 위탁업무 수행</li>
+                            <li>심의 신청, 관리 등을 위한 e-IRB 정보화 시스템 구축 및 운영</li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!--이용대상-->
+    <div id="PID" class="tab_cnt" style="display: none;">
+        <div class="sub_tab_s">
+            <ul id="portal206_sub_tab">
+                <li class="on"><a href="javascript:;" data-target="subsection_individual" title="선택됨"><span>개인연구자</span></a></li>
+                <li><a href="javascript:;" data-target="subsection_institution"><span>기관협약</span></a></li>
+            </ul>
+        </div>
+        <!--개인연구자-->
+        <div id="subsection_individual" class="sub_tab_cnt" style="display: block;">
+            <div class="bg_box">
+                <ul class="text_list">
+                    <li>가. 교육·연구 기관 또는 병원 등에 소속되지 않은 연구자</li>
+                    <li>나.“가”에 해당하지 않는 기관으로서, 사실상 기관위원회 설치가 불가능한 기관에 속한 연구자</li>
+                    <li>다. 기관위원회 설치 또는 협약 중이거나, 설치 또는 협약 예정인 기관에 속한 연구자(기관위원회 설치 때까지 한시적)</li>
+                    <li>라. 시행규칙 제9조 제1호에 해당하는 연구를 수행하는 연구자
+                        <ul>
+                            <li>- 국가나 지방자치단체가 직접 수행하거나 연구비를 지원하는 연구</li>
+                            <li>- 둘 이상의 기관이 공동으로 수행하는 연구로서 각각의 소관 기관위원회 중 하나의 기관위원회에서 심의하기에 적절하지 않다고 판단되어 수행기관의 장들이 공용위원회를 이용하기로 합의한 연구</li>
+                            <li>- 사회적 파급력이 큰 연구로서 심의의 공정성 확보가 필요하다고 판단한 연구</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p class="mt10">※ 필요에 따라 소속된 기관장의 확인 또는 승인을 받아야 함.</p>
+            </div>
+            <h4 class="sstit">심의비</h4>
+            <div class="table_layout data_table">
+                <table>
+                    <caption>심의비 테이블</caption>
+                    <colgroup>
+                        <col style="width: 25%">
+                        <col style="width: auto">
+                        <col style="width: 25%">
+                    </colgroup>
+                    <tbody>
+                    <tr>
+                        <th scope="row" rowspan="6">신규심의 ⑴</th>
+                        <td>영리기관이 직접 수행 또는 연구비 지원 있음 ⑵</td>
+                        <td>20만원</td>
+                    </tr>
+                    <tr>
+                        <td>비영리기관의 연구비 지원 있음 ⑶</td>
+                        <td>10만원</td>
+                    </tr>
+                    <tr>
+                        <td>연구비 지원 없음</td>
+                        <td>5만원</td>
+                    </tr>
+                    <tr>
+                        <td>심의면제</td>
+                        <td>5만원</td>
+                    </tr>
+                    <tr>
+                        <td>다기관연구 ⑷</td>
+                        <td>40만원</td>
+                    </tr>
+                    <tr>
+                        <td>개인정보 및 인체유래물등의 제공</td>
+                        <td>10만원</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">지속심의</th>
+                        <td></td>
+                        <td class="blnone">2만원</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <span class="scroll_img">스크롤</span>
+            </div>
+            <div class="description_wrap">
+                <strong>주</strong>
+                <ul>
+                    <li>⑴ 고유식별정보를 처리하는 연구의 심의도 동일 기준 적용</li>
+                    <li>⑵ 영리기관 : 기업이 자체적으로 연구 수행 또는 제약회사 등 기업이 연구비를 지원 (기업 사내 연구비 포함)</li>
+                    <li>⑶ 비영리기관 : 연구재단, 학회, 정부부처 지원 연구비, 대학 교내 연구비로 연구비 지원</li>
+                    <li>⑷ PMS와 같이 각 기관별 책임자가 있는 형태로 수행되는 다기관 연구로 영리기관이 직접 수행하거나 지원을 받는 연구</li>
+                </ul>
+            </div>
+            <h5 class="ssstit">납부기한</h5>
+            <p>'심의비 납부안내' 통지일로부터 7일 이내</p>
+            <h5 class="ssstit">납부방법</h5>
+            <p>e-IRB 시스템(public.irb.or.kr)을 통해 전자결제 진행<br>※ e-IRB 시스템 로그인 후 좌측메뉴(연구자 → 과제 및 심의현황 → 심의비납부 → 해당 연구과제의 [결제신청] 클릭</p>
+            <h4 class="sstit">환불 규정</h4>
+            <h5 class="ssstit pt0">환불 기준</h5>
+            <ul class="text_list">
+                <li>심의가 아직 진행되지 않은 경우(1회 이상 심의가 진행되어 평가표가 작성된 경우는 환불 불가)<br>※'계좌이체'의 경우: 환불 처리를 위해 결제수단에 대한 결제취소 진행 시, 일정금액의 수수료가 발생할 수 있으며 해당 비용을 제외한 금액이 환불처리 됩니다.</li>
+                <li>결제 당일: 수수료 발생없이 전액 환불</li>
+                <li>결제 익일부터: 결제금액의 1.8%(부가세 별도) 수수료를 제외한 금액 환불</li>
+            </ul>
+            <h5 class="ssstit">환불 절차</h5>
+            <ul class="text_list03">
+                <li>① 연구책임자의 환불 신청(사무국에 심의 진행 여부 사전 확인 필요)</li>
+                <li>② 사무국은 환불 신청 및 심의 진행여부 확인 후 환불 처리</li>
+            </ul>
+        </div>
+        <!--기관협약-->
+        <div id="subsection_institution" class="sub_tab_cnt" style="display: none;">
+            <h4 class="sstit">협약 대상</h4>
+            <ul class="text_list03">
+                <li>① 종사하는 연구자가 5인 이하인 기관</li>
+                <li>② 최근 3년간 기관위원회 심의건수가 30건 이하인 기관</li>
+                <li>③ 생명윤리 및 안전에 관한 법률 제14조제1항에 따른 인증을 받지 못한 기관</li>
+                <li>④ 생명윤리 및 안전에 관한 법률 제14조제4항에 따라 인증이 취소된 기관</li>
+            </ul>
+            <h4 class="sstit">협약 절차 및 방법</h4>
+            <div class="table_layout data_table">
+                <table>
+                    <caption>심의비 테이블</caption>
+                    <colgroup>
+                        <col style="width: 15%">
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: auto">
+                        <col style="width: 10%">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col">구분</th>
+                        <th scope="col">협약단위</th>
+                        <th scope="col">협약기간</th>
+                        <th scope="col">제출서류</th>
+                        <th scope="col">제출방법</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>시행규칙 제5조에 해당하는 기관</td>
+                        <td>기관</td>
+                        <td>1~3년 (1년 단위)</td>
+                        <td class="tal">
+                            <ul class="text_list03">
+                                <li>1. 시행규칙(별지 제3호 서식)_기관생명윤리위원회 업무위탁 협약서</li>
+                                <li>2. 공용위원회 업무위탁 추가협약서</li>
+                                <li>3. 해당 기관이 협약 대상임을 증빙할 수 있는 서류</li>
+                            </ul>
+                        </td>
+                        <td>수시 신청</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <span class="scroll_img">스크롤</span>
+            </div>
+            <h4 class="sstit">기관 협약 진행 순서</h4>
+            <div class="step_layout">
+                <ul class="step_inner w3">
+                    <li>
+                        <div class="step_box">공용위원회 e-IRB를 통한 협약 신청</div>
+                    </li>
+                    <li>
+                        <div class="step_box">협약신청서 심사</div>
+                    </li>
+                    <li>
+                        <div class="step_box">기관생명윤리위원회 업무 위탁협약서 &amp; 공용위원회 업무위탁 추가협약서 작성</div>
+                    </li>
+                    <li>
+                        <div class="step_box">협약 체결</div>
+                    </li>
+                </ul>
+            </div>
+            <h4 class="sstit">협약비(기본비용)</h4>
+            <div class="table_layout data_table">
+                <table>
+                    <caption>협약비(기본비용) 테이블</caption>
+                    <colgroup>
+                        <col style="width: auto">
+                        <col style="width: 10%">
+                        <col style="width: auto">
+                        <col style="width: 10%">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" colspan="2">연구수행기관</th>
+                        <th scope="col" colspan="2">배아생성의료기관</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>연구에 대한 심의 신청 5건 (인간대상연구 및 인체유래물연구 등 연구계획서 심의 및 개인정보, 인체유래물등의 제공 및 이관 등)</td>
+                        <td>50만원</td>
+                        <td>심의신청 3건 (연구계획서 심의, 잔여배아 및 잔여생식세포의 연구목적 제공, 배아의 보존기간 연장, 기증자 실비 보상금액 등)</td>
+                        <td>30만원</td>
+                    </tr>
+                    <tr>
+                        <td>연구에 대한 심의면제 신청 5건 (인간대상연구, 인체유래물연구만 해당)</td>
+                        <td>25만원</td>
+                        <td>배아, 생식세포 관리 등의 운영 실적에 대한 분기별 보고 4건</td>
+                        <td>20만원</td>
+                    </tr>
+                    <tr>
+                        <td>종사자 교육 등 협약기관 관리비</td>
+                        <td>100만원</td>
+                        <td>지침의 제·개정 심의, 종사자교육 등 협약기관 관리비</td>
+                        <td>100만원</td>
+                    </tr>
+                    <tr class="bg_type02">
+                        <td>총액</td>
+                        <td><b>175만원</b></td>
+                        <td>총액</td>
+                        <td><b>150만원</b></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <span class="scroll_img">스크롤</span>
+            </div>
+            <h4 class="sstit">추가비용</h4>
+            <div class="table_layout data_table">
+                <table>
+                    <caption>추가비용 테이블</caption>
+                    <colgroup>
+                        <col style="width: 20%">
+                        <col style="width: auto">
+                        <col style="width: 20%">
+                    </colgroup>
+                    <tbody>
+                    <tr>
+                        <th scope="row" rowspan="5">신규심의 추가</th>
+                        <td>영리기관이 직접 수행 또는 연구비 지원 있는 연구계획</td>
+                        <td>20만원 추가/건당</td>
+                    </tr>
+                    <tr>
+                        <td>비영리기관의 연구비 지원 있는 연구계획</td>
+                        <td>10만원 추가/건당</td>
+                    </tr>
+                    <tr>
+                        <td>연구비 지원 없는 연구계획</td>
+                        <td>5만원 추가/건당</td>
+                    </tr>
+                    <tr>
+                        <td>개인정보 및 인체유래물등의 제공, 이관 등</td>
+                        <td>10만원 추가/건당</td>
+                    </tr>
+                    <tr>
+                        <td>잔여배아 및 잔여생식세포의 연구목적 제공·배아의 보존기간 연장·기증자 실비 보상 금액 등 배아생성의료기관 심의</td>
+                        <td>10만원 추가/건당</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">심의면제 추가</th>
+                        <td colspan="2">5만원 추가/건당</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <span class="scroll_img">스크롤</span>
+            </div>
+            <h5 class="ssstit">납부기한</h5>
+            <p>협약비 : 협약비용 청구일로부터 20일 이내</p>
+            <h5 class="ssstit">납부방법</h5>
+            <ul class="text_list">
+                <li>가. e-IRB 시스템을 통한 전자결제(신용카드, 실시간 계좌이체)</li>
+                <li>나. 공용위원회 사무국으로부터 '별도 계좌입금' 방식으로 안내받은 경우
+                    <ul>
+                        <li>- e-IRB 시스템에 '전자결제' 기능이 적용되지 않은 경우(예, '배아생성의료기관' 기관위원회 유형으로 협약 체결한 경우)</li>
+                        <li>- 공용위원회 사무국에서 필요하다고 판단하는 경우</li>
+                        <li>- 영수증은 카드결제의 경우 카드사, 실시간 계좌이체의 경우 국세청에서 확인 가능</li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="information_wrap">
+                <strong>문의 연락처</strong>
+                <p>02-737-8388</p>
+            </div>
+        </div>
+    </div>
+    <!--심의신청-->
+    <div id="APL" class="tab_cnt" style="display: none;">
+        <h4 class="sstit">심의신청</h4>
+        <p>※ 협약기관 소속 연구자가 최초 로그인할 경우 소속기관 내 협약담당자의 승인 필요</p>
+        <div class="step_layout mt30">
+            <ul class="step_inner">
+                <li><div class="step_box">e-IRB 시스템(pubilic.irb.or.kr) 회원가입</div></li>
+                <li><div class="step_box">신규 또는 신규 외 과제 신청</div></li>
+                <li><div class="step_box">심의별 제출서류 (메뉴 참조) 확인</div></li>
+                <li><div class="step_box">(e-IRB 시스템) 자료실에서 필요한 양식 다운로드 및 작성</div></li>
+                <li><div class="step_box">e-IRB 심의신청서 메뉴에 내용을 입력하고 제출서류 업로드</div></li>
+                <li><div class="step_box">심의신청 각 페이지마다 저장하고 모든 메뉴의 작성이 완료되면 심의신청 (심의신청은 연구책임자만 가능)</div></li>
+            </ul>
+        </div>
+    </div>
+    <!--심의 및 심의면제대상-->
+    <div id="SCP" class="tab_cnt" style="display: none;">
+        <h4 class="sstit">심의 대상</h4>
+        <div class="subject_wrap">
+            <ul>
+                <li>
+                    <strong>인간대상연구</strong>
+                    <div class="text"><p>사KoNIBP 재단법인 국가생명윤리정책연구원인간대상연구법 제2조제1호에따라 사람을 대상으로 물리적으로 개입하거나 의사소통, 대인접촉등의 상호작용을 통하여 수행하는 연구, 또는 개인을 식별할 수 있는 정보를 이용하는 연구로서 보건복지부령으로 정하는 연구</p></div>
+                </li>
+                <li>
+                    <strong>인체유래물연구</strong>
+                    <div class="text"><p>법 제2조제12호에따라 인체로부터 수집하거나 채취한 조직∙세포∙혈액∙체액 등 인체 구성물 또는 이들로부터 분리된 혈청,혈장, 염색체, DNA, RNA, 단백질 등을 직접 조사∙분석하는 연구</p></div>
+                </li>
+                <li>
+                    <strong>배아줄기세포주 이용연구</strong>
+                    <div class="text"><p>생명윤리법 제35조 제1항에 따라 등록된 배아줄기세포주를 이용하여 질병의 진단∙예방∙치료를 위한 연구 또는 줄기세포의 특성 및 분화에 관한 기초연구 그밖에 국가위원회의 심의를 거쳐 대통령령으로 정한 연구</p></div>
+                </li>
+            </ul>
+        </div>
+        <h4 class="sstit">심의면제 대상</h4>
+        <div class="table_layout data_table">
+            <table>
+                <caption>심의면제 대상 테이블</caption>
+                <colgroup>
+                    <col style="width: 120px;">
+                    <col style="width: 120px;">
+                    <col style="width: auto">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">구분</th>
+                    <th scope="col">세부내용</th>
+                    <th scope="col">근거법령</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row">인간대상<br>연구</th>
+                    <td>시행규칙<br>제13조</td>
+                    <td><p class="tal">일반 대중에게 공개된 정보를 이용하는 연구 또는 개인 식별정보를 수집∙기록하지 않는 연구로서 다음 각 호의 어느 하나에 해당하는 연구</p>
+                        <p class="tal mt10 mb5">- 다음 -</p>
+                        <div class="table_list">
+                            <ol>
+                                <li>1. 연구대상자를 직접 조작하거나 그 환경을 조작하는 연구 중 다음 각 목의 어느 하나에 해당하는 연구
+                                    <ol>
+                                        <li>가. 약물투여, 혈액채취 등 침습적 행위를 하지 않는 연구</li>
+                                        <li>나. 신체적 변화가 따르지 않는 단순 접촉 측정장비 또는 관찰장비만을 사용하는 연구</li>
+                                        <li>다. ⌈식품위생법⌋ 시행규칙 제3조에 따라 판매 등이 허용되는 식품 또는 식품첨가물을 이용하여 맛 또는 질을 평가하는 연구</li>
+                                        <li>라. ⌈화장품법⌋ 제8조에 따른 안전기준에 맞는 화장품을 이용하여 사용감 또는 만족도 등을 조사하는 연구</li>
+                                    </ol>
+                                </li>
+                                <li>2. 연구대상자 등을 직접 대면하더라도 연구대상자등이 불특정하며, ⌈개인정보보호법⌋ 제23조에 따른 민감정보를 수집하거나 기록하지 않는 연구</li>
+                                <li>3. 연구대상자등에 대한 기존의 자료나 문서를 이용하는 연구<br>
+                                    ※ 1호 및 2호의 연구 중 「의약품 등의 안전에 관한 규칙」 별표 4 제2호 더목에 따른 취약한 환경에 있는 연구대상자를 대상으로 하는 연구는 기관위원회의 심의를 받아야 함
+                                </li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">인체유래물<br>연구</th>
+                    <td>시행규칙<br>제33조</td>
+                    <td><p class="tal">인체유래물 연구중 다음 각 호의 연구</p>
+                        <p class="tal mt10 mb5">- 다음 -</p>
+                        <div class="table_list">
+                            <ol>
+                                <li>1. 연구자가 개인정보를 수집∙기록하지 않는 연구 중 다음 각 목의 연구
+                                    <ol>
+                                        <li>가. 인체유래물은행이 수집 · 보관하고 있는 인체유래물과 그로부터 얻은 유전정보(이하 "인체유래물등"이라 한다)를 제공받아 사용하는 연구로서 인체유래물등을 제공한 인체유래물은행을 통하지 않으면 개인정보를 확인할 수 없는 연구</li>
+                                        <li>나. 의료기관에서 치료 및 진단을 목적으로 사용하고 남은 인체유래물등을 이용하여 정확도 검사 등 검사실 정도관리 및 검사법 평가 등을 수행하는 연구</li>
+                                        <li>다. 인체유래물을 직접 채취하지 않는 경우로서 일반 대중이 이용할 수 있도록 인체유래물로 부터 분리 · 가공된 연구재료(병원체, 세포주 등을 포함)를 사용하는 연구</li>
+                                        <li>라. 연구자가 인체유래물 기증자의 개인식별정보를 알 수 없으며, 연구를 통해 얻어진 결과가 기증자 개인의 유전적 특징 과 관계가 없는 연구(단, 배아줄기세포주를 이용한 연구는 제외)</li>
+                                    </ol>
+                                </li>
+                                <li>2. ⌈초ㆍ중등교육법⌋ 제2조 및 ⌈고등교육법⌋ 제2조에 따른 학교와 보건복지부장관이 정하는 교육기관에서 통상적인 교육과정의 범위에서 실무와 관련하여 수행하는 연구</li>
+                                <li>3. 공중보건상 긴급한 조치가 필요한 상황에서 국가 또는 지방자치단체가 직접 수행하거나 위탁한 연구 (단, 연구를 수행하는 기관의 장은 공용위원회에 연구 종료 전 연구의 진행 상황을 통보 하여야 함)</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+    </div>
+    <!--제출서류-->
+    <div id="DOC" class="tab_cnt" style="display: none;">
+        <h4 class="sstit">신규과제 심의 신청 시 제출서류</h4>
+        <div class="bg_box">
+            <ul class="text_list">
+                <li>e-IRB시스템을 이용하여 심의를 신청하는 경우 심의신청 전 모든 연구자의 연구이력 및 교육이수관리 작성 및 생명윤리법관련 교육이수증(최근2년 이내) 첨부 필수</li>
+                <li>연구책임자가 박사학위 학생일 경우 연구계획서에 대하여 지도교수가 직접 작성하고 서명한 지도교수서약서[별지서식 제26호](해당되는 경우)</li>
+            </ul>
+        </div>
+        <p class="mt10">각 연구의 유형에 따라 다음과 같은 서류를 제출합니다.</p>
+        <h4 class="sstit">인간대상연구</h4>
+        <div class="table_layout data_table">
+            <table>
+                <caption>인간대상연구 테이블</caption>
+                <colgroup>
+                    <col style="min-width: 100px">
+                    <col style="width: 30%">
+                    <col style="width: 30%">
+                    <col style="width: 30%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">연구유형</th>
+                    <th scope="col">실험연구</th>
+                    <th scope="col">조사연구</th>
+                    <th scope="col">개인정보 등 이용연구</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row">공통사항</th>
+                    <td colspan="3">
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 연구계획서 (<em class="c_blue02">공용위원회 권고서식</em>)</li>
+                                <li>2. 연구대상자로부터 연구에 이용되기 위해 얻어지는 정보의 목록 (증례기록서, 설문지, 실험일지 등)</li>
+                                <li>3. 연구책임자의 생명윤리준수서약서 (<em class="c_blue02">e-IRB 직접 작성</em>)</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">개별<br>제출자료</th>
+                    <td class="vaT">
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>4. 연구대상자 설명문 및 동의서(<em class="c_blue02">공용위원회 권고서식</em>)</li>
+                                <li>4-1. 연구대상자 설명문 및 동의서 통합본(다기관 개별 수행연구의 경우)</li>
+                                <li>5. 연구대상자 모집관련 문서</li>
+                                <li>6. 그 밖에 심의를 위해 필요한 서류(해당하는 경우)</li>
+                            </ol>
+                        </div>
+                    </td>
+                    <td class="vaT">
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>4. 연구대상자 설명문 및 동의서(<em class="c_blue02">공용위원회 권고서식 제2호</em>)</li>
+                                <li>5. 연구대상자 모집관련 문서</li>
+                            </ol>
+                        </div>
+                    </td>
+                    <td class="vaT">
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>4. 다른 연구자로부터 개인정보를 제공받아 연구를 수행할 경우 제공에 관한 기관위원회 승인서 등 개인정보 이용 및 제공에 관한 사실을 확인 할 수 있는 서류</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <h4 class="sstit">인체유래물 연구</h4>
+        <div class="table_layout data_table">
+            <table>
+                <caption>인체유래물 연구 테이블</caption>
+                <colgroup>
+                    <col style="min-width: 100px">
+                    <col style="width: 90%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">연구유형</th>
+                    <th scope="col">인체유래물연구</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row">제출자료</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 연구계획서 (<em class="c_blue02">공용위원회 권고서식</em>)</li>
+                                <li>2. 연구책임자의 생명윤리준수서약서 (<em class="c_blue02">e-IRB 직접 작성</em>)</li>
+                                <li>3. 연구대상자로부터 연구에 이용되기 위해 얻어지는 정보의 목록 (<em class="c_blue02">증례기록서,설문지,실험일지 등</em>)</li>
+                                <li>4. 연구대상자 모집관련 문서 (직접 수집하는 경우)</li>
+                                <li>5. 연구대상자 설명문 및 동의서 (직접 수집하는 경우)</li>
+                                <li>6. 인체유래물연구동의서 (직접 수집하는 경우)</li>
+                                <li>7. 물질양도각서(MTA)등 인체유래물등의 제공에 관한 협약을 확인 할 수 있는 서류 (제공받아 수행하는 경우)</li>
+                                <li>8. 그 밖에 심의를 위해 필요한 서류(해당하는 경우)</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <h4 class="sstit">배아줄기세포주 이용연구</h4>
+        <div class="table_layout data_table">
+            <table>
+                <caption>배아줄기세포주 이용연구 테이블</caption>
+                <colgroup>
+                    <col style="min-width: 100px">
+                    <col style="width: 90%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">연구유형</th>
+                    <th scope="col">배아줄기세포주 이용연구</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row">제출자료</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 연구계획서 (<em class="c_blue02">공용위원회 권고서식</em>)
+                                </li><li>2. 연구책임자의 생명윤리준수서약서 (<em class="c_blue02">e-IRB 직접 작성</em>)
+                            </li><li>3. 연구에 이용될 배아줄기세포주가 등록된 배아줄기세포주임을 증명할수 있는 서류(배아줄기세포주 등록증 사본)
+                            </li><li>4. 다음 각목의 서류를 심의 시 제출할수 없는 경우, 연구 시작 전까지 제출 가능
+                                <ol>
+                                    <li>가.배아줄기세포주의 제공에 관한 사항을 알 수 있는 물질양도각서(MTA).</li>
+                                    <li> 나.제공기관의 제공에 대한 기관위원회 승인서</li>
+                                </ol>
+                            </li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+        <h4 class="sstit">신규과제 외 심의 신청 시 제출서류</h4>
+        <div class="table_layout data_table">
+            <table>
+                <caption>신규과제 외 심의 신청 시 제출서류 테이블</caption>
+                <colgroup>
+                    <col style="min-width: 200px">
+                    <col style="width: 90%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">구분</th>
+                    <th scope="col">제출자료</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row">재심의</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 변경대비표 (<em class="c_blue02">공용위원회 권고서식</em>)</li>
+                                <li>2. 시정/보완 요청에 따라 수정된 해당 서류(<em class="c_blue02">계획서, 동의서 등</em>)</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">연구계획변경</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 변경대비표 (<em class="c_blue02">공용위원회 권고서식</em>)</li>
+                                <li>2. 변경된 해당 서류(<em class="c_blue02">계획서, 동의서 등</em>)</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">중대한 이상반응 및<br>미준수 보고</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 기타 관련 증빙 자료(해당되는 경우)</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">중간보고 및<br>지속심의</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 연구자의 생명윤리 및 연구윤리 관련 교육이수를 확인할 수 있는 문서 (지속심의 신청일로부터 최근 2년 이내)</li>
+                                <li>2. 인체유래물등 관리 대장(해당되는 경우)</li>
+                                <li>3. 제공승인서 또는 물질양도각서(해당되는 경우)</li>
+                                <li>4. 배아줄기세포등록증(해당되는 경우)</li>
+                                <li>5. 서면동의를 받은 경우 연구대상자등으로부터 받은 동의서 사본(해당되는 경우)</li>
+                                <li>6. 그 밖에 공용위원회에서 승인유효기간 연장 심사를 위해 확인을 요청하는 문서</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">연구종료·결과보고</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 서면동의를 받은 경우 연구대상자등으로부터 받은 동의서 사본(해당되는 경우로 중간보고 등을 통해 기 제출된 동의서는 제외)</li>
+                                <li>2. 결과보고서</li>
+                                <li>3. 연구의 비정상적 종료가 필요한 사유와 그에 따른 조치계획</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">심의면제</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 연구계획서(<em class="c_blue02">공용위원회 권고서식</em>)</li>
+                                <li>2. 기타 면제요건을 확인할 수 있는 서류</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">개인정보의<br>제공 심의</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 연구대상자등으로부터 개인정보의 제공에 동의를 받은 사실을 확인할 수 있는 동의서 사본(<em class="c_blue02">단, 결과보고 시 공용위원회 기 제출된 경우 제외</em>)</li>
+                                <li>2. 개인정보 제공 시 제공 방법 및 개인정보보호대책에 관한 사항</li>
+                                <li>3. 제공받으려는 자와 그 목적을 확인할 수 있는 서류(<em class="c_blue02">연구계획서 등</em>)</li>
+                                <li>4. 그 밖에 개인정보의 제공 적절성을 심의하기 위해 심의위원회가 요청하는 사항</li>
+                                <li>※ 단, 연구목적으로 수집되지 않은 개인정보의 제공은 개인정보보호법에 따라 데이터심의위원회의 심의를 받아야 합니다.</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">인체유래물등의<br>제공 심의</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 인체유래물 기증자가 제공에 동의했음을 확인할 수 있는 동의서 사본(<em class="c_blue02">단, 결과보고 시 공용위원회에 기 제출된 경우 제외</em>)</li>
+                                <li>2. 인체유래물등의 제공 시 제공방법 및 인체유래물기증자의 개인정보보호 대책에 관한 사항</li>
+                                <li>3. 제공받으려는 자와 그 목적을 확인할 수 있는 서류(<em class="c_blue02">연구계획서 등</em>)</li>
+                                <li>4. 그 밖에 인체유래물등의 제공 적절성을 심의하기 위해 심의위원회가 요청하는 사항</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">인체유래물등의 폐기 및<br>이관 심의 신청</th>
+                    <td>
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 인체유래물등의 폐기 또는 이관 계획(이관은 허가받은 인체유래물은행 또는 질병관리청으로만 가능하다)</li>
+                                <li>2. 인체유래물연구 동의서 사본</li>
+                                <li>3. 그 밖에 인체유래물등의 적절한 처리를 위한 심의를 위해 심의위원회가 요청하는 사항</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+    </div>
+    <!--심의종류-->
+    <div id="TYP" class="tab_cnt" style="display: none;">
+        <h4 class="sstit">심의종류</h4>
+        <div class="table_layout data_table">
+            <table>
+                <caption>심의종류 테이블</caption>
+                <colgroup>
+                    <col style="min-width: 170px">
+                    <col style="width: 45%">
+                    <col style="width: 45%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">구분</th>
+                    <th scope="col">정규심의</th>
+                    <th scope="col">신속심의</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row">정의</th>
+                    <td>정기적인 대면회의로 과반수 이상의 위원이 참석한 정규회의를 통하여 심의</td>
+                    <td>1인 이상의 특정 위원에게 심의권한을 위임하여 신속하게 심의</td>
+                </tr>
+                <tr>
+                    <th scope="row">심의일정</th>
+                    <td>매월 둘째주 화요일·목요일, 셋째주 수요일, 넷째주 화요일·목요일(월 5회)<br>* 배아생성의료기관 협약 전담 특별 위원회 : 분기별 개최</td>
+                    <td>수시심의</td>
+                </tr>
+                <tr>
+                    <th scope="row">접수마감</th>
+                    <td>심의일 기준 1주전 까지 접수완료된 건에 대하여 심의<br>※ 심의 건수가 많은 경우 차기 심의일로 이관</td>
+                    <td>없음(수시 접수 가능)</td>
+                </tr>
+                <tr>
+                    <th scope="row">심의대상</th>
+                    <td>모든 심의는 정규심의가 원칙</td>
+                    <td class="tal bg_type05">
+                        <div class="table_list line_0">
+                            <ol>
+                                <li>1. 법 시행규칙 제2조제2항에 해당하는 연구이나 제3항에 따라 신청된 연구로 제출된 서류로 제2항에 해당하는 사실이 확인 가능한 경우 또는 제13조 및 제33조에 따라 심의를 면제할 수 있는 인간대상연구 또는 인체유래물연구</li>
+                                <li>2. 제1호에 준하는 연구로 연구대상자의 자율성이 충분히 보장되며 연구 참여로 인한 연구대상자등의 위험이 없거나 미미한 연구</li>
+                                <li>3. 등록된 배아줄기세포주를 이용하는 연구 중 체외에서 수행되는 기초연구</li>
+                                <li>4. 기 승인되어 진행 중인 연구에 대한 지속적인 검토의 경우</li>
+                                <li>5. 수정 후 승인 또는 수정 후 신속심의의 결정을 통보받은 연구에 대한 재심의의 경우</li>
+                                <li>6. 연구계획 변경 중 사소한 연구변경의 경우(“사소한”이라 함은 연구대상자 등록 종료, 참여기준의 사소한 확인, 동의서의 명료한 확인, 공고 변경, 모니터 일정 추가 등 변경으로 인한 위험이 최소한이거나, 연구 대상자의 위험-이익(risk-benefit)의 변화가 바람직하지 않은 방향으로 변하지 않는 경우를 말함)</li>
+                                <li>7. 중대한 이상반응 및 위반·이탈 등의 보고</li>
+                                <li>8. 종료보고<br>※ 사안에 따라 정규심의가 필요하다고 판단되는 경우 정규심의 진행</li>
+                            </ol>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <span class="scroll_img">스크롤</span>
+        </div>
+    </div>
+    <!--심의절차-->
+    <div id="PRC" class="tab_cnt" style="display: none;">
+        <div class="charter_wrap">
+            <p><img th:src="@{/portal/images/deliberation.png}" alt="심의절차 하단 숨김 텍스트 설명"></p>
+        </div>
+        <div class="hidden">
+            <p>연구 심의 절차 흐름도 설명.</p>
+            <ol>
+                <li>서류작성</li>
+                <li>심의신청(연구책임자)</li>
+                <li>행정점검</li>
+                <li>접수완료
+                    <ul>
+                        <li>심의면제
+                            <ol>
+                                <li>결과통보</li>
+                                <li>연구시작</li>
+                                <li>종료/결과보고</li>
+                            </ol>
+                        </li>
+                        <li>심의
+                            <ul>
+                                <li>수정 후 신속심의 → 재심의 신청(신속심의)</li>
+                                <li>수정 후 승인 → 재심의 신청(신속심의)</li>
+                                <li>승인 → 연구시작 → 연구진행 중 과제관리 → 종료/결과보고</li>
+                                <li>보완/보류 → 재심의 신청(정규심의)</li>
+                                <li>반려</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ol>
+            <p>참고: 제출서류 미비 시 수정 요청 후 서류작성 단계로 되돌아간다.</p>
+        </div>
+        <ul class="text_list">
+            <li>① 협약기관 소속 연구자는 해당 기관 담당자의 승인후 신규과제 심의 신청 가능</li>
+            <li>② 연구 진행 중 필요시마다 연구계획변경, 중대한 이상반응보고, 지속심의 등 신청</li>
+            <li>③ 반려의 경우 재심의 신청 불가</li>
+        </ul>
+        <p>※ 이의신청은 심의결과를 통보받은 날을 기준으로 15일 이내 신청 가능</p>
+    </div>
+</div>
+<script layout:fragment="main_scripts" th:inline="javascript" type="text/javascript">
+    const portal206 = {
+
+        /**
+         * 상태
+         */
+        state: {
+            tab: []
+        },
+
+        /**
+         * 초기 로드
+         */
+        init: async function () {
+            const _this = this;
+            await _this.fnGetTabData();
+            await _this.initEvent();
+        },
+
+        /**
+         * 이벤트 바인딩
+         */
+        initEvent: function () {
+            const _this = this;
+
+            // 탭 메뉴 클릭 이벤트
+            const tabLinks = document.querySelectorAll('#portal206_tab li a');
+            tabLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // URL 변경하여 페이지 리로드
+                    const tabValue = this.getAttribute('data-tab');
+                    if (tabValue) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('tab', tabValue);
+                        window.location.href = url.toString();
+                    }
+                });
+            });
+
+            // 서브 탭 메뉴 클릭 이벤트
+            const subTabLinks = document.querySelectorAll('#portal206_sub_tab li a');
+            subTabLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // 모든 서브 탭의 활성 클래스 제거
+                    document.querySelectorAll('#portal206_sub_tab li').forEach(function(li) {
+                        li.classList.remove('on');
+                    });
+
+                    // 클릭한 서브 탭에 활성 클래스 추가
+                    this.parentElement.classList.add('on');
+
+                    // 모든 a 태그의 title 속성 제거
+                    subTabLinks.forEach(function(a) {
+                        a.removeAttribute('title');
+                    });
+
+                    // 클릭한 a 태그에 title="선택됨" 추가
+                    this.setAttribute('title', '선택됨');
+
+                    // 모든 서브 섹션 숨김
+                    document.querySelectorAll('.sub_tab_cnt').forEach(function (subTab) {
+                        subTab.style.display = 'none';
+                    });
+
+                    // 클릭한 서브 탭에 해당하는 섹션만 표시
+                    const targetId = this.getAttribute('data-target');
+                    if (targetId) {
+                        document.getElementById(targetId).style.display = 'block';
+                    }
+                });
+            });
+        },
+
+        /**
+         * 탭 렌더링
+         */
+        renderTab: function () {
+            const _this = this;
+            const tabContainer = document.querySelector('#portal206_tab');
+
+            if (!tabContainer || !_this.state.tab) return;
+
+            // URL에서 tab 파라미터 가져오기
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTabValue = urlParams.get('tab');
+
+            let html = '';
+            let firstTabValue = null;
+
+            _this.state.tab.forEach((tab, idx) => {
+                if (idx === 0) firstTabValue = tab.cdVal;
+
+                // URL 파라미터와 일치하면 활성화, 없으면 첫 번째 탭 활성화
+                const isActive = activeTabValue ? (tab.cdVal === activeTabValue) : (idx === 0);
+                const activeClass = isActive ? ' class="on"' : '';
+                html += `<li${activeClass}><a href="javascript:;" data-tab="${tab.cdVal}">${tab.cdNm}</a></li>`;
+            });
+
+            tabContainer.innerHTML = html;
+
+            // 활성화된 탭에 해당하는 섹션 표시
+            const targetTabValue = activeTabValue || firstTabValue;
+            if (targetTabValue) {
+                // 모든 섹션 숨김
+                document.querySelectorAll('.tab_cnt').forEach(function (tab) {
+                    tab.style.display = 'none';
+                });
+
+                // 해당 섹션만 표시
+                const targetSection = document.getElementById(targetTabValue);
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                }
+            }
+
+            // 탭 접근성 속성 업데이트
+            uiCommon.updateTabAccessibility('#portal206_tab');
+        },
+
+        /**
+         * 탭 데이터 조회
+         */
+        fnGetTabData: async function () {
+            const _this = this;
+
+            const param = new URLSearchParams({
+                grpCd : 'MENU_PORTAL206'
+            });
+
+            try {
+                const response = await API.get('/api/common/code/groupCd/list?' + param);
+
+                if (response && response.length > 0) {
+                    _this.state.tab = response;
+                    _this.renderTab()
+                }
+            } catch (error) {
+                console.error('탭 조회 실패:', error);
+            }
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        portal206.init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin800.mapper.Admin810Mapper">
+
+    <!--기관 목록 조회-->
+    <select id="selectAdmin810List" parameterType="egovframework.admin.admin800.domain.Admin810FilterDTO" resultType="egovframework.admin.admin800.domain.Admin810VO">
+        SELECT
+            inst_oid
+            , INST_NM
+            , brno
+            , rprsv_nm
+            , telno_pfx
+            , telno_mid
+            , telno_sfx
+            , FAX_PFX
+            , FAX_MID
+            , FAX_SFX
+            , zip
+            , ADDR
+            , daddr
+            , REG_ID
+            , REG_DT
+            , mdfcn_id
+            , mdfcn_dt
+            , USE_YN
+        FROM
+            ${schema}.inst
+        <where>
+            <if test="instOid != null and instOid != ''">
+                AND inst_oid = #{instOid}
+            </if>
+            <if test="instNm != null and instNm != ''">
+                AND INST_NM LIKE CONCAT('%', #{instNm}, '%')
+            </if>
+            <if test="bizRegNo != null and bizRegNo != ''">
+                AND brno LIKE CONCAT('%', #{bizRegNo}, '%')
+            </if>
+            <if test="repNm != null and repNm != ''">
+                AND rprsv_nm LIKE CONCAT('%', #{repNm}, '%')
+            </if>
+            <!-- 전화번호 검색 -->
+            <if test="telNo != null and telNo != ''">
+                AND CONCAT(telno_pfx, telno_mid, telno_sfx) LIKE CONCAT('%', #{telNo}, '%')
+            </if>
+            <!-- 팩스번호 검색 -->
+            <if test="faxNo != null and faxNo != ''">
+                AND CONCAT(FAX_PFX, FAX_MID, FAX_SFX) LIKE CONCAT('%', #{faxNo}, '%')
+            </if>
+            <if test="zipCd != null and zipCd != ''">
+                AND zip = #{zipCd}
+            </if>
+            <!-- 주소 검색 (주소 또는 상세주소에 포함) -->
+            <if test="addr != null and addr != ''">
+                AND (
+                    ADDR LIKE CONCAT('%', #{addr}, '%')
+                    OR daddr LIKE CONCAT('%', #{addr}, '%')
+                )
+            </if>
+            AND USE_YN = 'Y'
+        </where>
+    </select>
+
+    <!--기관 단건 조회-->
+    <select id="selectAdmin810" parameterType="String" resultType="egovframework.admin.admin800.domain.Admin810VO">
+        SELECT
+        inst_oid
+        , INST_NM
+        , brno
+        , rprsv_nm
+        , telno_pfx
+        , telno_mid
+        , telno_sfx
+        , FAX_PFX
+        , FAX_MID
+        , FAX_SFX
+        , zip
+        , ADDR
+        , daddr
+        , REG_ID
+        , REG_DT
+        , mdfcn_id
+        , mdfcn_dt
+        , USE_YN
+        FROM
+        ${schema}.inst
+        WHERE inst_oid = #{instOid}
+    </select>
+
+    <!--사업자등록번호로 기관 조회-->
+    <select id="selectByBizRegNo" parameterType="String" resultType="egovframework.admin.admin800.domain.Admin810VO">
+        SELECT
+            inst_oid
+            , INST_NM
+            , brno
+            , rprsv_nm
+            , telno_pfx
+            , telno_mid
+            , telno_sfx
+            , FAX_PFX
+            , FAX_MID
+            , FAX_SFX
+            , zip
+            , ADDR
+            , daddr
+            , REG_ID
+            , REG_DT
+            , mdfcn_id
+            , mdfcn_dt
+            , USE_YN
+        FROM
+            ${schema}.inst
+        WHERE brno = #{bizRegNo}
+          AND USE_YN = 'Y'
+    </select>
+
+    <!--기관 등록-->
+    <insert id="insertAdmin810" parameterType="egovframework.admin.admin800.domain.Admin810">
+        INSERT INTO ${schema}.inst(
+              inst_oid
+            , INST_NM
+            , brno
+            , rprsv_nm
+            , telno_pfx
+            , telno_mid
+            , telno_sfx
+            , FAX_PFX
+            , FAX_MID
+            , FAX_SFX
+            , zip
+            , ADDR
+            , daddr
+            , REG_ID
+            , REG_DT
+            , mdfcn_id
+            , mdfcn_dt
+            , USE_YN
+        )
+        VALUES (
+            #{instOid}
+           , #{instNm}
+           , #{bizRegNo}
+           , #{repNm}
+           , #{telPfx}
+           , #{telMid}
+           , #{telSfx}
+           , #{faxPfx}
+           , #{faxMid}
+           , #{faxSfx}
+           , #{zipCd}
+           , #{addr}
+           , #{addrDtl}
+           , #{regId}
+           , now()
+           , #{mdfcnId}
+           , now()
+           , #{useYn}
+        )
+    </insert>
+
+    <!--기관 수정-->
+    <update id="updateAdmin810" parameterType="egovframework.admin.admin800.domain.Admin810">
+        UPDATE
+            ${schema}.inst
+        <set>
+            <if test="instNm != null">
+                INST_NM = #{instNm},
+            </if>
+            <if test="bizRegNo != null">
+                brno = #{bizRegNo},
+            </if>
+            <if test="repNm != null">
+                rprsv_nm = #{repNm},
+            </if>
+            <if test="telPfx != null">
+                telno_pfx = #{telPfx},
+            </if>
+            <if test="telMid != null">
+                telno_mid = #{telMid},
+            </if>
+            <if test="telSfx != null">
+                telno_sfx = #{telSfx},
+            </if>
+            <if test="faxPfx != null">
+                FAX_PFX = #{faxPfx},
+            </if>
+            <if test="faxMid != null">
+                FAX_MID = #{faxMid},
+            </if>
+            <if test="faxSfx != null">
+                FAX_SFX = #{faxSfx},
+            </if>
+            <if test="zipCd != null">
+                zip = #{zipCd},
+            </if>
+            <if test="addr != null">
+                ADDR = #{addr},
+            </if>
+            <if test="addrDtl != null">
+                daddr = #{addrDtl},
+            </if>
+            <if test="mdfcnId != null">
+                mdfcn_id = #{mdfcnId},
+            </if>
+            <if test="useYn != null">
+                USE_YN = #{useYn},
+            </if>
+            mdfcn_dt = now()
+        </set>
+        WHERE
+            inst_oid = #{instOid}
+    </update>
+
+    <!--기관 삭제-->
+    <delete id="deleteAdmin810" parameterType="egovframework.admin.admin800.domain.Admin810DTO">
+        UPDATE
+            ${schema}.inst
+        SET
+            mdfcn_id = #{mdfcnId}
+          , mdfcn_dt = NOW()
+          , USE_YN = 'N'
+        WHERE
+            inst_oid = #{instOid}
+    </delete>
+</mapper>

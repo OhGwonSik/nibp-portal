@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin600.mapper.Admin614Mapper">
+	
+	<!--안내(팝업) 목록 조회-->
+	<select id="selectAdmin614List" parameterType="egovframework.admin.admin600.domain.Admin614FilterDTO" resultType="egovframework.admin.admin600.domain.Admin614VO">
+		SELECT
+			popup_oid
+			, popup_ttl
+			, popup_type
+			, popup_cn
+			, popup_img_file_path
+			, popup_url_addr
+			, popup_bgng_dt
+			, popup_end_dt
+			, pstn_x
+			, pstn_y
+			, size_w
+			, size_h
+			, open_yn
+			, use_yn
+			, reg_id
+			, reg_dt
+			, mdfcn_id
+			, mdfcn_dt
+			, CASE
+				WHEN popup_bgng_dt > CURDATE() THEN '대기'
+				WHEN CURDATE() >= popup_bgng_dt AND (popup_end_dt IS NULL OR popup_end_dt >= CURDATE()) AND open_yn = 'Y' THEN '게재'
+				WHEN CURDATE() > popup_end_dt THEN '게재종료'
+				ELSE ''
+				END AS open_state
+		FROM ${schema}.popup
+		<where>
+			<if test="keyword != null and keyword != ''">
+				AND (
+					popup_oid LIKE CONCAT('%', #{keyword}, '%')
+					OR popup_ttl LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+			<if test="openState != null and openState != ''">
+				<choose>
+					<when test="openState == '대기'">
+						AND popup_bgng_dt <![CDATA[ > ]]> CURDATE()
+					</when>
+
+					<when test="openState == '게재'">
+						AND popup_bgng_dt <![CDATA[ <= ]]> CURDATE()
+						AND (popup_end_dt IS NULL OR popup_end_dt <![CDATA[ >= ]]> CURDATE())
+					</when>
+
+					<when test="openState == '게재종료'">
+						AND popup_end_dt <![CDATA[ < ]]> CURDATE()
+					</when>
+				</choose>
+			</if>
+            <if test="popupBgngDt != null">
+                AND (popup_end_dt IS NULL OR popup_end_dt <![CDATA[ >= ]]> #{popupBgngDt})
+            </if>
+            <if test="popupEndDt != null">
+                AND popup_bgng_dt <![CDATA[ < ]]> DATE_ADD(#{popupEndDt}, INTERVAL 1 DAY)
+            </if>
+		</where>
+		ORDER BY
+			popup_oid DESC
+	</select>
+
+	<!--안내(팝업) 단건 조회-->
+	<resultMap id="Admin614ResultMap" type="egovframework.admin.admin600.domain.Admin614VO">
+		<id property="popupOid" column="popup_oid"/>
+		<result property="popupTtl" column="popup_ttl"/>
+		<result property="popupType" column="popup_type"/>
+		<result property="popupCn" column="popup_cn"/>
+		<result property="popupImgFilePath" column="popup_img_file_path"/>
+		<result property="popupUrlAddr" column="popup_url_addr"/>
+		<result property="popupBgngDt" column="popup_bgng_dt"/>
+		<result property="popupEndDt" column="popup_end_dt"/>
+		<result property="pstnX" column="pstn_x"/>
+		<result property="pstnY" column="pstn_y"/>
+		<result property="sizeW" column="size_w"/>
+		<result property="sizeH" column="size_h"/>
+		<result property="openYn" column="open_yn"/>
+		<result property="useYn" column="use_yn"/>
+		<result property="regId" column="reg_id"/>
+		<result property="regDt" column="reg_dt"/>
+		<result property="mdfcnId" column="mdfcn_id"/>
+		<result property="mdfcnDt" column="mdfcn_dt"/>
+		<association property="files" javaType="egovframework.common.file.domain.FileDTO">
+			<id property="fileOid" column="file_oid"/>
+			<result property="tblNm" column="tbl_nm"/>
+			<result property="tblOid" column="tbl_oid"/>
+			<result property="orgnlFileNm" column="orgnl_file_nm"/>
+			<result property="strgFileNm" column="strg_file_nm"/>
+			<result property="strgFilePath" column="strg_file_path"/>
+			<result property="strgFileCpct" column="strg_file_cpct"/>
+			<result property="fileTypeNm" column="file_type_nm"/>
+			<result property="fileType" column="file_type"/>
+			<result property="atchFileSeq" column="atch_file_seq"/>
+			<result property="useYn" column="file_use_yn"/>
+			<result property="regId" column="file_reg_user_id"/>
+			<result property="regDt" column="file_reg_dt"/>
+			<result property="mdfcnId" column="file_upd_user_id"/>
+			<result property="mdfcnDt" column="file_upd_dt"/>
+		</association>
+	</resultMap>
+	<select id="selectAdmin614" parameterType="String" resultMap="Admin614ResultMap">
+		SELECT
+			a.popup_oid
+			, a.popup_ttl
+			, a.popup_type
+			, a.popup_cn
+			, a.popup_img_file_path
+			, a.popup_url_addr
+			, a.popup_bgng_dt
+			, a.popup_end_dt
+			, a.pstn_x
+			, a.pstn_y
+			, a.size_w
+			, a.size_h
+			, a.open_yn
+			, a.use_yn
+			, a.reg_id
+			, a.reg_dt
+			, a.mdfcn_id
+			, a.mdfcn_dt
+			, b.file_oid
+			, b.tbl_nm
+			, b.tbl_oid
+			, b.orgnl_file_nm
+			, b.strg_file_nm
+			, b.strg_file_path
+			, b.strg_file_cpct
+			, b.file_type_nm
+			, b.file_type
+			, b.atch_file_seq
+			, b.use_yn AS file_use_yn
+			, b.reg_id AS file_reg_user_id
+			, b.reg_dt AS file_reg_dt
+			, b.mdfcn_id AS file_upd_user_id
+			, b.mdfcn_dt AS file_upd_dt
+		FROM ${schema}.popup a
+		LEFT JOIN ${schema}.file b
+			ON b.tbl_nm = 'popup'
+			AND b.tbl_oid = a.popup_oid
+			AND b.file_type = 'ATTACHMENT'
+			AND b.use_yn = 'Y'
+		WHERE a.popup_oid = #{popupOid}
+		ORDER BY b.atch_file_seq ASC, b.reg_dt DESC
+		LIMIT 1
+	</select>
+
+	<!-- 안내(팝업) 등록 -->
+	<insert id="insertAdmin614" parameterType="egovframework.admin.admin600.domain.Admin614DTO"
+        useGeneratedKeys="true" keyProperty="popupOid">
+		INSERT INTO ${schema}.popup (
+			popup_ttl
+			, popup_type
+			, popup_cn
+			, popup_img_file_path
+			, popup_url_addr
+			, popup_bgng_dt
+			, popup_end_dt
+			, pstn_x
+			, pstn_y
+			, size_w
+			, size_h
+			, open_yn
+			, use_yn
+			, reg_id
+			, reg_dt
+			, mdfcn_id
+			, mdfcn_dt
+		) VALUES (
+			#{popupTtl}
+			, #{popupType}
+			, #{popupCn}
+			, #{popupImgFilePath}
+			, #{popupUrlAddr}
+			, #{popupBgngDt}
+			, #{popupEndDt}
+			, #{pstnX}
+			, #{pstnY}
+			, #{sizeW}
+			, #{sizeH}
+			, #{openYn}
+			, 'Y'
+			, #{regId}
+			, NOW()
+			, #{mdfcnId}
+			, NOW()
+		)
+	</insert>
+
+	<!-- 안내(팝업) 수정 -->
+	<update id="updateAdmin614" parameterType="egovframework.admin.admin600.domain.Admin614DTO">
+		UPDATE ${schema}.popup
+		<set>
+			<if test="popupTtl != null">
+				popup_ttl = #{popupTtl},
+			</if>
+			<if test="popupType != null">
+				popup_type = #{popupType},
+			</if>
+			<if test="popupCn != null">
+				popup_cn = #{popupCn},
+			</if>
+			<if test="popupImgFilePath != null">
+				popup_img_file_path = #{popupImgFilePath},
+			</if>
+            popup_url_addr = #{popupUrlAddr},
+			<if test="popupBgngDt != null">
+				popup_bgng_dt = #{popupBgngDt},
+			</if>
+			<if test="pstnX != null">
+				pstn_x = #{pstnX},
+			</if>
+			<if test="pstnY != null">
+				pstn_y = #{pstnY},
+			</if>
+			<if test="sizeW != null">
+				size_w = #{sizeW},
+			</if>
+			<if test="sizeH != null">
+				size_h = #{sizeH},
+			</if>
+			<if test="openYn != null">
+				open_yn = #{openYn},
+			</if>
+			<if test="mdfcnId != null">
+				mdfcn_id = #{mdfcnId},
+			</if>
+			mdfcn_dt = NOW(),
+			popup_end_dt = #{popupEndDt},
+            use_yn = 'Y'
+		</set>
+		WHERE
+			popup_oid = #{popupOid}
+	</update>
+
+	<!-- 안내(팝업) 일괄 삭제 -->
+	<update id="deleteAdmin614" parameterType="egovframework.admin.admin600.domain.Admin614DeleteDTO">
+		UPDATE ${schema}.popup
+		SET
+			use_yn = 'N'
+			, mdfcn_id = #{mdfcnId}
+			, mdfcn_dt = NOW()
+		WHERE
+			popup_oid IN
+			<foreach collection="popupOids" item="popupOid" open="(" separator="," close=")">
+				#{popupOid}
+			</foreach>
+	</update>
+
+	<!-- 안내(팝업) 엑셀 다운로드용 목록 조회 -->
+	<select id="selectAdmin614ExcelList" parameterType="org.egovframe.rte.psl.dataaccess.util.EgovMap" resultType="egovframework.admin.admin600.domain.Admin614ExcelDTO">
+		SELECT
+			p.popup_oid AS popupOid,
+			p.popup_ttl AS popupTtl,
+			p.popup_type AS popupType,
+			p.popup_bgng_dt AS popupBgngDt,
+			p.popup_end_dt AS popupEndDt,
+			CASE
+				WHEN p.popup_bgng_dt > NOW() THEN '대기'
+				WHEN NOW() >= p.popup_bgng_dt AND (p.popup_end_dt IS NULL OR p.popup_end_dt >= NOW()) AND p.open_yn = 'Y' THEN '게재'
+				WHEN NOW() > p.popup_end_dt THEN '게재종료'
+				ELSE ''
+			END AS openState
+		FROM ${schema}.popup p
+		<where>
+			p.use_yn = 'Y'
+			<if test="keyword != null and keyword != ''">
+				AND (
+					p.popup_oid LIKE CONCAT('%', #{keyword}, '%')
+					OR p.popup_ttl LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+			<if test="openState != null and openState != ''">
+				<choose>
+					<when test="openState == '대기'">
+						AND p.popup_bgng_dt <![CDATA[ > ]]> NOW()
+					</when>
+					<when test="openState == '게재'">
+						AND p.popup_bgng_dt <![CDATA[ <= ]]> NOW()
+						AND (p.popup_end_dt IS NULL OR p.popup_end_dt >= NOW())
+						AND p.open_yn = 'Y'
+					</when>
+					<when test="openState == '게재종료'">
+						AND p.popup_end_dt <![CDATA[ < ]]> NOW()
+					</when>
+				</choose>
+			</if>
+			<if test="popupBgngDt != null and popupBgngDt != ''">
+				AND (p.popup_end_dt IS NULL OR p.popup_end_dt >= #{popupBgngDt})
+			</if>
+			<if test="popupEndDt != null and popupEndDt != ''">
+				AND p.popup_bgng_dt <![CDATA[ <= ]]> #{popupEndDt}
+			</if>
+		</where>
+		ORDER BY
+			p.popup_oid DESC
+	</select>
+</mapper>

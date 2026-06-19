@@ -1,0 +1,182 @@
+<th:block th:fragment='board_preview' xmlns:th='http://www.thymeleaf.org'>
+    <div id='board_preview' class='layer_popup'>
+        <div class='layer_popup_wrap'>
+            <div class='popup_wrap wp1000'>
+                <h1 class='p_tit'>사이트 화면 미리보기</h1>
+                <div class='popup_inner'>
+                    <div class='popup_cont_wrap'>
+                        <div class='search_wrap col30'>
+                            <ul>
+                                <li>
+                                    <select class='wp100' id="previewCategory">
+                                        <option>분류</option>
+                                    </select>
+                                    <select class='wp100' id="previewSearch">
+                                        <option>전체</option>
+                                        <option>제목</option>
+                                        <option>내용</option>
+                                    </select>
+                                    <input type='text' name='' id='lab_02' placeholder='검색어를 입력하세요' value='' title='검색어 입력'>
+                                    <a class='btn_search ss' href='javascript:;'><span>검색</span></a>
+                                </li>
+                            </ul>
+                            <div class='s_wrap'></div>
+                        </div>
+                        <div class='popup_cont_inner'>
+                            <div class='table_layout02 list_type'>
+                                <table>
+                                    <caption>게시판 위치 설정</caption>
+                                    <colgroup>
+                                        <col style='width: 70px;'>
+                                        <col style='width: 100px'>
+                                        <col style='width:auto'>
+                                        <col style='width: 100px'>
+                                        <col style='width: 100px'>
+                                        <col style='width: 100px'>
+                                        <col style='width: 100px'>
+                                        <col style='width: 80px'>
+                                    </colgroup>
+                                    <thead id='preview_thead'>
+										<tr>
+											<th data-col='번호'>번호</th>
+											<th data-col='분류'>분류</th>
+											<th data-col='이미지'>이미지</th>
+											<th data-col='썸네일'>썸네일</th>											
+											<th data-col='제목'>제목</th>
+											<th data-col='작성자'>작성자</th>
+											<th data-col='작성일'>작성일</th>
+											<th data-col='마감일'>마감일</th>
+											<th data-col='진행상황'>진행상황</th>
+											<th data-col='첨부파일'>첨부파일</th>
+											<th data-col='조회수'>조회수</th>
+										</tr>
+                                    </thead>
+                                    <tbody id='preview_tbody'>
+										<tr>
+											<td data-col='번호'>&nbsp;</td>
+											<td data-col='분류'>&nbsp;</td>
+											<td data-col='이미지'>&nbsp;</td>
+											<td data-col='썸네일'>&nbsp;</td>											
+											<td data-col='제목'>&nbsp;</td>
+											<td data-col='작성자'>&nbsp;</td>
+											<td data-col='작성일'>&nbsp;</td>
+											<td data-col='마감일'>&nbsp;</td>
+											<td data-col='진행상황'>&nbsp;</td>
+											<td data-col='첨부파일'>&nbsp;</td>
+											<td data-col='조회수'>&nbsp;</td>
+										</tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='btn_wrap mt30'>
+                        <a href='javascript:;' class='btn_basic bg_type01'>확인</a>
+                        <a href='javascript:;' class='btn_basic bg_type02 board_preview_close'>취소</a>
+                    </div>
+                </div>
+                <a href='javascript:;' class='pop_close board_preview_close'>팝업 닫기</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        let board_preview = {
+            /**
+             * 상태
+             */
+            state: {
+
+            },
+
+            /**
+             * 모달 show
+             */
+            initModal: function (config) {
+                uiCommon.fnShowModal('board_preview');
+                this.init();
+                
+                this.applyColumnConfig(config);
+            },
+
+            /**
+             * 초기 로드
+             */
+            init: function () {
+
+                // 닫기 버튼 클릭
+                $('.board_preview_close').off('click').on('click', function (e) {
+                    e.preventDefault();
+                    uiCommon.fnHideModal('board_preview');
+                });
+            },
+            
+            applyColumnConfig: function (config) {
+
+                // 모든 컬럼 숨김
+                document.querySelectorAll('[data-col]').forEach(el => {
+                    el.style.display = 'none';
+                });
+
+                // 기본항목(defaults) 표시
+                config.defaults.forEach(col => this.showCol(col));
+
+                // 선택항목
+                if (config.showNumber)     this.showCol('번호');
+                if (config.showWriter)     this.showCol('작성자');
+                if (config.showRegDt)      this.showCol('작성일');
+                if (config.showEndDt)      this.showCol('마감일');
+                if (config.showStatus)     this.showCol('진행상황');
+                if (config.showAttachment) this.showCol('첨부파일');
+                if (config.showViews)      this.showCol('조회수');
+
+                // 카테고리(분류) 표시 여부
+                if (config.showCategory) this.showCol('분류');
+
+                // 이미지 / 썸네일 (포토갤러리, 썸네일 게시판은 기본 포함)
+                if (config.showImage) this.showCol('이미지');
+                if (config.showThumb) this.showCol('썸네일');
+
+                // 분류 옵션 세팅
+                const ctgSelect = document.querySelector('#previewCategory');
+				
+				ctgSelect.innerHTML = '<option>분류</option>';
+				
+				if (config.showCategory && config.categoryList) {
+				
+				    let list = [];
+				
+				    if (typeof config.categoryList === 'string') {
+				        list = config.categoryList
+				            .split(',')
+				            .map(s => s.trim())
+				            .filter(s => s.length > 0);
+				    } else if (Array.isArray(config.categoryList)) {
+				        list = config.categoryList;
+				    }
+				
+				    list.forEach(ctg => {
+				        const opt = document.createElement('option');
+				        opt.value = ctg;
+				        opt.textContent = ctg;
+				        ctgSelect.appendChild(opt);
+				    });
+				
+				    ctgSelect.style.display = '';
+				
+				} else {
+					ctgSelect.style.display = 'none';
+				}
+
+                // 검색창 show/hide
+                const searchWrap = document.querySelector('.search_wrap');
+                searchWrap.style.display = (config.searchUseYn === 'N' ? 'none' : 'block');
+            },
+
+            showCol: function (colName) {
+                document.querySelectorAll(`[data-col='${colName}']`).forEach(el => {
+                    el.style.display = 'table-cell';
+                });
+            }
+        }
+    </script>
+</th:block>
